@@ -18,6 +18,9 @@ SETUVAR _fish_abbr_dnsflush:sudo\x20dscacheutil\x20\x2dflushcache
 SETUVAR _fish_abbr_dockerclean:docker\x20system\x20prune\x20\x2da
 SETUVAR _fish_abbr_dor:sudo\x20open\x20/Applications/Docker\x2eapp
 SETUVAR _fish_abbr_dotc:chezmoi
+SETUVAR _fish_abbr_dotca:chezmoi\x20apply\x20\x2dv
+SETUVAR _fish_abbr_dotccd:chezmoi\x20cd
+SETUVAR _fish_abbr_dotcu:chezmoi\x20update\x20\x2dv
 SETUVAR _fish_abbr_dps:docker\x20ps
 SETUVAR _fish_abbr_dpsa:docker\x20ps\x20\x2da
 SETUVAR _fish_abbr_fishconfig:vi\x20\x7e/\x2econfig/fish/config\x2efish
