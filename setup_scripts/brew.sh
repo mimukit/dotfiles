@@ -9,6 +9,10 @@ printf '%s%s%s\n' $COLOR_GREEN 'Installing homebrew...' $COLOR_REST
 brew update
 brew upgrade
 
+# Install repo sources
+printf '%s%s%s\n' $COLOR_GREEN 'Installing brew sources...' $COLOR_REST
+brew tap homebrew/cask-fonts
+
 # Install packages
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew packages...' $COLOR_REST
 apps=(
@@ -66,6 +70,10 @@ cask_apps=(
     setapp
     bitwarden
     rectangle
+    font-fira-code
+    font-fira-code-nerd-font
+    font-fira-mono-nerd-font
+    font-fira-mono-for-powerline
 )
 
 for item in "${cask_apps[@]}"; do
