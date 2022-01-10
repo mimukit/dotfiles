@@ -46,9 +46,9 @@ brew install "${apps[@]}"
 
 Install cask packages
 
+# google-chrome
 cask_apps=(
     raycast
-    google-chrome
     iterm2
     visual-studio-code
     postman
@@ -64,4 +64,10 @@ cask_apps=(
     rectangle
 )
 
-brew install "${cask_apps[@]}" --cask
+# brew install "${cask_apps[@]}" --cask
+
+for item in "${cask_apps[@]}"; do
+  brew info "${item}" --cask | grep --quiet 'Not installed' && brew install "${item}" --cask
+done
+
+echo '################# Brew Install Done #################'
