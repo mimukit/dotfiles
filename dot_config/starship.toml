@@ -4,9 +4,10 @@
 full_symbol = "🔋"
 charging_symbol = "🔌"
 discharging_symbol = "⚡"
+disabled = true
 
 [[battery.display]]
-threshold = 30
+threshold = 10
 style = "bold red"
 
 [character]
