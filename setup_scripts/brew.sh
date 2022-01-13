@@ -46,7 +46,7 @@ apps=(
     fish
     gnupg
     starship
-    
+    noti 
 )
 
 brew install "${apps[@]}"
