@@ -68,7 +68,6 @@ cask_apps=(
     slack
     messenger
     setapp
-    bitwarden
     rectangle
     font-fira-code
     font-fira-code-nerd-font
