@@ -75,6 +75,7 @@ cask_apps=(
     font-fira-mono-for-powerline
     spotify
     mark-text
+    toggl-track
 )
 
 for item in "${cask_apps[@]}"; do
