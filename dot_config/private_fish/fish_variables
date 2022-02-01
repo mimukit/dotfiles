@@ -28,10 +28,12 @@ SETUVAR _fish_abbr_dpsa:docker\x20ps\x20\x2da
 SETUVAR _fish_abbr_fishconfig:vi\x20\x7e/\x2econfig/fish/config\x2efish
 SETUVAR _fish_abbr_gbd:git\x20branch\x20\x2dd
 SETUVAR _fish_abbr_gbls:git\x20branch\x20\x2d\x2dall
+SETUVAR _fish_abbr_gc:git\x20checkout
 SETUVAR _fish_abbr_gitc:git\x20remote\x20prune\x20origin
 SETUVAR _fish_abbr_gitclean:git\x20remote\x20prune\x20origin
 SETUVAR _fish_abbr_gitcleanmerged:git\x20branch\x20\x2d\x2dmerged\x20main\x20\x7c\x20grep\x20\x2dv\x20\x22\x5e\x5c\x2a\x20main\x22\x20\x7c\x20xargs\x20\x2dn\x201\x20\x2dr\x20git\x20branch\x20\x2dd
 SETUVAR _fish_abbr_glo:git\x20log\x20\x2d\x2doneline
+SETUVAR _fish_abbr_gpo:git\x20pull\x20origin
 SETUVAR _fish_abbr_grh:git\x20reset\x20\x2d\x2dhard
 SETUVAR _fish_abbr_gst:git\x20status
 SETUVAR _fish_abbr_hma:hasura\x20migrate\x20apply
