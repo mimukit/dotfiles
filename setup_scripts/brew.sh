@@ -76,6 +76,7 @@ cask_apps=(
     spotify
     mark-text
     toggl-track
+    local
 )
 
 for item in "${cask_apps[@]}"; do
