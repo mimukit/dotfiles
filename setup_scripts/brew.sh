@@ -77,6 +77,7 @@ cask_apps=(
     mark-text
     toggl-track
     local
+    insomnia
 )
 
 for item in "${cask_apps[@]}"; do
