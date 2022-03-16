@@ -78,6 +78,7 @@ cask_apps=(
     toggl-track
     local
     insomnia
+    docker
 )
 
 for item in "${cask_apps[@]}"; do
