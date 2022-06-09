@@ -47,6 +47,7 @@ apps=(
     gnupg
     starship
     noti 
+    libpq
 )
 
 brew install "${apps[@]}"
