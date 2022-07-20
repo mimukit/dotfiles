@@ -48,6 +48,9 @@ apps=(
     starship
     noti 
     libpq
+    fzf
+    fd
+    terminal-notifier
 )
 
 brew install "${apps[@]}"
