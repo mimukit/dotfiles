@@ -93,3 +93,10 @@ show_always = false
 
 [aws]
 disabled = true
+
+[gcloud]
+disabled = true
+
+[swift]
+disabled = true
+
