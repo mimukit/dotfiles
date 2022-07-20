@@ -18,10 +18,16 @@ chezmoi init https://github.com/mimukit/dotfiles.git
 chezmoi diff
 ```
 
-- If you are happy with the changes that chezmoi will make then run:
+- If you are happy with the changes that chezmoi will make from remote then run:
 
 ```
 chezmoi apply -v
+```
+
+- If you want to update chezmoi remote with current local changes, then run:
+
+```
+chezmoi add $FILE
 ```
 
 - If you are not happy with the changes to a file then either edit it with:
