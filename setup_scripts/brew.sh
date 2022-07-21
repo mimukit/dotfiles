@@ -79,7 +79,6 @@ cask_apps=(
     mark-text
     toggl-track
     local
-    insomnia
     docker
     ticktick
 )
