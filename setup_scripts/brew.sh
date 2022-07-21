@@ -81,6 +81,7 @@ cask_apps=(
     local
     insomnia
     docker
+    ticktick
 )
 
 for item in "${cask_apps[@]}"; do
