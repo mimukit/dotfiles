@@ -4,7 +4,7 @@ A repository with my personal configuration files, powered by [chezmoi](https://
 
 ## How to use
 
-- Install `chezmoi` following [this guideline](https://www.chezmoi.io/docs/install/)
+- Install `chezmoi` following [this guideline](https://www.chezmoi.io/install/)
 
 - Initialize chezmoi with your dotfiles repo:
 
