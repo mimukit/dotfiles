@@ -14,41 +14,53 @@ brew tap homebrew/cask-fonts
 # Install packages
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew packages...' $COLOR_REST
 apps=(
+    bat
+    caddy
+    chezmoi
     cmake
     coreutils
+    docker
     dockutil
-    ffmpeg
+    exa
     fasd
+    fd
+    ffmpeg
+    fish
+    fnm
+    fzf
     gifsicle
     git
-    gnu-sed
+    gnupg
     grep
-    hub
+    groff
+    hostess
     httpie
+    hub
     imagemagick
     jq
+    lf
+    libpq
     mackup
+    mkcert
+    neovim
+    noti 
     peco
+    percona-toolkit
+    pgcli
+    pnpm
     psgrep
     python
     shellcheck
     ssh-copy-id
+    starship
     svn
+    terminal-notifier
+    tldr
     tmux
     tree
     vim
     volta
     wget
-    chezmoi
-    bat
-    fish
-    gnupg
-    starship
-    noti 
-    libpq
-    fzf
-    fd
-    terminal-notifier
 )
 
 brew install "${apps[@]}"
@@ -57,30 +69,40 @@ brew install "${apps[@]}"
 # Install cask packages
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew cask packages...' $COLOR_REST
 cask_apps=(
-    raycast
-    google-chrome
-    iterm2
-    visual-studio-code
-    postman
-    vlc
-    free-download-manager
-    firefox
-    vivaldi
+    android-platform-tools
+    anydesk
+    bluesnooze
     brave-browser
-    slack
-    messenger
-    setapp
-    rectangle
+    conduktor
+    docker
+    firefox
     font-fira-code
     font-fira-code-nerd-font
     font-fira-mono-nerd-font
-    font-fira-mono-for-powerline
-    spotify
+    free-download-manager
+    google-chrome
+    imageoptim
+    iterm2
+    latest
     mark-text
-    toggl-track
-    local
-    docker
+    messenger
+    ngrok
+    notion
+    postman
+    pritunl
+    raycast
+    rectangle
+    responsively
+    setapp
+    slack
+    spotify
     ticktick
+    toggl-track
+    visual-studio-code
+    vivaldi
+    vlc
+    warp
+    zoom
 )
 
 for item in "${cask_apps[@]}"; do
