@@ -71,6 +71,7 @@ printf '%s%s%s\n' $COLOR_GREEN 'Installing brew cask packages...' $COLOR_REST
 cask_apps=(
     android-platform-tools
     anydesk
+    authy
     bluesnooze
     brave-browser
     conduktor
@@ -85,7 +86,9 @@ cask_apps=(
     iterm2
     latest
     mark-text
+    macupdater
     messenger
+    mochi
     ngrok
     notion
     postman
@@ -102,6 +105,7 @@ cask_apps=(
     vivaldi
     vlc
     warp
+    whatsapp
     zoom
 )
 
