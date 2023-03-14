@@ -74,7 +74,6 @@ cask_apps=(
     authy
     bluesnooze
     brave-browser
-    conduktor
     docker
     firefox
     font-fira-code
