@@ -81,6 +81,7 @@ cask_apps=(
     font-fira-mono-nerd-font
     free-download-manager
     google-chrome
+    grammarly-desktop
     imageoptim
     iterm2
     latest
