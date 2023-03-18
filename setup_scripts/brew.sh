@@ -19,7 +19,6 @@ apps=(
     chezmoi
     cmake
     coreutils
-    docker
     dockutil
     exa
     fasd
@@ -71,6 +70,7 @@ printf '%s%s%s\n' $COLOR_GREEN 'Installing brew cask packages...' $COLOR_REST
 cask_apps=(
     android-platform-tools
     anydesk
+    appcleaner
     authy
     bluesnooze
     brave-browser
