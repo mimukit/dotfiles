@@ -46,7 +46,6 @@ apps=(
     peco
     percona-toolkit
     pgcli
-    pnpm
     psgrep
     python
     shellcheck
