@@ -29,6 +29,8 @@ apps=(
     fzf
     gifsicle
     git
+    gh
+    go
     gnupg
     grep
     groff
