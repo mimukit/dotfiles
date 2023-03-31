@@ -90,6 +90,7 @@ cask_apps=(
     mark-text
     macupdater
     messenger
+    microsoft-edge
     mochi
     ngrok
     notion
