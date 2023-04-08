@@ -77,6 +77,7 @@ cask_apps=(
     bluesnooze
     brave-browser
     docker
+    figma
     firefox
     font-fira-code
     font-fira-code-nerd-font
