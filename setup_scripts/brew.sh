@@ -17,6 +17,7 @@ apps=(
     bat
     caddy
     chezmoi
+    cloudflared
     cmake
     coreutils
     dockutil
