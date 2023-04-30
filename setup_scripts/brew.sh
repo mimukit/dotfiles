@@ -104,6 +104,7 @@ cask_apps=(
     setapp
     slack
     spotify
+    tempbox
     ticktick
     toggl-track
     visual-studio-code
