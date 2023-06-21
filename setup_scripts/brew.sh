@@ -77,7 +77,6 @@ cask_apps=(
     authy
     bluesnooze
     brave-browser
-    docker
     figma
     firefox
     font-fira-code
@@ -96,6 +95,7 @@ cask_apps=(
     mochi
     ngrok
     notion
+    orbstack
     postman
     pritunl
     raycast
