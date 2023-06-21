@@ -40,6 +40,7 @@ apps=(
     hub
     imagemagick
     jq
+    lazydocker
     lf
     libpq
     mackup
