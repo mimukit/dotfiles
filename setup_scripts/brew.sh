@@ -105,6 +105,7 @@ cask_apps=(
     setapp
     slack
     spotify
+    telegram-desktop
     tempbox
     ticktick
     toggl-track
