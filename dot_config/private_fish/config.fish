@@ -13,8 +13,9 @@ source "/opt/homebrew/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.fis
 # Abbreviation List
 abbr -a -- abbra 'abbr --add'
 abbr -a -- addfishpath 'set --universal --append fish_user_paths'
+abbr -a -- brewcleanup 'brew cleanup --prune=0'
 abbr -a -- brewup 'brew update && brew upgrade && brew cleanup'
-abbr -a -- brewupx 'brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy && brew cleanup'
+abbr -a -- brewupx 'brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup'
 abbr -a -- c clear
 abbr -a -- cip 'cd ~/github/shopuptech/dockerized-dev-env && sh ~/github/shopuptech/dockerized-dev-env/scripts/host-ip-fix.sh'
 abbr -a -- co 'code .'
