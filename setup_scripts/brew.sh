@@ -71,6 +71,7 @@ brew install "${apps[@]}"
 # Install cask packages
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew cask packages...' $COLOR_REST
 cask_apps=(
+    1password
     android-platform-tools
     alt-tab
     anydesk
