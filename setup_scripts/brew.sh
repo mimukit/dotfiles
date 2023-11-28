@@ -77,6 +77,7 @@ cask_apps=(
     android-platform-tools
     anydesk
     appcleaner
+    arc
     audacity
     authy
     bluesnooze
