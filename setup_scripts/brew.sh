@@ -72,40 +72,44 @@ brew install "${apps[@]}"
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew cask packages...' $COLOR_REST
 cask_apps=(
     1password
-    android-platform-tools
     alt-tab
+    android-file-transfer
+    android-platform-tools
     anydesk
     appcleaner
+    audacity
     authy
     bluesnooze
     brave-browser
-    figma
     firefox
     font-fira-code
     font-fira-code-nerd-font
     font-fira-mono-nerd-font
-    free-download-manager
+    genymotion
     google-chrome
     grammarly-desktop
+    httpie
     imageoptim
     iterm2
     latest
-    mark-text
+    local
     macupdater
+    mark-text
     messenger
     microsoft-edge
     mochi
     ngrok
     notion
+    obs
     orbstack
     postman
     pritunl
     raycast
     rectangle
-    responsively
     setapp
     slack
     spotify
+    sublime-text
     telegram-desktop
     tempbox
     ticktick
