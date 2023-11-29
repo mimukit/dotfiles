@@ -58,6 +58,7 @@ apps=(
     terminal-notifier
     tldr
     tmux
+    toptracker
     tree
     vim
     volta
