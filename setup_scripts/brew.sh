@@ -94,7 +94,6 @@ cask_apps=(
     latest
     local
     macupdater
-    mark-text
     messenger
     microsoft-edge
     mochi
