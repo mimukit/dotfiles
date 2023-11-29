@@ -58,7 +58,6 @@ apps=(
     terminal-notifier
     tldr
     tmux
-    toptracker
     tree
     vim
     volta
@@ -113,6 +112,7 @@ cask_apps=(
     telegram-desktop
     tempbox
     ticktick
+    toptracker
     visual-studio-code
     vivaldi
     vlc
