@@ -3,12 +3,11 @@ if status is-interactive
 end
 set -gx VOLTA_HOME "$HOME/.volta"
 set -gx PATH "$VOLTA_HOME/bin" $PATH
+set -gx PATH "/opt/homebrew/bin" $PATH
 
 starship init fish | source
 fzf_configure_bindings --git_log=\cg --directory=\cf
 
-# The next line updates PATH for the Google Cloud SDK.
-source "/opt/homebrew/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.fish.inc"
 
 # Abbreviation List
 abbr -a -- abbra 'abbr --add'
@@ -17,7 +16,6 @@ abbr -a -- brewcleanup 'brew cleanup --prune=0'
 abbr -a -- brewup 'brew update && brew upgrade && brew cleanup'
 abbr -a -- brewupx 'brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup'
 abbr -a -- c clear
-abbr -a -- cip 'cd ~/github/shopuptech/dockerized-dev-env && sh ~/github/shopuptech/dockerized-dev-env/scripts/host-ip-fix.sh'
 abbr -a -- co 'code .'
 abbr -a -- cpwd 'pwd | pbcopy'
 abbr -a -- ct 'cloudflared tunnel'
@@ -39,7 +37,6 @@ abbr -a -- dotccd 'chezmoi cd'
 abbr -a -- dotcu 'chezmoi update -v'
 abbr -a -- dps 'docker ps'
 abbr -a -- dpsa 'docker ps -a'
-abbr -a -- eip 'vi ~/github/shopuptech/dockerized-dev-env/.env'
 abbr -a -- ff 'fd -t f | fzf'
 abbr -a -- fishconfig 'vi ~/.config/fish/config.fish'
 abbr -a -- gbd 'git branch -d'
