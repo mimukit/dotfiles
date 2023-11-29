@@ -75,7 +75,6 @@ cask_apps=(
     android-file-transfer
     android-platform-tools
     anydesk
-    appcleaner
     arc
     audacity
     authy
