@@ -22,17 +22,16 @@ apps=(
     coreutils
     dockutil
     exa
-    fasd
     fd
     ffmpeg
     fish
     fnm
     fzf
+    gh
     gifsicle
     git
-    gh
-    go
     gnupg
+    go
     grep
     groff
     hostess
@@ -46,7 +45,7 @@ apps=(
     mackup
     mkcert
     neovim
-    noti 
+    noti
     peco
     percona-toolkit
     pgcli
@@ -104,7 +103,6 @@ cask_apps=(
     obs
     orbstack
     postman
-    pritunl
     raycast
     rectangle
     setapp
@@ -114,7 +112,6 @@ cask_apps=(
     telegram-desktop
     tempbox
     ticktick
-    toggl-track
     visual-studio-code
     vivaldi
     vlc
