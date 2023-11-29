@@ -90,7 +90,6 @@ cask_apps=(
     httpie
     imageoptim
     iterm2
-    latest
     local
     macupdater
     messenger
