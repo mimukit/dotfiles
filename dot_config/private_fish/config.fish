@@ -8,6 +8,8 @@ set -gx PATH "/opt/homebrew/bin" $PATH
 starship init fish | source
 fzf_configure_bindings --git_log=\cg --directory=\cf
 
+source ~/.iterm2_shell_integration.fish
+test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish
 
 # Abbreviation List
 abbr -a -- abbra 'abbr --add'
@@ -39,6 +41,7 @@ abbr -a -- dps 'docker ps'
 abbr -a -- dpsa 'docker ps -a'
 abbr -a -- ff 'fd -t f | fzf'
 abbr -a -- fishconfig 'vi ~/.config/fish/config.fish'
+abbr -a -- flashdns 'sudo killall -HUP mDNSResponder'
 abbr -a -- gbd 'git branch -d'
 abbr -a -- gbls 'git branch --all'
 abbr -a -- gc 'git checkout'
