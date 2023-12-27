@@ -51,6 +51,7 @@ apps=(
     pgcli
     psgrep
     python
+    ripgrep
     shellcheck
     ssh-copy-id
     starship
