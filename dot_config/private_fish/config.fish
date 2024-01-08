@@ -80,7 +80,7 @@ abbr -a -- sta 'snyk test --all-projects'
 abbr -a -- starshipconfig 'vi ~/.config/starship.toml'
 abbr -a -- vd 'vercel dev'
 abbr -a -- vf 'fzf | xargs -o vim'
-abbr -a -- voltaup 'volta install node@lts @antfu/ni serve vercel pnpm yarn@1 npm@latest'
+abbr -a -- voltaup 'volta install node@lts @antfu/ni serve vercel pnpm yarn@1 npm@latest firebase-tools'
 abbr -a -- wr wrangler
 abbr -a -- y yarn
 abbr -a -- yb 'yarn build'
