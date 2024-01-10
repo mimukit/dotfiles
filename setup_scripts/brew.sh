@@ -52,6 +52,7 @@ apps=(
     psgrep
     python
     ripgrep
+    rust
     shellcheck
     ssh-copy-id
     starship
