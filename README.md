@@ -21,7 +21,7 @@ chezmoi diff
 - If you are happy with the changes that chezmoi will make from remote then run:
 
 ```
-chezmoi apply -v
+chezmoi -v apply
 ```
 
 - If you want to update chezmoi remote with current local changes, then run:
