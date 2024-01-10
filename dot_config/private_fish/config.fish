@@ -4,6 +4,7 @@ end
 set -gx VOLTA_HOME "$HOME/.volta"
 set -gx PATH "$VOLTA_HOME/bin" $PATH
 set -gx PATH "/opt/homebrew/bin" $PATH
+set -gx EDITOR "nvim"
 
 starship init fish | source
 fzf_configure_bindings --git_log=\cg --directory=\cf
