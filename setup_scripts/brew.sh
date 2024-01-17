@@ -52,6 +52,7 @@ apps=(
     psgrep
     python
     ripgrep
+    ruby
     rust
     shellcheck
     ssh-copy-id
