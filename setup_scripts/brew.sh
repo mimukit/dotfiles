@@ -55,6 +55,7 @@ apps=(
     ruby
     rust
     shellcheck
+    smug
     ssh-copy-id
     starship
     svn
