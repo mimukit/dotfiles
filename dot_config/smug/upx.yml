@@ -1,0 +1,13 @@
+session: update_brew_volta
+
+root: ~
+
+windows:
+  - name: brew_volta
+    layout: main-vertical
+    commands:
+      - voltaup
+    panes:
+      - type: vertical
+        commands:
+          - brewupx
