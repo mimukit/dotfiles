@@ -109,7 +109,6 @@ cask_apps=(
     setapp
     slack
     spotify
-    sublime-text
     telegram-desktop
     tempbox
     ticktick
@@ -117,8 +116,8 @@ cask_apps=(
     visual-studio-code
     vivaldi
     vlc
-    warp
     whatsapp
+    zed
     zoom
 )
 
