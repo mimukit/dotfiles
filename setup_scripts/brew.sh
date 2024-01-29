@@ -102,6 +102,7 @@ cask_apps=(
     ngrok
     notion
     obs
+    obsidian
     orbstack
     postman
     raycast
