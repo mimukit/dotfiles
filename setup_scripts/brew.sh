@@ -19,6 +19,7 @@ apps=(
     chezmoi
     cloudflared
     cmake
+    composer
     coreutils
     dockutil
     exa
@@ -49,6 +50,7 @@ apps=(
     peco
     percona-toolkit
     pgcli
+    pkgxdev/made/pkgx
     psgrep
     python
     ripgrep
@@ -84,6 +86,7 @@ cask_apps=(
     authy
     bluesnooze
     brave-browser
+    dbngin
     firefox
     font-fira-code
     font-fira-code-nerd-font
@@ -91,6 +94,7 @@ cask_apps=(
     genymotion
     google-chrome
     grammarly-desktop
+    herd
     httpie
     imageoptim
     iterm2
