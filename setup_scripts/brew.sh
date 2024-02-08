@@ -83,7 +83,6 @@ cask_apps=(
     anydesk
     arc
     audacity
-    authy
     bluesnooze
     brave-browser
     dbngin
