@@ -12,6 +12,8 @@ fzf_configure_bindings --git_log=\cg --directory=\cf
 source ~/.iterm2_shell_integration.fish
 test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish
 
+pyenv init - | source
+
 # Abbreviation List
 abbr -a -- abbra 'abbr --add'
 abbr -a -- addfishpath 'set --universal --append fish_user_paths'

@@ -52,6 +52,7 @@ apps=(
     pgcli
     pkgxdev/made/pkgx
     psgrep
+    pyenv
     python
     ripgrep
     ruby
