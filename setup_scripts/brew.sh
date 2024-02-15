@@ -85,7 +85,6 @@ cask_apps=(
     arc
     audacity
     bluesnooze
-    brave-browser
     dbngin
     firefox
     font-fira-code
@@ -118,6 +117,7 @@ cask_apps=(
     tempbox
     ticktick
     toptracker
+    tor-browser
     visual-studio-code
     vivaldi
     vlc
