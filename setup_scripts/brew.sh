@@ -61,6 +61,7 @@ apps=(
     smug
     ssh-copy-id
     starship
+    stremio
     svn
     terminal-notifier
     tldr
