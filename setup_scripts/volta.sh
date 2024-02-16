@@ -16,7 +16,7 @@ printf '%s%s%s\n' $COLOR_GREEN 'Installing yarn v1...' $COLOR_REST
 volta install yarn@1
 
 printf '%s%s%s\n' $COLOR_GREEN 'Installing volta packages...' $COLOR_REST
-volta install @antfu/ni serve vercel pnpm
+volta install @antfu/ni serve vercel pnpm firebase-tools wrangler turbo
 
 printf '%s%s%s\n' $COLOR_GREEN 'Info volta list...' $COLOR_REST
 volta list

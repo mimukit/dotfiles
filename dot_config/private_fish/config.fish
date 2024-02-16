@@ -71,7 +71,7 @@ abbr -a -- npmup 'npx npm-check -gu'
 abbr -a -- starshipconfig 'nvim ~/.config/starship.toml'
 abbr -a -- upx 'smug upx -i -a'
 abbr -a -- vf 'fzf | xargs -o nvim'
-abbr -a -- voltaup 'volta install node@lts @antfu/ni serve vercel pnpm yarn@1 npm@latest firebase-tools wrangler'
+abbr -a -- voltaup 'volta install node@lts @antfu/ni serve vercel pnpm yarn@1 npm@latest firebase-tools wrangler turbo'
 abbr -a -- wr wrangler
 abbr -a -- yup 'yarn global upgrade-interactive --latest'
 
