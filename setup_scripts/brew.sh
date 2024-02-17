@@ -70,6 +70,7 @@ apps=(
     vim
     volta
     wget
+    zoxide
 )
 
 brew install "${apps[@]}"
