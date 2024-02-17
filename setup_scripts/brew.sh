@@ -58,6 +58,7 @@ apps=(
     ruby
     rust
     shellcheck
+    shortcat
     smug
     ssh-copy-id
     starship
