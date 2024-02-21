@@ -41,6 +41,7 @@ apps=(
     imagemagick
     jq
     lazydocker
+    lazygit
     lf
     libpq
     mackup
