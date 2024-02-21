@@ -66,6 +66,7 @@ apps=(
     stremio
     svn
     terminal-notifier
+    thefuck
     tldr
     tmux
     tree
