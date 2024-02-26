@@ -5,6 +5,7 @@ abbr -a -- brewcleanup 'brew cleanup --prune=0'
 abbr -a -- brewup 'brew update && brew upgrade && brew cleanup'
 abbr -a -- brewupx 'brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup'
 abbr -a -- c clear
+abbr -a -- ch 'clear; tmux clear-history; clear'
 abbr -a -- co 'code .'
 abbr -a -- cpwd 'pwd | pbcopy'
 abbr -a -- ct 'cloudflared tunnel'
