@@ -56,6 +56,7 @@ abbr -a -- npmsize 'find . -name "node_modules" -type d -prune -print | xargs du
 abbr -a -- npmup 'npx npm-check -gu'
 abbr -a -- pwdc 'pwd | pbcopy'
 abbr -a -- starshipconfig 'nvim ~/.config/starship.toml'
+abbr -a -- tn 'tmux new-session -A -s default'
 abbr -a -- upx 'smug upx -i -a'
 abbr -a -- vf 'fzf | xargs -o nvim'
 abbr -a -- voltaup 'volta install node@lts @antfu/ni pnpm yarn@1 npm@latest serve'
