@@ -1,0 +1,166 @@
+{
+  "main": {
+    "id": "4904d218b1e1b5cd",
+    "type": "split",
+    "children": [
+      {
+        "id": "befaf7681ad6a91b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "45159d924cecfe7c",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "1f318746567fa447",
+    "type": "split",
+    "children": [
+      {
+        "id": "b977e91c532d47ef",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "03d351148ef76734",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "9de7cf471e41e2ac",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "tag:#flashcards/test",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "8d2adee96bb15dec",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "b1aa350e18ddb112",
+    "type": "split",
+    "children": [
+      {
+        "id": "8e19636b67f9a3a4",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5ad3a607df97b9dc",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "3bd85f68ddd4a4e9",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "80f0d1961035cdc1",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "6ded8127c40075c3",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {}
+            }
+          },
+          {
+            "id": "812c2c53cb7ff63b",
+            "type": "leaf",
+            "state": {
+              "type": "advanced-tables-toolbar",
+              "state": {}
+            }
+          }
+        ],
+        "currentTab": 4
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "table-editor-obsidian:Advanced Tables Toolbar": false,
+      "tldraw:Create new tldrawing": false
+    }
+  },
+  "active": "45159d924cecfe7c",
+  "lastOpenFiles": [
+    "tldraw/Tldraw 2024-03-04 1.55AM.md",
+    "Hello World.md",
+    "tldraw",
+    "Test Markdown.md",
+    "test.md",
+    "My Day/2024-03-03.md",
+    "Untitled - 3.md",
+    "Untitled.md",
+    "[.md",
+    "1.md",
+    "Flash Cards.md"
+  ]
+}
