@@ -90,7 +90,6 @@ cask_apps=(
     arc
     audacity
     bluesnooze
-    dbngin
     firefox
     font-fira-code
     font-fira-code-nerd-font
@@ -98,7 +97,6 @@ cask_apps=(
     genymotion
     google-chrome
     grammarly-desktop
-    herd
     httpie
     imageoptim
     iterm2
@@ -118,6 +116,7 @@ cask_apps=(
     setapp
     slack
     spotify
+    sublime-text
     telegram-desktop
     tempbox
     ticktick
@@ -127,7 +126,6 @@ cask_apps=(
     vivaldi
     vlc
     whatsapp
-    zed
     zoom
 )
 
