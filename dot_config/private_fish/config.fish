@@ -29,3 +29,4 @@ test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shel
 pyenv init - | source
 zoxide init --cmd cd fish | source
 thefuck --alias | source 
+mise activate fish | source
