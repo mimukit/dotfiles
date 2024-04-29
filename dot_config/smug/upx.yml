@@ -1,12 +1,12 @@
-session: update_brew_volta
+session: update_brew_mise
 
 root: ~
 
 windows:
-  - name: brew_volta
+  - name: update_brew_mise
     layout: main-vertical
     commands:
-      - voltaup
+      - mise outdated && mise up
     panes:
       - type: vertical
         commands:
