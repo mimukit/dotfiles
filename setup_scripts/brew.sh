@@ -46,6 +46,7 @@ apps=(
     libpq
     mackup
     mkcert
+    mycli
     neovim
     noti
     peco
