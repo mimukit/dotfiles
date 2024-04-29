@@ -73,7 +73,6 @@ apps=(
     tmux
     tree
     vim
-    volta
     wget
     zoxide
 )
