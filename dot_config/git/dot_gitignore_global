@@ -1,0 +1,8 @@
+# Node
+npm-debug.log
+
+# Mac
+.DS_Store
+
+# Misc
+.mise.local.toml
