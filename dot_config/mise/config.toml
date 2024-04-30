@@ -43,7 +43,7 @@ paranoid = false              # see MISE_PARANOID
 # ] 
 # disable specific tools, generally used to turn off core tools
 
-env_file = '.env' # load env vars from a dotenv file, see `MISE_ENV_FILE`
+# env_file = '.env' # load env vars from a dotenv file, see `MISE_ENV_FILE`
 
 experimental = true # enable experimental features
 
