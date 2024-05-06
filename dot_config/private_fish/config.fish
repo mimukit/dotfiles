@@ -5,6 +5,7 @@ if status is-interactive
     # Commands to run in interactive sessions can go here
 end
 set -gx PATH "/opt/homebrew/bin" $PATH
+set -gx PATH "~/.local/share/mise/shims" $PATH
 set -gx EDITOR "nvim"
 
 # Disable fish greeting message
