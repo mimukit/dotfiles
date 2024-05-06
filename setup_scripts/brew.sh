@@ -54,7 +54,7 @@ apps=(
     peco
     percona-toolkit
     pgcli
-    pkgxdev/made/pkgx
+    pnpm
     psgrep
     pyenv
     python
