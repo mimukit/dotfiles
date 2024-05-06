@@ -1,6 +1,6 @@
 # ~/.config/starship.toml
 
-command_timeout=2000
+command_timeout = 2000
 
 [battery]
 full_symbol = "🔋"
@@ -16,14 +16,14 @@ style = "bold red"
 error_symbol = "[✖](bold red) "
 
 [cmd_duration]
-min_time = 10_000  # Show command duration over 10,000 milliseconds (=10 sec)
+min_time = 10_000                    # Show command duration over 10,000 milliseconds (=10 sec)
 format = " took [$duration]($style)"
 
 [directory]
 truncate_to_repo = false
 
 [directory.substitutions]
-"~/github" = "github.com"
+"~/Github" = "github.com"
 
 [git_branch]
 format = " [$symbol$branch]($style) "
@@ -99,4 +99,3 @@ disabled = true
 
 [swift]
 disabled = true
-
