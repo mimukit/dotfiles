@@ -2,7 +2,6 @@
 usage = "latest"
 node = "lts"
 "npm:npm" = "latest"
-"npm:pnpm" = "latest"
 "npm:yarn" = "latest"
 "npm:@antfu/ni" = "latest"
 "npm:nx" = "latest"
