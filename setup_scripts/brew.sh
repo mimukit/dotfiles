@@ -99,7 +99,6 @@ cask_apps=(
     genymotion
     google-chrome
     grammarly-desktop
-    httpie
     imageoptim
     iterm2
     local
