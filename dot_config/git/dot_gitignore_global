@@ -6,3 +6,6 @@ npm-debug.log
 
 # Misc
 .mise.local.toml
+
+# Act
+act.secrets
