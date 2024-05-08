@@ -14,6 +14,7 @@ brew tap homebrew/cask-fonts
 # Install packages
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew packages...' $COLOR_REST
 apps=(
+    act
     bat
     btop
     caddy
@@ -112,6 +113,7 @@ cask_apps=(
     obsidian
     orbstack
     postman
+    pkgxdev/made/pkgx
     raycast
     rectangle
     setapp
