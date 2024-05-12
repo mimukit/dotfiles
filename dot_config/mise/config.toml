@@ -6,6 +6,7 @@ node = "lts"
 "npm:@antfu/ni" = "latest"
 "npm:nx" = "latest"
 "npm:serve" = "latest"
+"npm:tsx" = "latest"
 
 [settings]
 # plugins can read the versions files used by other version managers (if enabled by the plugin)
