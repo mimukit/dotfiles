@@ -93,6 +93,7 @@ cask_apps=(
     arc
     audacity
     bluesnooze
+    chatgpt
     firefox
     font-fira-code
     font-fira-code-nerd-font
@@ -128,6 +129,7 @@ cask_apps=(
     visual-studio-code
     vivaldi
     vlc
+    wezterm
     whatsapp
     zoom
 )
