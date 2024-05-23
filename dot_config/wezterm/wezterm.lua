@@ -33,10 +33,11 @@ config.font = wezterm.font_with_fallback({{
     scale = 1.2,
     weight = "Medium"
 }, {
-    family = "FantasqueSansM Nerd Font",
-    scale = 1.3
+    family = "Arial",
+    scale = 1.2
 }})
-config.window_background_opacity = 0.95
+
+config.window_background_opacity = 0.97
 config.window_decorations = "RESIZE"
 config.window_close_confirmation = "NeverPrompt"
 config.scrollback_lines = 10000
