@@ -10,4 +10,5 @@ rm -rf ~/.config/nvim
 rm -rf ~/.local/share/nvim
 
 printf '%s%s%s\n' $COLOR_GREEN 'Downloading & installing NvChad config...' $COLOR_REST
-git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
+git clone https://github.com/NvChad/starter ~/.config/nvim
+rm -rf ~/.config/nvim/.git
