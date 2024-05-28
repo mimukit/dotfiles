@@ -6,6 +6,7 @@ node = "lts"
 "npm:@antfu/ni" = "latest"
 "npm:nx" = "latest"
 "npm:serve" = "latest"
+"npm:trash-cli" = "latest"
 "npm:tsx" = "latest"
 
 [settings]
