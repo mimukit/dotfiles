@@ -15,6 +15,7 @@ brew tap homebrew/cask-fonts
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew packages...' $COLOR_REST
 apps=(
     act
+    atuin
     bat
     btop
     caddy
