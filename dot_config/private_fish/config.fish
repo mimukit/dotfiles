@@ -28,4 +28,4 @@ test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shel
 pyenv init - | source
 zoxide init --cmd cd fish | source
 mise activate fish | source
-atuin init fish | source
+atuin init --disable-up-arrow fish | source
