@@ -8,6 +8,7 @@ node = "lts"
 "npm:serve" = "latest"
 "npm:trash-cli" = "latest"
 "npm:tsx" = "latest"
+"npm:autocannon" = "latest"
 
 [settings]
 # plugins can read the versions files used by other version managers (if enabled by the plugin)
