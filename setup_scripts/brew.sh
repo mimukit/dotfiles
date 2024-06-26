@@ -58,7 +58,6 @@ apps=(
     pgcli
     pnpm
     psgrep
-    pyenv
     python
     ripgrep
     ruby
