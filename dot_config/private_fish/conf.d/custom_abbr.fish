@@ -61,3 +61,6 @@ abbr -a -- upx 'smug upx -i -a'
 abbr -a -- vf 'fzf | xargs -o nvim'
 abbr -a -- wr wrangler
 abbr -a -- yup 'yarn global upgrade-interactive --latest'
+abbr -a -- zja 'zellij a default'
+abbr -a -- zjn 'zellij -s default'
+abbr -a -- zju 'zellij action new-tab --layout upx'
