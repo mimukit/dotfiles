@@ -1,5 +1,5 @@
 layout {
-     tab name="brew & mise update" {
+     tab name="update system..." {
         pane size=1 borderless=true {
             plugin location="zellij:tab-bar"
         }
@@ -10,6 +10,9 @@ layout {
             }
             pane size="30%" command="fish" close_on_exit=true {
                 args "-c" "mise outdated && mise up"
+            }
+            pane size="30%" command="fish" close_on_exit=true {
+                args "-c" "fisher update"
             }
         }
         }
