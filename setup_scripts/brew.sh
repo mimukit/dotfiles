@@ -65,7 +65,6 @@ apps=(
     rust
     rustdesk
     shellcheck
-    shortcat
     smug
     ssh-copy-id
     starship
@@ -87,6 +86,7 @@ brew install "${apps[@]}"
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew cask packages...' $COLOR_REST
 cask_apps=(
     1password
+    adobe-creative-cloud
     alt-tab
     android-file-transfer
     android-platform-tools
@@ -95,30 +95,31 @@ cask_apps=(
     audacity
     bluesnooze
     chatgpt
+    docker
     firefox
     font-fira-code
     font-fira-code-nerd-font
     font-fira-mono-nerd-font
+    free-download-manager
     genymotion
     google-chrome
     grammarly-desktop
+    herd
     imageoptim
     iterm2
+    lm-studio
     local
     macupdater
     messenger
-    microsoft-edge
     mochi
-    ngrok
     notion
-    obs
     obsidian
-    orbstack
+    onedrive
     postman
-    pkgxdev/made/pkgx
     raycast
-    rectangle
+    rustdesk
     setapp
+    shortcat
     slack
     spotify
     sublime-text
@@ -127,8 +128,8 @@ cask_apps=(
     ticktick
     toptracker
     tor-browser
+    utm
     visual-studio-code
-    vivaldi
     vlc
     wezterm
     whatsapp
