@@ -63,6 +63,7 @@ apps=(
     ripgrep
     ruby
     rust
+    rustdesk
     shellcheck
     shortcat
     smug
