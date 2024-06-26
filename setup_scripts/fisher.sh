@@ -10,3 +10,4 @@ fisher install jorgebucaran/replay.fish
 fisher install PatrickF1/fzf.fish
 fisher install markcial/upto
 fisher install franciscolourenco/done
+fisher install oakninja/MakeMeFish
