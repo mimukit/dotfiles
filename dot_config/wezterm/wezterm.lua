@@ -40,8 +40,18 @@ config.font = wezterm.font_with_fallback({{
 config.window_background_opacity = 0.97
 config.window_decorations = "RESIZE"
 config.window_close_confirmation = "NeverPrompt"
-config.scrollback_lines = 10000
+config.scrollback_lines = 100000
 config.default_workspace = "main"
+config.window_frame = {
+    border_left_width = '0cell',
+    border_right_width = '0cell',
+    border_top_height = '0.1cell',
+    border_bottom_height = '0cell',
+    border_left_color = '#dc8a78',
+    border_right_color = '#dc8a78',
+    border_top_color = '#dc8a78',
+    border_bottom_color = '#dc8a78'
+}
 
 -- Dim inactive panes
 config.inactive_pane_hsb = {
