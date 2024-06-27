@@ -1,5 +1,5 @@
 layout {
-     tab name="update system..." {
+     tab name="system updates" {
         pane size=1 borderless=true {
             plugin location="zellij:tab-bar"
         }
