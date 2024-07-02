@@ -55,6 +55,7 @@ apps=(
     noti
     peco
     percona-toolkit
+    peterldowns/tap/localias
     pgcli
     pnpm
     psgrep
