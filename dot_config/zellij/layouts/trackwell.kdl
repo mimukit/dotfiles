@@ -1,0 +1,29 @@
+layout {
+     tab name="trackwell-prisma" focus=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane cwd="~/Github/trkwll/trackwell-prisma"
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+     }
+     tab name="trackwell-prisma-elk" {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane cwd="~/Github/trkwll/trackwell-prisma/elk"
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+     }
+     tab name="trackwell-admin" {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane cwd="~/Github/trkwll/trackwell-admin"
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+     }
+}
