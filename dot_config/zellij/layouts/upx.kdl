@@ -5,7 +5,7 @@ layout {
         }
         pane split_direction="vertical" {
             pane split_direction="horizontal" {
-            pane command="fish" close_on_exit=false {
+            pane command="fish" close_on_exit=true {
                 args "-c" "brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup"
             }
             pane size="30%" command="fish" close_on_exit=true {
