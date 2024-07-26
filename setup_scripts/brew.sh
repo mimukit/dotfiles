@@ -25,7 +25,7 @@ apps=(
     composer
     coreutils
     dockutil
-    exa
+    eza
     fd
     ffmpeg
     fish
