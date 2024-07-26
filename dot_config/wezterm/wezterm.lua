@@ -29,6 +29,10 @@ config.color_scheme = "Banana Blueberry"
 -- config.color_scheme = "Ef-Deuteranopia-Dark"
 
 config.font = wezterm.font_with_fallback({{
+    family = "MesloLGS Nerd Font Mono",
+    scale = 1.15,
+    weight = "Medium"
+}, {
     family = "FiraMono Nerd Font Mono",
     scale = 1.2,
     weight = "Medium"
