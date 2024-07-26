@@ -20,7 +20,6 @@ set -x GIT_EDITOR $EDITOR
 
 # Misc
 starship init fish | source
-fzf_configure_bindings --git_log=\cg --directory=\cf
 
 source ~/.iterm2_shell_integration.fish
 test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish
