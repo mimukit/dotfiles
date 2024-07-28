@@ -252,7 +252,8 @@ config.key_tables = {
 
 -- Tab bar
 -- I don't like the look of "fancy" tab bar
-config.use_fancy_tab_bar = false
+config.enable_tab_bar = false
+config.use_fancy_tab_bar = true
 config.status_update_interval = 1000
 config.tab_bar_at_bottom = false
 wezterm.on("update-status", function(window, pane)
@@ -332,11 +333,10 @@ wezterm.on("update-status", function(window, pane)
     }}))
 end)
 
-config.enable_tab_bar = false
 config.window_padding = {
-    left = '0.5cell',
-    right = '0.5cell',
-    top = '0.5cell',
+    left = '1cell',
+    right = '1cell',
+    top = '0cell',
     bottom = '0cell'
 
 }
