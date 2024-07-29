@@ -54,7 +54,7 @@ abbr -a -- starshipconfig 'nvim ~/.config/starship.toml'
 abbr -a -- tk 'tmux kill-server'
 abbr -a -- tn 'tmux new-session -A -s default'
 abbr -a -- ts 'tmux source ~/.config/tmux/tmux.conf'
-abbr -a -- upx 'smug upx -i -a'
+abbr -a -- upx 'tmuxinator start upx'
 abbr -a -- vf 'fzf | xargs -o nvim'
 abbr -a -- wr wrangler
 abbr -a -- yup 'yarn global upgrade-interactive --latest'
