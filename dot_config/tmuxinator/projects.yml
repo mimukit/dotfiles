@@ -1,0 +1,10 @@
+# /Users/mukit/.config/tmuxinator/projects.yml
+
+name: projects
+root: ~/Projects/js
+windows:
+  - projects:
+      layout: even-horizontal
+      panes:
+        - projects:
+            - clear

@@ -1,0 +1,16 @@
+# /Users/mukit/.config/tmuxinator/trackwell.yml
+
+name: trackwell
+root: ~/Github/trkwll/trackwell-prisma
+windows:
+  - trackwell-prisma:
+      layout: main-horizontal
+      panes:
+        - trackwell:
+            - clear
+  - trackwell_admin:
+      layout: main-horizontal
+      root: ~/Github/trkwll/trackwell-admin
+      panes:
+        - trackwell_admin:
+            - clear

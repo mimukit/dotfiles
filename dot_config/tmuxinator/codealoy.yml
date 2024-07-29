@@ -1,0 +1,16 @@
+# /Users/mukit/.config/tmuxinator/codealoy.yml
+
+name: codealoy
+root: ~/Github/codealoy/codealoy
+windows:
+  - codealoy:
+      layout: main-horizontal
+      panes:
+        - codealoy:
+            - clear
+  - codealoy_v1:
+      layout: main-horizontal
+      root: ~/Github/codealoy/codealoy_v1
+      panes:
+        - codealoy_v1:
+            - clear
