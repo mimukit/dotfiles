@@ -1,7 +1,6 @@
 # Abbreviation List
 abbr -a -- abbra 'abbr --add'
 abbr -a -- addfishpath 'set --universal --append fish_user_paths'
-abbr -a -- brewcleanup 'brew cleanup --prune=0'
 abbr -a -- brewup 'brew update && brew upgrade && brew cleanup'
 abbr -a -- brewupx 'brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup'
 abbr -a -- c clear
@@ -25,18 +24,15 @@ abbr -a -- czc 'code ~/.local/share/chezmoi'
 abbr -a -- czu 'chezmoi -v update'
 abbr -a -- dps 'docker ps'
 abbr -a -- dpsa 'docker ps -a'
-abbr -a -- f 'fuck'
-abbr -a -- ff 'fd -t f | fzf'
 abbr -a -- fishconfig 'nvim ~/.config/fish/config.fish'
 abbr -a -- gbd 'git branch -d'
 abbr -a -- gbls 'git branch --all'
 abbr -a -- gc 'git checkout'
-abbr -a -- gitc 'git remote prune origin'
 abbr -a -- gitclean 'git remote prune origin'
 abbr -a -- gitcleanmerged git\ branch\ --merged\ main\ \|\ grep\ -v\ \"^\\\*\ main\"\ \|\ xargs\ -n\ 1\ -r\ git\ branch\ -d
 abbr -a -- glo 'git log --oneline --graph --decorate --all'
 abbr -a -- gph 'git push origin'
-abbr -a -- gpo 'git pull origin'
+abbr -a -- gpu 'git pull origin'
 abbr -a -- grh 'git reset --hard'
 abbr -a -- gst 'git status'
 abbr -a -- j jump
