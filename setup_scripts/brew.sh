@@ -65,7 +65,6 @@ apps=(
     rust
     rustdesk
     shellcheck
-    smug
     ssh-copy-id
     starship
     stremio
