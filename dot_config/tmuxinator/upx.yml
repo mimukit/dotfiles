@@ -1,0 +1,20 @@
+# /Users/mukit/.config/tmuxinator/upx.yml
+
+name: system_updates
+root: ~/
+windows:
+  - system_updates:
+      layout: even-vertical
+      panes:
+        - brew_update:
+            - clear
+            - brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup
+        - mise_update:
+            - clear
+            - mise outdated
+            - mise up
+            - exit
+        - fisher_update:
+            - clear
+            - fisher update
+            - exit
