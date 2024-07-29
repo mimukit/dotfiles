@@ -72,6 +72,7 @@ apps=(
     terminal-notifier
     tldr
     tmux
+    tmuxinator
     tree
     vim
     wget
