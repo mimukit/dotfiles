@@ -21,11 +21,11 @@ end
 -- Settings
 config.default_prog = {fish_path, "-l"}
 
-config.color_scheme = "Banana Blueberry"
+config.color_scheme = "Catppuccin Mocha"
+-- config.color_scheme = "Banana Blueberry"
 -- config.color_scheme = 'Outrun Dark (base16)'
 -- config.color_scheme = 'Omni (Gogh)'
 -- config.color_scheme = 'Nightfly (Gogh)'
--- config.color_scheme = "Catppuccin Mocha"
 -- config.color_scheme = "Ef-Deuteranopia-Dark"
 
 config.font = wezterm.font_with_fallback({{
@@ -336,7 +336,7 @@ end)
 config.window_padding = {
     left = '1cell',
     right = '1cell',
-    top = '0cell',
+    top = '0.5cell',
     bottom = '0cell'
 
 }
