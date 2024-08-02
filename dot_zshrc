@@ -1,0 +1,109 @@
+if [[ -f "/opt/homebrew/bin/brew" ]] then
+  # If you're using macOS, you'll want this enabled
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+# Set the directory we want to store zinit and plugins
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+
+# Download Zinit, if it's not there yet
+if [ ! -d "$ZINIT_HOME" ]; then
+   mkdir -p "$(dirname $ZINIT_HOME)"
+   git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+fi
+
+# Source/Load zinit
+source "${ZINIT_HOME}/zinit.zsh"
+
+# Add in zsh plugins
+zinit light zsh-users/zsh-syntax-highlighting
+zinit light zsh-users/zsh-completions
+zinit light zsh-users/zsh-autosuggestions
+zinit light Aloxaf/fzf-tab
+
+# Add in snippets
+zinit snippet OMZP::git
+zinit snippet OMZP::vi-mode
+
+
+
+# Load completions
+autoload -Uz compinit && compinit
+
+zinit cdreplay -q
+
+# Keybindings
+bindkey -v
+bindkey '^p' history-search-backward
+bindkey '^n' history-search-forward
+
+# History
+HISTSIZE=5000
+HISTFILE=~/.zsh_history
+SAVEHIST=$HISTSIZE
+HISTDUP=erase
+setopt appendhistory
+setopt sharehistory
+setopt hist_ignore_space
+setopt hist_ignore_all_dups
+setopt hist_save_no_dups
+setopt hist_ignore_dups
+setopt hist_find_no_dups
+
+# Completion styling
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' menu no
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
+zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+
+# Shell integrations
+eval "$(fzf --zsh)"
+eval "$(zoxide init --cmd cd zsh)"
+eval "$(starship init zsh)"
+
+# Alias list
+alias brewupx='brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup'
+alias c='clear'
+alias cc='clear; tmux clear-history; clear'
+alias co='code .'
+alias ct='cloudflared tunnel'
+alias cz='chezmoi'
+alias cza='chezmoi -v apply'
+alias czc='code ~/.local/share/chezmoi'
+alias czv='cd ~/.local/share/chezmoi && nvim'
+alias dc='docker compose'
+alias dcud='docker compose up -d'
+alias dnsflush='sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
+alias dps='docker ps'
+alias dpsa='docker ps -a'
+alias gitclean='git remote prune origin'
+alias gitcleanmerged='git\ branch\ --merged\ main\ \|\ grep\ -v\ \"^\\\*\ main\"\ \|\ xargs\ -n\ 1\ -r\ git\ branch\ -d'
+alias ls='ls --color'
+alias lzd='lazydocker'
+alias nb='nr build'
+alias ncu='npx npm-check-updates'
+alias nd='nr dev'
+alias ns='nr start'
+alias nvf='fzf | xargs -o nvim'
+alias o='open .'
+alias pwdc='pwd | pbcopy'
+alias so='subl .'
+alias tk='tmux kill-server'
+alias tn='tmux new-session -A -s default'
+alias ts='tmux source ~/.config/tmux/tmux.conf'
+alias upx='tmuxinator start upx'
+alias wr='wrangler'
+alias yup='yarn global upgrade-interactive --latest'
+alias actm='act --container-architecture linux/amd64 -r --secret-file act.secrets'
+alias ff='fd -t f | fzf --preview "bat --color=always --style=numbers {}"'
+alias ls='eza --long --icons --header --no-user --sort=type'
+alias la='eza --long --icons --header --no-user --sort=type --all'
+alias las='localias'
+alias ld='lazydocker'
+alias lg='lazygit'
+alias m='tmuxinator'
+alias ms='tmuxinator start $(tmuxinator list --newline | fzf)'
+alias rm='trash'
+alias v='nvim'
+
