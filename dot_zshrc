@@ -75,6 +75,8 @@ alias co='code .'
 alias ct='cloudflared tunnel'
 alias cz='chezmoi'
 alias cza='chezmoi -v apply'
+alias czav='chezmoi add ~/.config/nvim && chezmoi forget ~/.config/nvim/lazy-lock.json'
+alias czaz='chezmoi add ~/.zshrc'
 alias czc='code ~/.local/share/chezmoi'
 alias czv='cd ~/.local/share/chezmoi && nvim'
 alias dc='docker compose'
@@ -111,6 +113,8 @@ alias m='tmuxinator'
 alias ms='tmuxinator start $(tmuxinator list --newline | fzf)'
 alias rm='trash'
 alias v='nvim'
+alias zconf='nvim ~/.zshrc'
+alias zsrc='source ~/.zshrc'
 
 # Load other tools
 eval "$(/opt/homebrew/bin/mise activate zsh)"
