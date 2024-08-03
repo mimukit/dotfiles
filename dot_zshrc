@@ -3,6 +3,10 @@ if [[ -f "/opt/homebrew/bin/brew" ]] then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+
+# Set global environment variables
+export EDITOR "nvim"
+
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
@@ -108,3 +112,6 @@ alias ms='tmuxinator start $(tmuxinator list --newline | fzf)'
 alias rm='trash'
 alias v='nvim'
 
+# Load other tools
+eval "$(/opt/homebrew/bin/mise activate zsh)"
+eval "$(atuin init zsh)"
