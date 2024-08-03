@@ -157,6 +157,12 @@ vim.opt.cursorline = false
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 20
 
+-- Custom settings
+vim.opt.wrap = false
+vim.opt.hlsearch = true
+vim.opt.incsearch = true
+vim.opt.termguicolors = true
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -190,6 +196,42 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+vim.keymap.set('n', ';', ':', { desc = 'CMD enter command mode' })
+vim.keymap.set('i', 'jk', '<ESC>', { desc = 'Alternative back to normal mode' })
+
+vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move line to down' })
+vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move line to up' })
+
+vim.keymap.set('n', 'J', 'mzJ`z', { desc = 'Concat next line' })
+vim.keymap.set('n', '<C-d>', '<C-d>zz', { desc = 'Scroll down and keep cursor in center of the screen' })
+vim.keymap.set('n', '<C-u>', '<C-u>zz', { desc = 'Scroll up and keep cursor in center of the screen' })
+
+vim.keymap.set('n', 'n', 'nzzzv', { desc = 'Go to next search item and keep cursor in center of the screen' })
+vim.keymap.set('n', 'N', 'Nzzzv', { desc = 'Go to previous search item and keep cursor in center of the screen' })
+
+vim.keymap.set('x', '<leader>p', [["_dP]], { desc = 'Paste without modifying the buffer registry' })
+
+vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y]], { desc = 'Copy to system clipboard ' })
+vim.keymap.set('n', '<leader>Y', [["+Y]])
+
+-- vim.keymap.set('n', '<C-f>', '<cmd>silent !tmux neww tmux-sessionizer<CR>')
+
+vim.keymap.set({ 'n', 'v' }, '<leader>w', '<cmd> w <cr>', { desc = 'Save current buffer' })
+vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd> w <cr>', { desc = 'Save current buffer' })
+vim.keymap.set('n', '<C-c>', '<cmd>%y+<CR>', { desc = 'Copy whole file' })
+vim.keymap.set('n', '<CR>', 'O<Esc>j', { desc = 'Enter new line without insert mode' })
+
+vim.keymap.set('n', '<leader>tn', '<cmd>set nu!<CR>', { desc = '[T]oggle line [n]umber' })
+vim.keymap.set('n', '<leader>trn', '<cmd>set rnu!<CR>', { desc = '[T]oggle [r]elative [n]umber' })
+
+-- Move cursor in insert mode
+vim.keymap.set('i', '<C-b>', '<ESC>^i', { desc = 'Move beginning of line' })
+vim.keymap.set('i', '<C-e>', '<End>', { desc = 'Move end of line' })
+vim.keymap.set('i', '<C-h>', '<Left>', { desc = 'Move left' })
+vim.keymap.set('i', '<C-l>', '<Right>', { desc = 'Move right' })
+vim.keymap.set('i', '<C-j>', '<Down>', { desc = 'Move down' })
+vim.keymap.set('i', '<C-k>', '<Up>', { desc = 'Move up' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -284,7 +326,6 @@ require('lazy').setup({
         { '<leader>d', group = '[D]ocument' },
         { '<leader>r', group = '[R]ename' },
         { '<leader>s', group = '[S]earch' },
-        { '<leader>w', group = '[W]orkspace' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       }
@@ -498,7 +539,7 @@ require('lazy').setup({
 
           -- Fuzzy find all the symbols in your current workspace.
           --  Similar to document symbols, except searches over your entire project.
-          map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+          map('<leader>Ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
 
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
@@ -570,19 +611,25 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`tsserver`) will work just fine
-        -- tsserver = {},
-        --
-
+        bashls = {},
+        cssls = {},
+        dockerls = {},
+        docker_compose_language_service = {},
+        eslint = {},
+        emmet_ls = {},
+        html = {},
+        jsonls = {},
+        marksman = {},
+        mdx_analyzer = {},
+        phpactor = {},
+        pyright = {},
+        sqls = {},
+        somesass_ls = {},
+        tailwindcss = {},
+        taplo = {},
+        tsserver = {},
+        typos_lsp = {},
+        yamlls = {},
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -611,7 +658,16 @@ require('lazy').setup({
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
+        -- formatters
+        'black',
+        'isort',
+        'prettier',
+        'prettierd',
+        'stylua',
+
+        -- linters
+        'eslint_d',
+        'pylint',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -636,7 +692,7 @@ require('lazy').setup({
     cmd = { 'ConformInfo' },
     keys = {
       {
-        '<leader>f',
+        '<leader>fm',
         function()
           require('conform').format { async = true, lsp_fallback = true }
         end,
@@ -657,12 +713,21 @@ require('lazy').setup({
         }
       end,
       formatters_by_ft = {
-        lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        python = { 'isort', 'black' },
-        --
+        css = { 'prettierd' },
+        graphql = { 'prettierd' },
+        html = { 'prettierd' },
         -- You can use 'stop_after_first' to run the first available formatter from the list
         javascript = { 'prettierd', 'prettier', stop_after_first = true },
+        javascriptreact = { 'prettierd' },
+        json = { 'prettierd' },
+        liquid = { 'prettierd' },
+        lua = { 'stylua' },
+        markdown = { 'prettierd' },
+        -- Conform can also run multiple formatters sequentially
+        python = { 'isort', 'black' },
+        typescript = { 'prettierd' },
+        typescriptreact = { 'prettierd' },
+        yaml = { 'prettier' },
       },
     },
   },
@@ -845,7 +910,32 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = {
+        'bash',
+        'css',
+        'csv',
+        'dockerfile',
+        'fish',
+        'html',
+        'javascript',
+        'jsdoc',
+        'json',
+        'kdl',
+        'lua',
+        'luadoc',
+        'markdown',
+        'php',
+        'printf',
+        'robots',
+        'scss',
+        'ssh_config',
+        'tmux',
+        'toml',
+        'typescript',
+        'vim',
+        'vimdoc',
+        'yaml',
+      },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
