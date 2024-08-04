@@ -216,23 +216,25 @@ vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y]], { desc = 'Copy to system clip
 vim.keymap.set('n', '<leader>Y', [["+Y]], { desc = 'Copy current line to clipboard' })
 vim.keymap.set({ 'n', 'v' }, '<leader>p', [["+p]], { desc = 'Paste from system clipboard' })
 
--- vim.keymap.set('n', '<C-f>', '<cmd>silent !tmux neww tmux-sessionizer<CR>')
-
-vim.keymap.set({ 'n', 'v' }, '<leader>w', '<cmd> w <cr>', { desc = 'Save current buffer' })
-vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd> w <cr>', { desc = 'Save current buffer' })
 vim.keymap.set('n', '<C-c>', '<cmd>%y+<CR>', { desc = 'Copy whole file' })
 vim.keymap.set('n', '<CR>', 'O<Esc>j', { desc = 'Enter new line without insert mode' })
 
 vim.keymap.set('n', '<leader>tn', '<cmd>set nu!<CR>', { desc = '[T]oggle line [n]umber' })
 vim.keymap.set('n', '<leader>trn', '<cmd>set rnu!<CR>', { desc = '[T]oggle [r]elative [n]umber' })
 
+-- Buffer management
+vim.keymap.set({ 'n', 'v' }, '<leader>w', '<cmd> w <cr>', { desc = 'Save current buffer' })
+vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd> w <cr>', { desc = 'Save current buffer' })
+
+vim.keymap.set('n', '<leader>bx', ':bd<CR>', { desc = 'Close current buffer' })
+vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = 'Move to next buffer' })
+vim.keymap.set('n', '<leader>bp', ':bprevious<CR>', { desc = 'Move to previous buffer' })
+
 -- Move cursor in insert mode
-vim.keymap.set('i', '<C-b>', '<ESC>^i', { desc = 'Move beginning of line' })
-vim.keymap.set('i', '<C-e>', '<End>', { desc = 'Move end of line' })
-vim.keymap.set('i', '<C-h>', '<Left>', { desc = 'Move left' })
-vim.keymap.set('i', '<C-l>', '<Right>', { desc = 'Move right' })
-vim.keymap.set('i', '<C-j>', '<Down>', { desc = 'Move down' })
-vim.keymap.set('i', '<C-k>', '<Up>', { desc = 'Move up' })
+-- vim.keymap.set('i', '<C-h>', '<Left>', { desc = 'Move left' })
+-- vim.keymap.set('i', '<C-l>', '<Right>', { desc = 'Move right' })
+-- vim.keymap.set('i', '<C-j>', '<Down>', { desc = 'Move down' })
+-- vim.keymap.set('i', '<C-k>', '<Up>', { desc = 'Move up' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
