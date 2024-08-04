@@ -1,8 +1,12 @@
+# Load brew tools to shell 
 if [[ -f "/opt/homebrew/bin/brew" ]] then
-  # If you're using macOS, you'll want this enabled
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+# Open or attach to default tmux session on startup
+if command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
+  tmux new-session -A -s default
+fi
 
 # Set global environment variables
 export EDITOR "nvim"
