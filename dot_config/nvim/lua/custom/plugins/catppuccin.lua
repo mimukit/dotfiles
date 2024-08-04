@@ -1,6 +1,7 @@
 return {
   {
     'catppuccin/nvim',
+    lazy = false,
     name = 'catppuccin',
     priority = 1000,
 
@@ -41,15 +42,54 @@ return {
         custom_highlights = {},
         default_integrations = true,
         integrations = {
+          alpha = true,
+          bufferline = true,
           cmp = true,
+          dap = true,
+          dap_ui = true,
           gitsigns = true,
-          nvimtree = true,
-          treesitter = true,
-          notify = false,
+          harpoon = true,
+          indent_blankline = {
+            enabled = true,
+            colored_indent_levels = true,
+          },
+          leap = true,
+          lsp_trouble = true,
+          mason = true,
           mini = {
             enabled = true,
-            indentscope_color = '',
+            indentscope_color = 'lavender',
           },
+          native_lsp = {
+            enabled = true,
+            virtual_text = {
+              errors = { 'italic' },
+              hints = { 'italic' },
+              warnings = { 'italic' },
+              information = { 'italic' },
+              ok = { 'italic' },
+            },
+            underlines = {
+              errors = { 'underline' },
+              hints = { 'underline' },
+              warnings = { 'underline' },
+              information = { 'underline' },
+              ok = { 'underline' },
+            },
+            inlay_hints = {
+              background = true,
+            },
+          },
+          neotree = true,
+          noice = true,
+          notify = true,
+          treesitter = true,
+          telescope = {
+            enabled = true,
+            style = 'nvchad',
+          },
+          which_key = true,
+          window_picker = true,
           -- For more plugins integrations please scroll down (https://github.com/catppuccin/nvim#integrations)
         },
       }
