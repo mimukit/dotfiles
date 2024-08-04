@@ -43,7 +43,7 @@ What is Kickstart?
 
 Kickstart Guide:
 
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
+  NOTE: The very first thing you should do is to run the command `:Tutor` in Neovim.
 
     If you don't know what this means, type the following:
       - <escape key>
@@ -197,6 +197,7 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+vim.keymap.set('n', '<Esc>', '<cmd>noh<CR>', { desc = 'Clear search highlights' })
 vim.keymap.set('n', ';', ':', { desc = 'CMD enter command mode' })
 vim.keymap.set('i', 'jk', '<ESC>', { desc = 'Alternative back to normal mode' })
 
@@ -230,6 +231,9 @@ vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd> w <cr>', { desc = 'Save curren
 vim.keymap.set('n', '<leader>bx', ':bd<CR>', { desc = 'Close current buffer' })
 vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = 'Move to next buffer' })
 vim.keymap.set('n', '<leader>bp', ':bprevious<CR>', { desc = 'Move to previous buffer' })
+
+-- TodoTelescope
+vim.keymap.set('n', '<leader>st', ':TodoTelescope keywords=TODO,FIX,FIXME<CR>', { desc = 'Telescope list of todos' })
 
 -- Move cursor in insert mode
 -- vim.keymap.set('i', '<C-h>', '<Left>', { desc = 'Move left' })
@@ -873,7 +877,8 @@ require('lazy').setup({
   -- },
 
   -- Highlight todo, notes, etc in comments
-  { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
+
+  { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = true } },
 
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
