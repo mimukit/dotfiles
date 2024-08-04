@@ -80,7 +80,7 @@ return {
           lualine_z = { 'location' },
         },
         tabline = {},
-        extensions = {},
+        extensions = { 'neo-tree' },
       }
     end,
   },
