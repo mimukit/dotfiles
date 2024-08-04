@@ -47,6 +47,7 @@ return {
           cmp = true,
           dap = true,
           dap_ui = true,
+          fidget = true,
           gitsigns = true,
           harpoon = true,
           indent_blankline = {
