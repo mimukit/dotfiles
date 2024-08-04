@@ -1,6 +1,7 @@
 return {
   {
     'akinsho/bufferline.nvim',
+    event = 'VeryLazy',
     version = '*',
     dependencies = 'nvim-tree/nvim-web-devicons',
 
@@ -10,6 +11,7 @@ return {
         options = {
           -- "slant" | "slope" | "thick" | "thin" | { 'any', 'any' },
           separator_style = 'slant',
+
           offsets = {
             {
               filetype = 'neo-tree',
@@ -17,6 +19,10 @@ return {
               highlight = 'Directory',
               separator = true, -- use a "true" to enable the default, or set your own character
             },
+          },
+
+          highlights = require('catppuccin.groups.integrations.bufferline').get {
+            styles = { 'italic', 'bold' },
           },
         },
       }
