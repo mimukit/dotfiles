@@ -212,8 +212,9 @@ vim.keymap.set('n', 'N', 'Nzzzv', { desc = 'Go to previous search item and keep 
 
 vim.keymap.set('x', '<leader>p', [["_dP]], { desc = 'Paste without modifying the buffer registry' })
 
-vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y]], { desc = 'Copy to system clipboard ' })
-vim.keymap.set('n', '<leader>Y', [["+Y]])
+vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y]], { desc = 'Copy to system clipboard' })
+vim.keymap.set('n', '<leader>Y', [["+Y]], { desc = 'Copy current line to clipboard' })
+vim.keymap.set({ 'n', 'v' }, '<leader>p', [["+p]], { desc = 'Paste from system clipboard' })
 
 -- vim.keymap.set('n', '<C-f>', '<cmd>silent !tmux neww tmux-sessionizer<CR>')
 
