@@ -232,6 +232,9 @@ vim.keymap.set('n', '<leader>bx', ':bd<CR>', { desc = 'Close current buffer' })
 vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = 'Move to next buffer' })
 vim.keymap.set('n', '<leader>bp', ':bprevious<CR>', { desc = 'Move to previous buffer' })
 
+-- Oil file manager
+vim.keymap.set('n', '-', '<CMD>Oil<CR>', { desc = 'Open directory & file manager' })
+
 -- TodoTelescope
 vim.keymap.set('n', '<leader>st', ':TodoTelescope keywords=TODO,FIX,FIXME<CR>', { desc = 'Telescope list of todos' })
 
