@@ -18,3 +18,7 @@ windows:
             - clear
             - fisher update
             - exit
+        - zinit_update:
+            - clear
+            - zinit update --all
+            - exit
