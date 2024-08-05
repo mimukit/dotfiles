@@ -10,16 +10,6 @@ return {
       --  - ci'  - [C]hange [I]nside [']quote
       require('mini.ai').setup { n_lines = 500 }
 
-      -- INFO: Animate common Neovim actions
-      require('mini.animate').setup {
-        open = {
-          enable = false,
-        },
-        close = {
-          enable = false,
-        },
-      }
-
       -- INFO: Enable basic improvements
       require('mini.basics').setup {
         -- Options. Set to `false` to disable.
@@ -79,10 +69,6 @@ return {
       --
       require('mini.icons').setup()
 
-      -- INFO: Jump to next/previous single character
-      --
-      require('mini.jump').setup()
-
       -- INFO: Move any selection in any directions
       --
       require('mini.move').setup()
@@ -91,12 +77,54 @@ return {
       --
       require('mini.pairs').setup()
 
+      -- INFO: Split and join arguments
+      --
+      require('mini.splitjoin').setup()
+
       -- INFO: Add/delete/replace surroundings (brackets, quotes, etc.)
       --
       -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
-      require('mini.surround').setup()
+      require('mini.surround').setup {
+        -- Add custom surroundings to be used on top of builtin ones. For more
+        -- information with examples, see `:h MiniSurround.config`.
+        custom_surroundings = nil,
+
+        -- Duration (in ms) of highlight when calling `MiniSurround.highlight()`
+        highlight_duration = 500,
+
+        -- Module mappings. Use `''` (empty string) to disable one.
+        mappings = {
+          add = 'gsa', -- Add surrounding in Normal and Visual modes
+          delete = 'gsd', -- Delete surrounding
+          find = 'gsf', -- Find surrounding (to the right)
+          find_left = 'gsF', -- Find surrounding (to the left)
+          highlight = 'gsh', -- Highlight surrounding
+          replace = 'gsr', -- Replace surrounding
+          update_n_lines = 'gssn', -- Update `n_lines`
+
+          suffix_last = 'l', -- Suffix to search with "prev" method
+          suffix_next = 'n', -- Suffix to search with "next" method
+        },
+
+        -- Number of lines within which surrounding is searched
+        n_lines = 20,
+
+        -- Whether to respect selection type:
+        -- - Place surroundings on separate lines in linewise mode.
+        -- - Place surroundings on each line in blockwise mode.
+        respect_selection_type = false,
+
+        -- How to search for surrounding (first inside current line, then inside
+        -- neighborhood). One of 'cover', 'cover_or_next', 'cover_or_prev',
+        -- 'cover_or_nearest', 'next', 'prev', 'nearest'. For more details,
+        -- see `:h MiniSurround.config`.
+        search_method = 'cover',
+
+        -- Whether to disable showing non-error feedback
+        silent = false,
+      }
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
