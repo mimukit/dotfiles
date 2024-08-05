@@ -25,6 +25,8 @@
 -- vim.keymap.set({ 'n', 'v' }, '<leader>p', [["+p]], { desc = 'Paste from system clipboard' })
 -- vim.keymap.set('n', '<CR>', 'O<Esc>j', { desc = 'Enter new line without insert mode' })
 -- vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd> w <cr>', { desc = 'Save current buffer' })
+-- vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move line to down' })
+-- vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move line to up' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -40,9 +42,6 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 
 vim.keymap.set('n', '<Esc>', '<cmd>noh<CR>', { desc = 'Clear search highlights' })
 vim.keymap.set('n', ';', ':', { desc = 'CMD enter command mode' })
-
-vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move line to down' })
-vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move line to up' })
 
 vim.keymap.set('n', 'J', 'mzJ`z', { desc = 'Concat next line' })
 vim.keymap.set('n', '<C-d>', '<C-d>zz', { desc = 'Scroll down and keep cursor in center of the screen' })
