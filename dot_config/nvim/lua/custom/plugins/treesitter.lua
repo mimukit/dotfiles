@@ -19,6 +19,7 @@ return {
         'markdown',
         'php',
         'printf',
+        'regex',
         'robots',
         'scss',
         'ssh_config',
