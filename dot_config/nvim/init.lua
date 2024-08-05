@@ -238,6 +238,10 @@ vim.keymap.set('n', '-', '<CMD>Oil<CR>', { desc = 'Open directory & file manager
 -- TodoTelescope
 vim.keymap.set('n', '<leader>st', ':TodoTelescope keywords=TODO,FIX,FIXME<CR>', { desc = 'Telescope list of todos' })
 
+-- NeoTree
+
+vim.keymap.set('n', '<leader>e', ':Neotree toggle<CR>', { desc = 'Toggle file [e]xplorer in NeoTree' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -896,7 +900,14 @@ require('lazy').setup({
       require('mini.surround').setup()
 
       -- Animate common Neovim actions
-      require('mini.animate').setup()
+      require('mini.animate').setup {
+        open = {
+          enable = false,
+        },
+        close = {
+          enable = false,
+        },
+      }
 
       -- Comment lines
       --
