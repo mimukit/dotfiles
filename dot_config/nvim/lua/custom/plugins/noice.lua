@@ -2,16 +2,22 @@ return {
   {
     'folke/noice.nvim',
     event = 'VeryLazy',
-    opts = {
-      -- add any options here
-    },
+    opts = {},
     dependencies = {
       -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
       'MunifTanjim/nui.nvim',
       -- OPTIONAL:
       --   `nvim-notify` is only needed, if you want to use the notification view.
       --   If not available, we use `mini` as the fallback
-      'rcarriga/nvim-notify',
+      {
+        'rcarriga/nvim-notify',
+        opts = {
+          render = 'compact', -- default, compact, minimal, simple
+          stages = 'fade_in_slide_out', -- fade, fade_in_slide_out, slide, static
+          timeout = 1000,
+          top_down = true,
+        },
+      },
     },
     config = function()
       require('noice').setup {
