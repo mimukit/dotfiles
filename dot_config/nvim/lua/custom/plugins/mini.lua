@@ -2,7 +2,7 @@ return {
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
     config = function()
-      -- Better Around/Inside textobjects
+      -- INFO: Better Around/Inside textobjects
       --
       -- Examples:
       --  - va)  - [V]isually select [A]round [)]paren
@@ -10,7 +10,7 @@ return {
       --  - ci'  - [C]hange [I]nside [']quote
       require('mini.ai').setup { n_lines = 500 }
 
-      -- Animate common Neovim actions
+      -- INFO: Animate common Neovim actions
       require('mini.animate').setup {
         open = {
           enable = false,
@@ -20,15 +20,7 @@ return {
         },
       }
 
-      -- Comment lines
-      --
-      -- Examples:
-      -- - gc - Toggle comment (like `gcip` - comment inner paragraph)
-      -- - gcc - Toggle comment on current lines
-      -- - dgc - Delete whole comment block
-      require('mini.comment').setup()
-
-      -- Enable basic improvements
+      -- INFO: Enable basic improvements
       require('mini.basics').setup {
         -- Options. Set to `false` to disable.
         options = {
@@ -71,7 +63,35 @@ return {
         silent = false,
       }
 
-      -- Add/delete/replace surroundings (brackets, quotes, etc.)
+      -- INFO: Comment lines
+      --
+      -- Examples:
+      -- - gc - Toggle comment (like `gcip` - comment inner paragraph)
+      -- - gcc - Toggle comment on current lines
+      -- - dgc - Delete whole comment block
+      require('mini.comment').setup()
+
+      -- INFO: Automatic highlighting of word under cursor
+      --
+      require('mini.cursorword').setup()
+
+      -- INFO: Mini icons
+      --
+      require('mini.icons').setup()
+
+      -- INFO: Jump to next/previous single character
+      --
+      require('mini.jump').setup()
+
+      -- INFO: Move any selection in any directions
+      --
+      require('mini.move').setup()
+
+      -- INFO: Minimal and fast autopairs
+      --
+      require('mini.pairs').setup()
+
+      -- INFO: Add/delete/replace surroundings (brackets, quotes, etc.)
       --
       -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
       -- - sd'   - [S]urround [D]elete [']quotes
