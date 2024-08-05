@@ -192,14 +192,14 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 --  Use CTRL+<hjkl> to switch between windows
 --
 --  See `:help wincmd` for a list of all window commands
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+-- vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
+-- vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
+-- vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
+-- vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 vim.keymap.set('n', '<Esc>', '<cmd>noh<CR>', { desc = 'Clear search highlights' })
 vim.keymap.set('n', ';', ':', { desc = 'CMD enter command mode' })
-vim.keymap.set('i', 'jk', '<ESC>', { desc = 'Alternative back to normal mode' })
+-- vim.keymap.set('i', 'jk', '<ESC>', { desc = 'Alternative back to normal mode' })
 
 vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move line to down' })
 vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move line to up' })
@@ -213,12 +213,12 @@ vim.keymap.set('n', 'N', 'Nzzzv', { desc = 'Go to previous search item and keep 
 
 vim.keymap.set('x', '<leader>p', [["_dP]], { desc = 'Paste without modifying the buffer registry' })
 
-vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y]], { desc = 'Copy to system clipboard' })
-vim.keymap.set('n', '<leader>Y', [["+Y]], { desc = 'Copy current line to clipboard' })
-vim.keymap.set({ 'n', 'v' }, '<leader>p', [["+p]], { desc = 'Paste from system clipboard' })
+-- vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y]], { desc = 'Copy to system clipboard' })
+-- vim.keymap.set('n', '<leader>Y', [["+Y]], { desc = 'Copy current line to clipboard' })
+-- vim.keymap.set({ 'n', 'v' }, '<leader>p', [["+p]], { desc = 'Paste from system clipboard' })
 
 vim.keymap.set('n', '<C-c>', '<cmd>%y+<CR>', { desc = 'Copy whole file' })
-vim.keymap.set('n', '<CR>', 'O<Esc>j', { desc = 'Enter new line without insert mode' })
+-- vim.keymap.set('n', '<CR>', 'O<Esc>j', { desc = 'Enter new line without insert mode' })
 
 vim.keymap.set('n', '<leader>tn', '<cmd>set nu!<CR>', { desc = '[T]oggle line [n]umber' })
 vim.keymap.set('n', '<leader>trn', '<cmd>set rnu!<CR>', { desc = '[T]oggle [r]elative [n]umber' })
@@ -226,7 +226,7 @@ vim.keymap.set('n', '<leader>tc', '<cmd>Telescope colorscheme<CR>', { desc = '[T
 
 -- Buffer management
 vim.keymap.set({ 'n', 'v' }, '<leader>w', '<cmd> w <cr>', { desc = 'Save current buffer' })
-vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd> w <cr>', { desc = 'Save current buffer' })
+-- vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd> w <cr>', { desc = 'Save current buffer' })
 
 vim.keymap.set('n', '<leader>bx', ':bd<CR>', { desc = 'Close current buffer' })
 vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = 'Move to next buffer' })
@@ -237,12 +237,6 @@ vim.keymap.set('n', '-', '<CMD>Oil<CR>', { desc = 'Open directory & file manager
 
 -- TodoTelescope
 vim.keymap.set('n', '<leader>st', ':TodoTelescope keywords=TODO,FIX,FIXME<CR>', { desc = 'Telescope list of todos' })
-
--- Move cursor in insert mode
--- vim.keymap.set('i', '<C-h>', '<Left>', { desc = 'Move left' })
--- vim.keymap.set('i', '<C-l>', '<Right>', { desc = 'Move right' })
--- vim.keymap.set('i', '<C-j>', '<Down>', { desc = 'Move down' })
--- vim.keymap.set('i', '<C-k>', '<Up>', { desc = 'Move up' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
