@@ -89,3 +89,8 @@ vim.keymap.set('n', '<leader>qd', function()
   require('persistence').stop()
 end, { desc = 'Stop Persistence => session wont be saved on exit' })
 
+-- Spectre
+vim.keymap.set('n', '<leader>ff', '<cmd>lua require("spectre").open_file_search({select_word=true})<CR>', { desc = 'Search on current file' })
+vim.keymap.set('n', '<leader>fr', '<cmd>lua require("spectre").toggle()<CR>', { desc = 'Toggle Spectre' })
+vim.keymap.set('n', '<leader>fw', '<cmd>lua require("spectre").open_visual({select_word=true})<CR>', { desc = 'Search current word' })
+vim.keymap.set('v', '<leader>fc', '<esc><cmd>lua require("spectre").open_visual()<CR>', { desc = 'Search current word' })
