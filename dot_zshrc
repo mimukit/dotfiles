@@ -73,6 +73,8 @@ eval "$(starship init zsh)"
 
 
 # Alias list
+alias ..='cd ..'
+alias ...='cd ...'
 alias brewupx='brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup'
 alias c='clear'
 alias cc='clear; tmux clear-history; clear'
@@ -80,6 +82,7 @@ alias co='code .'
 alias ct='cloudflared tunnel'
 alias cz='chezmoi'
 alias cza='chezmoi -v apply'
+alias czai='chezmoi forget ~/.config/iterm2/ --force && chezmoi add ~/.config/iterm2/'
 alias czav='chezmoi forget ~/.config/nvim/ --force && chezmoi add ~/.config/nvim && chezmoi forget ~/.config/nvim/lazy-lock.json --force'
 alias czaz='chezmoi add ~/.zshrc'
 alias czc='code ~/.local/share/chezmoi'
