@@ -73,3 +73,4 @@ vim.keymap.set('n', '<leader>st', ':TodoTelescope keywords=TODO,FIX,FIXME<CR>', 
 
 -- NeoTree
 vim.keymap.set('n', '<leader>e', ':Neotree focus<CR>', { desc = 'Focus neotree file [e]xplorer' })
+vim.keymap.set('n', '<leader>te', ':Neotree toggle<CR>', { desc = 'Focus neotree file [e]xplorer' })
