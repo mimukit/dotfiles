@@ -6,16 +6,6 @@
 	<false/>
 	<key>AllowClipboardAccess</key>
 	<true/>
-	<key>AppleAntiAliasingThreshold</key>
-	<integer>1</integer>
-	<key>ApplePressAndHoldEnabled</key>
-	<false/>
-	<key>AppleScrollAnimationEnabled</key>
-	<integer>0</integer>
-	<key>AppleSmoothFixedFontsSizeThreshold</key>
-	<integer>1</integer>
-	<key>AppleWindowTabbingMode</key>
-	<string>manual</string>
 	<key>AutoHideTmuxClientSession</key>
 	<true/>
 	<key>ClosingTmuxWindowKillsTmuxWindows</key>
@@ -4525,8 +4515,10 @@
 	<false/>
 	<key>OpenArrangementAtStartup</key>
 	<false/>
-	<key>OpenNoWindowsAtStartup</key>
+	<key>OpenBookmark</key>
 	<false/>
+	<key>OpenNoWindowsAtStartup</key>
+	<true/>
 	<key>PointerActions</key>
 	<dict>
 		<key>Button,1,1,,</key>
@@ -4566,6 +4558,12 @@
 	<true/>
 	<key>PromptOnQuit</key>
 	<false/>
+	<key>QuitWhenAllWindowsClosed</key>
+	<true/>
+	<key>RunJobsInServers</key>
+	<false/>
+	<key>SeparateWindowTitlePerTab</key>
+	<true/>
 	<key>ShowFullScreenTabBar</key>
 	<true/>
 	<key>ShowNewOutputIndicator</key>
@@ -4586,6 +4584,8 @@
 	<true/>
 	<key>UseBorder</key>
 	<false/>
+	<key>UseLionStyleFullscreen</key>
+	<true/>
 	<key>VisualIndicatorForEsc</key>
 	<false/>
 	<key>WindowNumber</key>
