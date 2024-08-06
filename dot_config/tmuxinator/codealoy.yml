@@ -7,10 +7,11 @@ windows:
       layout: main-horizontal
       panes:
         - codealoy:
+            - localias start
             - clear
-  - codealoy_v1:
+  - editor:
       layout: main-horizontal
-      root: ~/Github/codealoy/codealoy_v1
       panes:
-        - codealoy_v1:
+        - editor:
             - clear
+            - nvim
