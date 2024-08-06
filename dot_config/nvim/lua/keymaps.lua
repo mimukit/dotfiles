@@ -76,8 +76,16 @@ vim.keymap.set('n', '<leader>e', ':Neotree focus<CR>', { desc = 'Focus neotree f
 vim.keymap.set('n', '<leader>te', ':Neotree toggle<CR>', { desc = 'Focus neotree file [e]xplorer' })
 
 -- Persistence
-vim.keymap.set("n", "<leader>qs", function() require("persistence").load() end, { desc = 'Load the session for the current directory'})
-vim.keymap.set("n", "<leader>qS", function() require("persistence").select() end, { desc = 'Select a session to load'})
-vim.keymap.set("n", "<leader>ql", function() require("persistence").load({ last = true }) end, { desc = 'Load the last session'})
-vim.keymap.set("n", "<leader>qd", function() require("persistence").stop() end , { desc = 'Stop Persistence => session wont be saved on exit'})
+vim.keymap.set('n', '<leader>qs', function()
+  require('persistence').load()
+end, { desc = 'Load the session for the current directory' })
+vim.keymap.set('n', '<leader>qS', function()
+  require('persistence').select()
+end, { desc = 'Select a session to load' })
+vim.keymap.set('n', '<leader>ql', function()
+  require('persistence').load { last = true }
+end, { desc = 'Load the last session' })
+vim.keymap.set('n', '<leader>qd', function()
+  require('persistence').stop()
+end, { desc = 'Stop Persistence => session wont be saved on exit' })
 
