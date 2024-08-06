@@ -10,7 +10,7 @@ return {
 
         options = {
           -- "slant" | "slope" | "thick" | "thin" | { 'any', 'any' },
-          separator_style = 'slant',
+          separator_style = 'thick',
 
           offsets = {
             {
