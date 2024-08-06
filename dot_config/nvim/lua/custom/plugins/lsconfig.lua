@@ -21,6 +21,9 @@ return {
     },
     config = function()
       require('lspsaga').setup {
+        lightbulb = {
+          enable = false,
+        },
         outline = {
           win_width = 60,
         },
