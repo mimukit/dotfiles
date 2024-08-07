@@ -18,6 +18,32 @@
                 },
                 "rules": [
                     {
+                        "manipulators": [
+                            {
+                                "description": "Hyper Key: change caps_lock to command+control+option+shift.",
+                                "from": {
+                                    "key_code": "caps_lock",
+                                    "modifiers": {
+                                        "optional": [
+                                            "any"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "left_shift",
+                                        "modifiers": [
+                                            "left_command",
+                                            "left_control",
+                                            "left_option"
+                                        ]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "Toggle caps_lock by pressing left_shift then right_shift",
                         "manipulators": [
                             {
@@ -152,12 +178,15 @@
                         ]
                     },
                     {
+                        "description": "Change left_option+wb to move between words",
                         "manipulators": [
                             {
-                                "description": "Hyper Key: change caps_lock to command+control+option+shift.",
                                 "from": {
-                                    "key_code": "caps_lock",
+                                    "key_code": "w",
                                     "modifiers": {
+                                        "mandatory": [
+                                            "option"
+                                        ],
                                         "optional": [
                                             "any"
                                         ]
@@ -165,11 +194,31 @@
                                 },
                                 "to": [
                                     {
-                                        "key_code": "left_shift",
+                                        "key_code": "right_arrow",
                                         "modifiers": [
-                                            "left_command",
-                                            "left_control",
-                                            "left_option"
+                                            "option"
+                                        ]
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "b",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "option"
+                                        ],
+                                        "optional": [
+                                            "any"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "left_arrow",
+                                        "modifiers": [
+                                            "option"
                                         ]
                                     }
                                 ],
