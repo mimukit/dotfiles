@@ -4,10 +4,10 @@ name: codealoy
 root: ~/Github/codealoy/codealoy
 windows:
   - codealoy:
+      focus: true
       layout: main-horizontal
       panes:
         - codealoy:
-            - localias start
             - clear
   - editor:
       layout: main-horizontal
@@ -15,3 +15,9 @@ windows:
         - editor:
             - clear
             - nvim
+  - local_alias:
+      layout: main-horizontal
+      panes:
+        - local_alias:
+            - localias start
+            - exit
