@@ -1,6 +1,7 @@
 return {
   {
     'nvim-pack/nvim-spectre',
+    event = 'BufReadPre',
     opts = {
       open_cmd = 'noswapfile vnew',
       mapping = {
