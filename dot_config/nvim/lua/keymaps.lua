@@ -52,7 +52,8 @@ vim.keymap.set('n', 'N', 'Nzzzv', { desc = 'Go to previous search item and keep 
 
 vim.keymap.set('x', '<leader>p', [["_dP]], { desc = 'Paste without modifying the buffer registry' })
 
-vim.keymap.set('n', '<C-c>', '<cmd>%y+<CR>', { desc = 'Copy whole file' })
+vim.keymap.set('n', 'gbv', 'ggVG', { desc = 'Select whole file' })
+vim.keymap.set('n', 'gby', '<cmd>%y+<CR>', { desc = 'Copy whole file' })
 
 vim.keymap.set('n', '<leader>tn', '<cmd>set nu!<CR>', { desc = '[T]oggle line [n]umber' })
 vim.keymap.set('n', '<leader>trn', '<cmd>set rnu!<CR>', { desc = '[T]oggle [r]elative [n]umber' })
