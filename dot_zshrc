@@ -11,6 +11,7 @@ fi
 # Set global environment variables
 export EDITOR "nvim"
 export XDG_CONFIG_HOME="$HOME/.config"
+export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
 
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
@@ -68,9 +69,9 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Shell integrations
+eval "$(starship init zsh)"
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
-eval "$(starship init zsh)"
 eval "$(/opt/homebrew/bin/mise activate zsh)"
 
 # Alias list
