@@ -19,5 +19,5 @@ windows:
       layout: main-horizontal
       panes:
         - local_alias:
-            - localias start
+            - localias stop && localias start
             - exit
