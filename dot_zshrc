@@ -78,6 +78,7 @@ eval "$(/opt/homebrew/bin/mise activate zsh)"
 # Alias list
 alias ..='cd ..'
 alias ...='cd ...'
+alias af='eval $(alias | fzf --tac --nth=1 | awk -F= "{print \$1}")'
 alias brewupx='brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup'
 alias c='clear'
 alias cc='clear; tmux clear-history; clear'
