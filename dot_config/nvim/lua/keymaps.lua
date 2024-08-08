@@ -58,6 +58,8 @@ vim.keymap.set('n', 'gby', '<cmd>%y+<CR>', { desc = 'Copy whole file' })
 vim.keymap.set('n', '<leader>tn', '<cmd>set nu!<CR>', { desc = '[T]oggle line [n]umber' })
 vim.keymap.set('n', '<leader>trn', '<cmd>set rnu!<CR>', { desc = '[T]oggle [r]elative [n]umber' })
 vim.keymap.set('n', '<leader>tc', '<cmd>Telescope colorscheme<CR>', { desc = '[T]oggle [c]olorscheme' })
+vim.keymap.set('n', '<leader>tsv', ':vsp<CR>', { desc = '[T]oggle [s]plit [v]ertically' })
+vim.keymap.set('n', '<leader>tsh', ':vsp<CR>', { desc = '[T]oggle [s]plit [h]orizontally' })
 
 -- Buffer management
 vim.keymap.set({ 'n', 'v' }, '<leader>w', '<cmd> w <cr>', { desc = 'Save current buffer' })
@@ -101,4 +103,3 @@ vim.keymap.set({ 'n', 't' }, '<C-h>', '<CMD>NavigatorLeft<CR>')
 vim.keymap.set({ 'n', 't' }, '<C-l>', '<CMD>NavigatorRight<CR>')
 vim.keymap.set({ 'n', 't' }, '<C-k>', '<CMD>NavigatorUp<CR>')
 vim.keymap.set({ 'n', 't' }, '<C-j>', '<CMD>NavigatorDown<CR>')
-vim.keymap.set({ 'n', 't' }, '<C-p>', '<CMD>NavigatorPrevious<CR>')
