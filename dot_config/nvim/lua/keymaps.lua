@@ -59,7 +59,7 @@ vim.keymap.set('n', '<leader>tn', '<cmd>set nu!<CR>', { desc = '[T]oggle line [n
 vim.keymap.set('n', '<leader>trn', '<cmd>set rnu!<CR>', { desc = '[T]oggle [r]elative [n]umber' })
 vim.keymap.set('n', '<leader>tc', '<cmd>Telescope colorscheme<CR>', { desc = '[T]oggle [c]olorscheme' })
 vim.keymap.set('n', '<leader>tsv', ':vsp<CR>', { desc = '[T]oggle [s]plit [v]ertically' })
-vim.keymap.set('n', '<leader>tsh', ':vsp<CR>', { desc = '[T]oggle [s]plit [h]orizontally' })
+vim.keymap.set('n', '<leader>tsh', ':sp<CR>', { desc = '[T]oggle [s]plit [h]orizontally' })
 
 -- Buffer management
 vim.keymap.set({ 'n', 'v' }, '<leader>w', '<cmd> w <cr>', { desc = 'Save current buffer' })
