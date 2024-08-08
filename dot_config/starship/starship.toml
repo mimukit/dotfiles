@@ -32,9 +32,6 @@ base = "#1e1e2e"
 mantle = "#181825"
 crust = "#11111b"
 
-# Disables the blank line at the start of the prompt
-command_timeout = "5000"
-
 # Add the modules you need
 [battery]
 full_symbol = "🔋"
