@@ -234,7 +234,7 @@ return {
         'black',
         'isort',
         'prettier',
-        'prettierd',
+        'prettier',
         'stylua',
 
         -- linters
@@ -261,3 +261,4 @@ return {
     end,
   },
 }
+
