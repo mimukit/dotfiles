@@ -95,3 +95,10 @@ vim.keymap.set('n', '<leader>ff', '<cmd>lua require("spectre").open_file_search(
 vim.keymap.set('n', '<leader>fr', '<cmd>lua require("spectre").toggle()<CR>', { desc = 'Toggle Spectre' })
 vim.keymap.set('n', '<leader>fw', '<cmd>lua require("spectre").open_visual({select_word=true})<CR>', { desc = 'Search current word' })
 vim.keymap.set('v', '<leader>fc', '<esc><cmd>lua require("spectre").open_visual()<CR>', { desc = 'Search current word' })
+
+-- Navigator
+vim.keymap.set({ 'n', 't' }, '<C-h>', '<CMD>NavigatorLeft<CR>')
+vim.keymap.set({ 'n', 't' }, '<C-l>', '<CMD>NavigatorRight<CR>')
+vim.keymap.set({ 'n', 't' }, '<C-k>', '<CMD>NavigatorUp<CR>')
+vim.keymap.set({ 'n', 't' }, '<C-j>', '<CMD>NavigatorDown<CR>')
+vim.keymap.set({ 'n', 't' }, '<C-p>', '<CMD>NavigatorPrevious<CR>')
