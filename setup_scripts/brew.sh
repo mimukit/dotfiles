@@ -66,6 +66,7 @@ apps=(
     rustdesk
     shellcheck
     ssh-copy-id
+    sshs
     starship
     stremio
     svn
