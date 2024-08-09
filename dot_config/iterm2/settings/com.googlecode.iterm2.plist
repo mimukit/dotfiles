@@ -3449,7 +3449,7 @@
 			<key>Thin Strokes</key>
 			<integer>4</integer>
 			<key>Transparency</key>
-			<real>0.10000000000000001</real>
+			<real>0.050000000000000017</real>
 			<key>Underline Color</key>
 			<dict>
 				<key>Alpha Component</key>
