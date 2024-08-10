@@ -24,6 +24,7 @@ return {
         'scss',
         'ssh_config',
         'tmux',
+        'tsx',
         'toml',
         'typescript',
         'vim',
