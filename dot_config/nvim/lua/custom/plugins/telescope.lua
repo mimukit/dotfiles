@@ -99,6 +99,9 @@ return {
       vim.keymap.set('n', '<leader>sn', function()
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
+
+      -- Shortcut for noice notification list
+      vim.keymap.set('n', '<leader>sN', ':Telescope noice<CR>', { desc = '[S]earch [N]oice notifications' })
     end,
   },
 }
