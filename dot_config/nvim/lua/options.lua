@@ -73,7 +73,7 @@ vim.opt.cursorline = true
 vim.opt.scrolloff = 20
 
 -- Custom settings
-vim.opt.wrap = false
+vim.opt.wrap = true
 vim.opt.hlsearch = true
 vim.opt.incsearch = true
 vim.opt.termguicolors = true
