@@ -65,6 +65,7 @@ vim.keymap.set('n', '<leader>tsh', ':sp<CR>', { desc = '[T]oggle [s]plit [h]oriz
 vim.keymap.set({ 'n', 'v' }, '<leader>w', '<cmd> w <cr>', { desc = 'Save current buffer' })
 
 vim.keymap.set('n', '<leader>bx', ':bd<CR>', { desc = 'Close current buffer' })
+vim.keymap.set('n', '<leader>bd', ':bufdo bd<CR>', { desc = 'Close all buffers' })
 vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = 'Move to next buffer' })
 vim.keymap.set('n', '<leader>bp', ':bprevious<CR>', { desc = 'Move to previous buffer' })
 
