@@ -59,7 +59,7 @@ return {
       -- - gc - Toggle comment (like `gcip` - comment inner paragraph)
       -- - gcc - Toggle comment on current lines
       -- - dgc - Delete whole comment block
-      require('mini.comment').setup()
+      -- require('mini.comment').setup()
 
       -- INFO: Automatic highlighting of word under cursor
       --
