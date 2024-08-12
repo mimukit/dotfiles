@@ -7,7 +7,7 @@ return {
       {
         '<leader>fm',
         function()
-          require('conform').format { async = true, lsp_fallback = true }
+          require('conform').format({ async = true, lsp_fallback = true })
         end,
         mode = '',
         desc = '[F]ormat buffer',
@@ -26,21 +26,21 @@ return {
         }
       end,
       formatters_by_ft = {
-        css = { 'prettier' },
-        graphql = { 'prettier' },
-        html = { 'prettier' },
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        javascript = { 'prettier', stop_after_first = true },
-        javascriptreact = { 'prettier' },
-        json = { 'prettier' },
-        liquid = { 'prettier' },
+        css = { 'prettierd', 'prettier', stop_after_first = true },
+        graphql = { 'prettierd', 'prettier', stop_after_first = true },
+        html = { 'prettierd', 'prettier', stop_after_first = true },
+        javascript = { 'prettierd', 'prettier', stop_after_first = true },
+        javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        json = { 'prettierd', 'prettier', stop_after_first = true },
+        liquid = { 'prettierd', 'prettier', stop_after_first = true },
         lua = { 'stylua' },
-        markdown = { 'prettier' },
+        markdown = { 'prettierd', 'prettier', stop_after_first = true },
         -- Conform can also run multiple formatters sequentially
         python = { 'isort', 'black' },
-        typescript = { 'prettier' },
-        typescriptreact = { 'prettier' },
-        yaml = { 'prettier' },
+        typescript = { 'prettierd', 'prettier', stop_after_first = true },
+        typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        yaml = { 'prettierd', 'prettier', stop_after_first = true },
       },
     },
   },
