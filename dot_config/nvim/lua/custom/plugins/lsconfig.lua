@@ -233,7 +233,7 @@ return {
         -- formatters
         'black',
         'isort',
-        'prettier',
+        'prettierd',
         'prettier',
         'stylua',
 
