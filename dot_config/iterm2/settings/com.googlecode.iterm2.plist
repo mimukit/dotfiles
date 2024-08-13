@@ -3426,7 +3426,7 @@
 			<key>Space</key>
 			<integer>0</integer>
 			<key>Special Font Config</key>
-			<string>{"version":1,"entries":[{"count":128,"fontName":"Baloo Da 2","start":2432}]}</string>
+			<string>{"entries":[{"start":2432,"fontName":"Baloo Da 2","count":128}],"version":1}</string>
 			<key>Sync Title</key>
 			<false/>
 			<key>Tab Color</key>
