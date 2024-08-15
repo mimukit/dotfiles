@@ -122,17 +122,17 @@ local function header_color()
 end
 
 local function configure()
-  local theme = require 'alpha.themes.theta'
+  local theme = require('alpha.themes.theta')
   local themeconfig = theme.config
-  local dashboard = require 'alpha.themes.dashboard'
+  local dashboard = require('alpha.themes.dashboard')
   local buttons = {
     type = 'group',
     val = {
       { type = 'text', val = 'Quick links', opts = { hl = 'SpecialComment', position = 'center' } },
       { type = 'padding', val = 1 },
-      dashboard.button('e', '  New file', '<cmd>ene<CR>'),
-      dashboard.button('<leader> s f', '  Find file'),
-      dashboard.button('<leader> s w', '  Find text'),
+      dashboard.button('<leader> <leader>', '  Find file'),
+      dashboard.button('<leader> sg', '  Find text'),
+      dashboard.button('<leader> tss', '  Load session list'),
       dashboard.button('u', '󱐥  Update plugins', '<cmd>Lazy sync<CR>'),
       dashboard.button('t', '  Install language tools', '<cmd>Mason<CR>'),
       dashboard.button('q', '󰩈  Quit', '<cmd>qa<CR>'),
