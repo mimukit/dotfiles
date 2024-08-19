@@ -24,7 +24,7 @@ return {
           dashboard.button("r", " " .. " Recent files",    "<cmd>  Telescope oldfiles <cr>"),
           dashboard.button("s", " " .. " Restore Session", [[<cmd> lua require("persistence").load() <cr>]]),
           dashboard.button("l", "󰒲 " .. " Lazy",            "<cmd> Lazy <cr>"),
-          dashboard.button("t", "☷ " .. " Mason",           "<cmd> Mason <cr>"),
+          dashboard.button("m", "☷ " .. " Mason",           "<cmd> Mason <cr>"),
           dashboard.button("q", " " .. " Quit",            "<cmd> qa <cr>"),
       }
       for _, button in ipairs(dashboard.section.buttons.val) do
