@@ -44,7 +44,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#flashcards/test",
+                "query": "প্রোগ্রামিং সমস্যা",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -146,14 +146,29 @@
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
       "table-editor-obsidian:Advanced Tables Toolbar": false,
-      "tldraw:Create new tldrawing": false
+      "edit-mdx:New .mdx file": false
     }
   },
   "active": "45159d924cecfe7c",
   "lastOpenFiles": [
+    "content/courses/learn-problem-solving-basic/24-congratulation.mdx",
+    "content/courses/learn-problem-solving-basic/1-1-time-complexity.mdxb",
+    "content/courses/learn-problem-solving-basic/1-a-time-complexity.mdxb",
+    "content/courses/learn-problem-solving-basic/23-factor-number.mdx",
+    "content/courses/learn-problem-solving-basic/22-palindrome.mdx",
+    "content/courses/learn-problem-solving-basic/21-fibonacci.mdx",
+    "content/courses/learn-problem-solving-basic/12-sum-digit.mdx",
+    "content/courses/learn-problem-solving-basic/11-pattern.mdx",
+    "content/courses/learn-problem-solving-basic/25-congratulation.mdx",
+    "content/courses/learn-problem-solving-basic/23-pattern.mdx",
+    "content/courses/learn-problem-solving-basic/22-factor-number.mdx",
+    "courses.md",
+    "content/courses/learn-problem-solving-basic/0-index.md",
+    "content/courses/learn-problem-solving-basic/index.md",
+    "content/courses/learn-problem-solving-basic/2-two-string.md",
+    "content/courses/learn-problem-solving-basic/1-welcome.md",
     "tldraw/Tldraw 2024-03-04 1.55AM.md",
     "Hello World.md",
-    "tldraw",
     "Test Markdown.md",
     "test.md",
     "My Day/2024-03-03.md",
