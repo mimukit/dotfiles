@@ -1,16 +1,9 @@
 return {
+  -- Collection of various small independent plugins/modules
   {
     "echasnovski/mini.nvim",
+    lazy = false,
     config = function()
-      -- Collection of various small independent plugins/modules
-      -- INFO: Better Around/Inside textobjects
-      --
-      -- Examples:
-      --  - va)  - [V]isually select [A]round [)]paren
-      --  - yinq - [Y]ank [I]nside [N]ext [Q]uote
-      --  - ci'  - [C]hange [I]nside [']quote
-      require("mini.ai").setup({ n_lines = 500 })
-
       -- INFO: Enable basic improvements
       require("mini.basics").setup({
         -- Options. Set to `false` to disable.
@@ -62,10 +55,6 @@ return {
       --
       require("mini.icons").setup()
 
-      -- INFO: Minimal and fast autopairs
-      --
-      require("mini.pairs").setup()
-
       -- INFO: Split and join arguments
       --
       require("mini.splitjoin").setup()
@@ -73,11 +62,13 @@ return {
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
       --
-      --  INFO: Already install modules by LazyVim extra plugins
+      --  INFO: Already install modules by LazyVim plugins
+      -- - mini-ai
       -- - mini-comment
-      -- - mini-surround
-      -- - mini-move
       -- - mini-hipattern
+      -- - mini-move
+      -- - mini-pairs
+      -- - mini-surround
     end,
   },
 }
