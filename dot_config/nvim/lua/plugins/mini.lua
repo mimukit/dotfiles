@@ -2,7 +2,7 @@ return {
   -- Collection of various small independent plugins/modules
   {
     "echasnovski/mini.nvim",
-    lazy = false,
+    event = "VeryLazy",
     config = function()
       -- INFO: Enable basic improvements
       require("mini.basics").setup({
