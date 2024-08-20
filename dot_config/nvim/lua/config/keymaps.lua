@@ -16,13 +16,11 @@ vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Scroll up and keep cursor in c
 vim.keymap.set("n", "n", "nzzzv", { desc = "Go to next search item and keep cursor in center of the screen" })
 vim.keymap.set("n", "N", "Nzzzv", { desc = "Go to previous search item and keep cursor in center of the screen" })
 
-vim.keymap.set("x", "<leader>p", [["_dP]], { desc = "Paste without modifying the buffer registry" })
-
-vim.keymap.set("n", "bv", "ggVG", { desc = "Select whole file" })
-vim.keymap.set("n", "by", "<cmd>%y+<CR>", { desc = "Copy whole file" })
+vim.keymap.set("n", "<leader>bv", "ggVG", { desc = "Select whole file" })
+vim.keymap.set("n", "<leader>by", "<cmd>%y+<CR>", { desc = "Copy whole file" })
 
 -- Buffer management
-vim.keymap.set({ "n", "v" }, "<leader>w", "<cmd> w <cr>", { desc = "Save current buffer" })
+-- vim.keymap.set({ "n", "v" }, "<leader>w", "<cmd> w <cr>", { desc = "Save current buffer" })
 vim.keymap.set("n", "<leader>bx", ":bd<CR>", { desc = "Close current buffer" })
 vim.keymap.set("n", "<leader>bd", ":bufdo bd<CR>", { desc = "Close all buffers" })
 vim.keymap.set("n", "<leader>bn", ":bnext<CR>", { desc = "Move to next buffer" })
@@ -33,3 +31,11 @@ vim.keymap.set({ "n", "t" }, "<C-h>", "<CMD>NavigatorLeft<CR>")
 vim.keymap.set({ "n", "t" }, "<C-l>", "<CMD>NavigatorRight<CR>")
 vim.keymap.set({ "n", "t" }, "<C-k>", "<CMD>NavigatorUp<CR>")
 vim.keymap.set({ "n", "t" }, "<C-j>", "<CMD>NavigatorDown<CR>")
+
+-- Split pane
+vim.keymap.set("n", "<leader>uv", "<CMD>vsplit<CR>", { desc = "Split pane vertically" })
+
+-- System Clipboard
+vim.keymap.set({ "n", "v" }, "<leader>cy", [["+y]], { desc = "Copy to system clipboard" })
+vim.keymap.set("n", "<leader>cY", [["+Y]], { desc = "Copy current line to clipboard" })
+vim.keymap.set({ "n", "v" }, "<leader>cp", [["+p]], { desc = "Paste from system clipboard" })
