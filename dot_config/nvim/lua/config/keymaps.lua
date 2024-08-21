@@ -18,6 +18,11 @@ vim.keymap.set("n", "<leader>bv", "ggVG", { desc = "Select whole file" })
 vim.keymap.set("n", "<leader>by", "<cmd>%y+<CR>", { desc = "Copy whole file" })
 
 -- vim.keymap.set({ "n", "v" }, "<leader>w", "<cmd> w <cr>", { desc = "Save current buffer" })
+-- Move cursor in insert mode
+vim.keymap.set("i", "<M-j>", "<Down>", { desc = "Move cursor down" })
+vim.keymap.set("i", "<M-k>", "<Up>", { desc = "Move cursor up" })
+vim.keymap.set("i", "<M-h>", "<Left>", { desc = "Move cursor left" })
+vim.keymap.set("i", "<M-l>", "<Right>", { desc = "Move cursor right" })
 
 -- Navigator
 vim.keymap.set({ "n", "t" }, "<C-h>", "<CMD>NavigatorLeft<CR>")
