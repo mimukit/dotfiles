@@ -4,9 +4,5 @@ return {
     filesystem = {
       follow_current_file = { enabled = true },
     },
-    window = {
-      position = "right",
-      width = 50,
-    },
   },
 }
