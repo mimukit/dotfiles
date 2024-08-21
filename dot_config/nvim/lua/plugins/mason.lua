@@ -2,21 +2,11 @@ return {
   {
     "williamboman/mason.nvim",
     opts = {
+      ui = {
+        border = "rounded",
+        height = 0.8,
+      },
       ensure_installed = {
-        -- formatters
-        "black",
-        "isort",
-        "prettierd",
-        "shfmt",
-        "stylua",
-
-        -- linters
-        "eslint_d",
-        "hadolint",
-        "jsonlint",
-        "markdownlint",
-        "pylint",
-
         -- snippets
         "emmet-language-server",
       },
