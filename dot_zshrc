@@ -92,6 +92,7 @@ alias czak='chezmoi forget ~/.config/karabiner/karabiner.json --force && chezmoi
 alias czao='chezmoi forget ~/Documents/Markdowns/.obsidian/ --force && chezmoi add ~/Documents/Markdowns/.obsidian/'
 alias czav='chezmoi forget ~/.config/nvim/ --force && chezmoi add ~/.config/nvim'
 alias czaz='chezmoi add ~/.zshrc'
+alias czra='chezmoi re-add'
 alias czc='code ~/.local/share/chezmoi'
 alias czv='cd ~/.local/share/chezmoi && nvim'
 alias czg='cd ~/.local/share/chezmoi && lazygit'
