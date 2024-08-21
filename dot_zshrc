@@ -9,7 +9,7 @@ fi
 # fi
 
 # Set global environment variables
-export EDITOR "nvim"
+export EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
 
@@ -128,6 +128,7 @@ alias m='tmuxinator'
 alias ms='tmuxinator start $( tmuxinator list --newline | grep -v "^tmuxinator projects" | fzf --prompt="⚡Tmuxinator Session → " --height=~50% --layout=reverse --border --exit-0)'
 alias rm='trash'
 alias v='nvim'
+alias vim='nvim'
 alias vconf='cd ~/.config/nvim && nvim'
 alias zconf='nvim ~/.zshrc'
 alias zsrc='source ~/.zshrc'
