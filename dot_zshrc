@@ -83,6 +83,7 @@ alias brewupx='brew update && brew outdated --cask --greedy --verbose && brew up
 alias c='clear'
 alias cc='clear; tmux clear-history; clear'
 alias co='code .'
+alias conf='cd ~/.config && nvim'
 alias ct='cloudflared tunnel'
 alias cz='chezmoi'
 alias cza='chezmoi -v apply'
