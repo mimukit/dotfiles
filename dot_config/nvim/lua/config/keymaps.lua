@@ -10,9 +10,8 @@ vim.keymap.set("n", "J", "mzJ`z", { desc = "Concat next line" })
 vim.keymap.set("n", "n", "nzzzv", { desc = "Go to next search item and keep cursor in center of the screen" })
 vim.keymap.set("n", "N", "Nzzzv", { desc = "Go to previous search item and keep cursor in center of the screen" })
 
--- Buffer management
-vim.keymap.set("n", "<leader>bv", "ggVG", { desc = "Select whole file" })
-vim.keymap.set("n", "<leader>by", "<cmd>%y+<CR>", { desc = "Copy whole file" })
+-- Visual selection
+vim.keymap.set("n", "<leader>vb", "ggVG", { desc = "Select whole file" })
 
 -- Move cursor in insert mode
 vim.keymap.set("i", "<M-j>", "<Down>", { desc = "Move cursor down" })
@@ -32,7 +31,22 @@ vim.keymap.set({ "n", "t" }, "<C-j>", "<CMD>NavigatorDown<CR>")
 -- Split pane
 vim.keymap.set("n", "<leader>uv", "<CMD>vsplit<CR>", { desc = "Split pane vertically" })
 
--- System Clipboard
-vim.keymap.set({ "n", "v" }, "<leader>cy", [["+y]], { desc = "Copy to system clipboard" })
-vim.keymap.set("n", "<leader>cY", [["+Y]], { desc = "Copy current line to clipboard" })
-vim.keymap.set({ "n", "v" }, "<leader>cp", [["+p]], { desc = "Paste from system clipboard" })
+-- Clipboard management
+vim.keymap.set({ "n", "v" }, "<leader>yy", [["+y]], { desc = "Copy to system clipboard" })
+vim.keymap.set("n", "<leader>yl", [["+Y]], { desc = "Copy current line to clipboard" })
+vim.keymap.set("n", "<leader>yb", "<cmd>%y+<CR>", { desc = "Copy whole file" })
+vim.keymap.set("n", "<leader>yw", '"+yiw', { desc = "Copy word under cusror to the clipboard buffer" })
+vim.keymap.set("n", "<leader>yW", '"+yiW', { desc = "Copy WORD under cusror to the clipboard buffer" })
+
+vim.keymap.set({ "n", "v" }, "<leader>pp", [["+p]], { desc = "Paste from system clipboard" })
+vim.keymap.set("x", "<leader>pr", [["_dP]], { desc = "Paste without modifying the buffer registry" })
+
+vim.keymap.set(
+  "n",
+  "<leader>yp",
+  ':let @+ = expand("%:p")<cr>:lua print("Copied path to: " .. vim.fn.expand("%:p"))<cr>',
+  { silent = false, desc = "Copy current file path" }
+)
+
+-- External commands
+vim.keymap.set("n", "cx", ":!chmod +x %<cr>", { desc = "make file executable" })
