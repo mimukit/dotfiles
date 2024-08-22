@@ -19,7 +19,7 @@ $SUDO apt update && $SUDO apt upgrade -y
 
 # Add necessary ppa sources
 # Nodejs
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_lts.x | $SUDO -E bash -
 
 if [ $? -eq 0 ]; then
   echo -e "${GREEN}\n✅ System updated and upgraded successfully.${NC}"
