@@ -27,7 +27,20 @@ fi
 # Install necessary packages
 echo -e "${GREEN}\n🚀 Installing required packages...${NC}"
 
-$SUDO apt install -y software-properties-common build-essential curl zsh tmux git eza bat btop neovim unzip ripgrep
+$SUDO apt install -y \
+  software-properties-common \
+  build-essential \
+  bat \
+  btop \
+  curl \
+  eza \
+  git \
+  neovim \
+  ripgrep \
+  tmux \
+  tree \
+  unzip \
+  zsh
 
 if [ $? -eq 0 ]; then
   echo -e "${GREEN}\n✅ Packages installed successfully.${NC}"
@@ -60,7 +73,8 @@ if [ -f "$HOME/dotfiles/dot_zshrc" ]; then
   cp "$HOME/dotfiles/dot_zshrc" "$HOME/.zshrc"
 
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}\n✅ .zshrc replaced successfully.${NC}"
+    echo -e "${GREEN}\n✅ .zshrc replaced successfully. Restarting zsh to install plugins...${NC}"
+    exec zsh # Restart zsh to install plugins via zinit
   else
     echo -e "${RED}\n❌ Failed to replace .zshrc.${NC}"
     exit 1
@@ -75,7 +89,7 @@ if [ -d "$HOME/dotfiles/dot_config/tmux" ]; then
   echo -e "${GREEN}\n🚀 Copying tmux configuration...${NC}"
 
   mkdir -p "$HOME/.config/tmux"
-  cp -r "$HOME/dotfiles/dot_config/tmux/" "$HOME/.config/tmux"
+  cp -r "$HOME/dotfiles/dot_config/tmux/" "$HOME/.config/tmux/"
 
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}\n✅ Tmux configuration copied successfully.${NC}"
@@ -133,6 +147,7 @@ if ! command -v fnm &>/dev/null; then
 
   curl -fsSL https://fnm.vercel.app/install | bash
   source $HOME/.bashrc
+  source ~/.bashrc
 
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}\n✅ fnm installed successfully.${NC}"
