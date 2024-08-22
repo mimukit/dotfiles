@@ -141,39 +141,39 @@ else
   echo -e "${GREEN}\n⚠️  fzf already installed. Skipping clone and installation.${NC}"
 fi
 
-# Install fnm
-if ! command -v fnm &>/dev/null; then
-  echo -e "${GREEN}\n🚀 Installing fnm...${NC}"
+# Install Node.js using NVM as an alternative to FNM
+if ! command -v nvm &>/dev/null; then
+  echo -e "${GREEN}\n🚀 Installing NVM (Node Version Manager)...${NC}"
 
-  curl -fsSL https://fnm.vercel.app/install | bash
-  source $HOME/.bashrc
-  source ~/.bashrc
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+  source ~/.bashrc # Source .bashrc to make nvm command available
 
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}\n✅ fnm installed successfully.${NC}"
+    echo -e "${GREEN}\n✅ NVM installed successfully.${NC}"
+
+    nvm install --lts
+
+    if [ $? -eq 0 ]; then
+      echo -e "${GREEN}\n✅ Node.js LTS installed successfully using NVM.${NC}"
+    else
+      echo -e "${RED}\n❌ Failed to install Node.js LTS.${NC}"
+      exit 1
+    fi
   else
-    echo -e "${RED}\n❌ Failed to install fnm.${NC}"
+    echo -e "${RED}\n❌ Failed to install NVM.${NC}"
     exit 1
   fi
 else
-  echo -e "${GREEN}\n⚠️  fnm already installed. Skipping installation.${NC}"
-fi
+  echo -e "${GREEN}\n⚠️  NVM already installed. Skipping installation.${NC}"
 
-# Install the latest LTS version of Node.js using fnm
-if command -v fnm &>/dev/null; then
-  echo -e "${GREEN}\n🚀 Installing the latest LTS version of Node.js...${NC}"
-
-  fnm install --lts
+  nvm install --lts
 
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}\n✅ Node.js LTS installed successfully.${NC}"
+    echo -e "${GREEN}\n✅ Node.js LTS installed successfully using NVM.${NC}"
   else
     echo -e "${RED}\n❌ Failed to install Node.js LTS.${NC}"
     exit 1
   fi
-else
-  echo -e "${RED}\n❌ fnm not found. Cannot install Node.js LTS.${NC}"
-  exit 1
 fi
 
 # Copy Neovim and tmux configurations
