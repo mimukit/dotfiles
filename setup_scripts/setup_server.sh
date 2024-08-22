@@ -93,7 +93,7 @@ fi
 if ! command -v starship &>/dev/null; then
   echo -e "${GREEN}\n🚀 Installing Starship prompt...${NC}"
 
-  curl -sS https://starship.rs/install.sh | sh
+  curl -sS https://starship.rs/install.sh | sh -s -- -y >/dev/null 2>&1
 
   # Copy starship.toml
   if [ -f "$HOME/dotfiles/dot_config/starship/starship.toml" ]; then
