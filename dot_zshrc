@@ -68,12 +68,10 @@ zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
-# Shell integrations
-source <(fzf --zsh)
-
 # Shell integrations for macos only
 if [[ "$OSTYPE" == "darwin"* ]]; then
    eval "$(starship init zsh)"
+   eval "$(fzf --zsh)"
    eval "$(atuin init zsh --disable-up-arrow)"
    eval "$(zoxide init zsh --cmd cd)"
    eval "$(/opt/homebrew/bin/mise activate zsh)"
