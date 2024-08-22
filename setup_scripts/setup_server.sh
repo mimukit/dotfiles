@@ -89,6 +89,22 @@ else
   exit 1
 fi
 
+# Install Starship prompt
+if ! command -v starship &>/dev/null; then
+  echo -e "${GREEN}\n🚀 Installing Starship prompt...${NC}"
+
+  curl -sS https://starship.rs/install.sh | sh
+
+  if [ $? -eq 0 ]; then
+    echo -e "${GREEN}\n✅ Starship installed successfully.${NC}"
+  else
+    echo -e "${RED}\n❌ Failed to install Starship.${NC}"
+    exit 1
+  fi
+else
+  echo -e "${GREEN}\n⚠️  Starship already installed. Skipping installation.${NC}"
+fi
+
 # Replace .tmux.conf with the one from dotfiles
 if [ -d "$HOME/dotfiles/dot_config/tmux" ]; then
   echo -e "${GREEN}\n🚀 Copying tmux configuration...${NC}"
