@@ -5,9 +5,16 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Check if sudo is available
+if command -v sudo &>/dev/null; then
+  SUDO="sudo"
+else
+  SUDO=""
+fi
+
 # Update and upgrade the system
 echo -e "${GREEN}Updating and upgrading the system...${NC}"
-sudo apt update && sudo apt upgrade -y
+$SUDO apt update && $SUDO apt upgrade -y
 if [ $? -eq 0 ]; then
   echo -e "${GREEN}System updated and upgraded successfully.${NC}"
 else
@@ -17,7 +24,7 @@ fi
 
 # Install necessary packages
 echo -e "${GREEN}Installing required packages...${NC}"
-sudo apt install -y software-properties-common build-essential curl zsh tmux git eza bat btop neovim unzip ripgrep fontconfig
+$SUDO apt install -y software-properties-common build-essential curl zsh tmux git eza bat btop neovim unzip ripgrep fontconfig
 if [ $? -eq 0 ]; then
   echo -e "${GREEN}Packages installed successfully.${NC}"
 else
@@ -142,4 +149,3 @@ else
 fi
 
 echo -e "${GREEN}All tasks completed successfully.${NC}"
-
