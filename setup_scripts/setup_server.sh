@@ -41,7 +41,7 @@ $SUDO apt install -y \
   git \
   neovim \
   nodejs \
-  python3 \
+  python3.12-venv \
   ripgrep \
   tmux \
   tree \
