@@ -110,7 +110,6 @@ fi
 if [ -f "$HOME/dotfiles/dot_config/starship/starship.toml" ]; then
   echo -e "${GREEN}\n🚀 Copying Starship configuration...${NC}"
 
-  mkdir -p "$HOME/.config/starship"
   cp -r "$HOME/dotfiles/dot_config/starship/" "$HOME/.config/starship/"
 
   if [ $? -eq 0 ]; then
