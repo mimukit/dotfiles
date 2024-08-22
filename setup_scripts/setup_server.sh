@@ -132,6 +132,7 @@ if ! command -v fnm &>/dev/null; then
   echo -e "${GREEN}\n🚀 Installing fnm...${NC}"
 
   curl -fsSL https://fnm.vercel.app/install | bash
+  source $HOME/.bashrc
 
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}\n✅ fnm installed successfully.${NC}"
