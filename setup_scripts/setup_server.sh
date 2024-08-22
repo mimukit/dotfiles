@@ -95,6 +95,23 @@ if ! command -v starship &>/dev/null; then
 
   curl -sS https://starship.rs/install.sh | sh
 
+  # Copy starship.toml
+  if [ -f "$HOME/dotfiles/dot_config/starship.toml" ]; then
+    echo -e "${GREEN}\n🚀 Copying Starship configuration...${NC}"
+
+    cp "$HOME/dotfiles/dot_config/starship/" "$HOME/.config/"
+
+    if [ $? -eq 0 ]; then
+      echo -e "${GREEN}\n✅ Starship configuration copied successfully.${NC}"
+    else
+      echo -e "${RED}\n❌ Failed to copy Starship configuration.${NC}"
+      exit 1
+    fi
+  else
+    echo -e "${RED}\n⚠️  Starship configuration not found in dotfiles repository. Please fix.${NC}"
+    exit 1
+  fi
+
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}\n✅ Starship installed successfully.${NC}"
   else
