@@ -13,139 +13,168 @@ else
 fi
 
 # Update and upgrade the system
-echo -e "${GREEN}Updating and upgrading the system...${NC}"
+echo -e "${GREEN}\n🚀 Updating and upgrading the system...${NC}"
+
 $SUDO apt update && $SUDO apt upgrade -y
+
 if [ $? -eq 0 ]; then
-  echo -e "${GREEN}System updated and upgraded successfully.${NC}"
+  echo -e "${GREEN}\n✅ System updated and upgraded successfully.${NC}"
 else
-  echo -e "${RED}Failed to update and upgrade the system.${NC}"
+  echo -e "${RED}\n❌ Failed to update and upgrade the system.${NC}"
   exit 1
 fi
 
 # Install necessary packages
-echo -e "${GREEN}Installing required packages...${NC}"
-$SUDO apt install -y software-properties-common build-essential curl zsh tmux git eza bat btop neovim unzip ripgrep fontconfig
+echo -e "${GREEN}\n🚀 Installing required packages...${NC}"
+
+$SUDO apt install -y software-properties-common build-essential curl zsh tmux git eza bat btop neovim unzip ripgrep
+
 if [ $? -eq 0 ]; then
-  echo -e "${GREEN}Packages installed successfully.${NC}"
+  echo -e "${GREEN}\n✅ Packages installed successfully.${NC}"
 else
-  echo -e "${RED}Failed to install packages.${NC}"
+  echo -e "${RED}\n❌ Failed to install packages.${NC}"
   exit 1
 fi
 
 # Clone dotfiles repo
 if [ ! -d "$HOME/dotfiles" ]; then
-  echo -e "${GREEN}Cloning dotfiles repository...${NC}"
+  echo -e "${GREEN}\n🚀 Cloning dotfiles repository...${NC}"
+
   git clone https://github.com/mimukit/dotfiles.git "$HOME/dotfiles"
+
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}dotfiles repository cloned successfully.${NC}"
+    echo -e "${GREEN}\n✅ Dotfiles repository cloned successfully.${NC}"
   else
-    echo -e "${RED}Failed to clone dotfiles repository.${NC}"
+    echo -e "${RED}\n❌ Failed to clone dotfiles repository.${NC}"
     exit 1
   fi
 else
-  echo -e "${GREEN}dotfiles repository already exists. Skipping clone.${NC}"
+  echo -e "${GREEN}\n⚠️  Dotfiles repository already exists. Skipping clone.${NC}"
 fi
 
 # Replace .zshrc with the one from dotfiles
 if [ -f "$HOME/dotfiles/dot_zshrc" ]; then
-  echo -e "${GREEN}Replacing .zshrc with custom configuration...${NC}"
+  echo -e "${GREEN}\n🚀 Replacing .zshrc with custom configuration...${NC}"
+
   rm -f "$HOME/.zshrc"
   cp "$HOME/dotfiles/dot_zshrc" "$HOME/.zshrc"
+
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}.zshrc replaced successfully.${NC}"
+    echo -e "${GREEN}\n✅ .zshrc replaced successfully.${NC}"
   else
-    echo -e "${RED}Failed to replace .zshrc.${NC}"
+    echo -e "${RED}\n❌ Failed to replace .zshrc.${NC}"
     exit 1
   fi
 else
-  echo -e "${RED}dot_zshrc not found in dotfiles repository. Skipping.${NC}"
+  echo -e "${RED}\n⚠️  dot_zshrc not found in dotfiles repository. Please fix.${NC}"
+  exit 1
+fi
+
+# Replace .tmux.conf with the one from dotfiles
+if [ -d "$HOME/dotfiles/dot_config/tmux" ]; then
+  echo -e "${GREEN}\n🚀 Copying tmux configuration...${NC}"
+
+  mkdir -p "$HOME/.config/tmux"
+  cp -r "$HOME/dotfiles/dot_config/tmux/" "$HOME/.config/tmux"
+
+  if [ $? -eq 0 ]; then
+    echo -e "${GREEN}\n✅ Tmux configuration copied successfully.${NC}"
+  else
+    echo -e "${RED}\n❌ Failed to copy tmux configuration.${NC}"
+    exit 1
+  fi
+else
+  echo -e "${RED}\n⚠️  Tmux configuration not found in dotfiles repository. Please fix.${NC}"
+  exit 1
 fi
 
 # Clone tmux plugin manager
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
-  echo -e "${GREEN}Cloning tmux plugin manager...${NC}"
+  echo -e "${GREEN}\n🚀 Cloning tmux plugin manager...${NC}"
+
   git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+
+  # Start Tmux and install plugins
+  tmux start-server
+  tmux new-session -d
+  ~/.tmux/plugins/tpm/bin/install_plugins
+  tmux kill-server
+
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}tmux plugin manager cloned successfully.${NC}"
+    echo -e "${GREEN}\n✅ Tmux plugin manager cloned successfully.${NC}"
   else
-    echo -e "${RED}Failed to clone tmux plugin manager.${NC}"
+    echo -e "${RED}\n❌ Failed to clone tmux plugin manager.${NC}"
     exit 1
   fi
 else
-  echo -e "${GREEN}tmux plugin manager already exists. Skipping clone.${NC}"
+  echo -e "${GREEN}\n⚠️  Tmux plugin manager already exists. Skipping clone.${NC}"
 fi
 
 # Install fzf
 if [ ! -d "$HOME/.fzf" ]; then
-  echo -e "${GREEN}Cloning and installing fzf...${NC}"
+  echo -e "${GREEN}\n🚀 Cloning and installing fzf...${NC}"
+
   git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
   "$HOME/.fzf/install" --all
+
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}fzf installed successfully.${NC}"
+    echo -e "${GREEN}\n✅ fzf installed successfully.${NC}"
   else
-    echo -e "${RED}Failed to install fzf.${NC}"
+    echo -e "${RED}\n❌ Failed to install fzf.${NC}"
     exit 1
   fi
 else
-  echo -e "${GREEN}fzf already installed. Skipping clone and installation.${NC}"
+  echo -e "${GREEN}\n⚠️  fzf already installed. Skipping clone and installation.${NC}"
 fi
 
 # Install fnm
 if ! command -v fnm &>/dev/null; then
-  echo -e "${GREEN}Installing fnm...${NC}"
+  echo -e "${GREEN}\n🚀 Installing fnm...${NC}"
+
   curl -fsSL https://fnm.vercel.app/install | bash
+
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}fnm installed successfully.${NC}"
+    echo -e "${GREEN}\n✅ fnm installed successfully.${NC}"
   else
-    echo -e "${RED}Failed to install fnm.${NC}"
+    echo -e "${RED}\n❌ Failed to install fnm.${NC}"
     exit 1
   fi
 else
-  echo -e "${GREEN}fnm already installed. Skipping installation.${NC}"
+  echo -e "${GREEN}\n⚠️  fnm already installed. Skipping installation.${NC}"
 fi
 
 # Install the latest LTS version of Node.js using fnm
 if command -v fnm &>/dev/null; then
-  echo -e "${GREEN}Installing the latest LTS version of Node.js...${NC}"
+  echo -e "${GREEN}\n🚀 Installing the latest LTS version of Node.js...${NC}"
+
   fnm install --lts
+
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Node.js LTS installed successfully.${NC}"
+    echo -e "${GREEN}\n✅ Node.js LTS installed successfully.${NC}"
   else
-    echo -e "${RED}Failed to install Node.js LTS.${NC}"
+    echo -e "${RED}\n❌ Failed to install Node.js LTS.${NC}"
     exit 1
   fi
 else
-  echo -e "${RED}fnm not found. Cannot install Node.js LTS.${NC}"
+  echo -e "${RED}\n❌ fnm not found. Cannot install Node.js LTS.${NC}"
   exit 1
 fi
 
 # Copy Neovim and tmux configurations
 if [ -d "$HOME/dotfiles/dot_config/nvim" ]; then
-  echo -e "${GREEN}Copying Neovim configuration...${NC}"
+  echo -e "${GREEN}\n🚀 Copying Neovim configuration...${NC}"
+
   mkdir -p "$HOME/.config/nvim"
   cp -r "$HOME/dotfiles/dot_config/nvim/" "$HOME/.config/nvim"
+
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Neovim configuration copied successfully.${NC}"
+    echo -e "${GREEN}\n✅ Neovim configuration copied successfully.${NC}"
   else
-    echo -e "${RED}Failed to copy Neovim configuration.${NC}"
+    echo -e "${RED}\n❌ Failed to copy Neovim configuration.${NC}"
     exit 1
   fi
 else
-  echo -e "${RED}Neovim configuration not found in dotfiles repository. Skipping.${NC}"
+  echo -e "${RED}\n❌ Neovim configuration not found in dotfiles repository. Please fix.${NC}"
 fi
 
-if [ -d "$HOME/dotfiles/dot_config/tmux" ]; then
-  echo -e "${GREEN}Copying tmux configuration...${NC}"
-  mkdir -p "$HOME/.config/tmux"
-  cp -r "$HOME/dotfiles/dot_config/tmux/" "$HOME/.config/tmux"
-  if [ $? -eq 0 ]; then
-    echo -e "${GREEN}tmux configuration copied successfully.${NC}"
-  else
-    echo -e "${RED}Failed to copy tmux configuration.${NC}"
-    exit 1
-  fi
-else
-  echo -e "${RED}tmux configuration not found in dotfiles repository. Skipping.${NC}"
-fi
-
-echo -e "${GREEN}All tasks completed successfully.${NC}"
+echo -e "${GREEN}\n\n✅ All tasks completed successfully.${NC}"
