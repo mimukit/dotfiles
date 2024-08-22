@@ -93,8 +93,7 @@ fi
 if [ -d "$HOME/dotfiles/dot_config/tmux" ]; then
   echo -e "${GREEN}\n🚀 Copying tmux configuration...${NC}"
 
-  mkdir -p "$HOME/.config/tmux"
-  cp -r "$HOME/dotfiles/dot_config/tmux/" "$HOME/.config/tmux/"
+  cp -r "$HOME/dotfiles/dot_config/tmux/" "$HOME/.config/"
 
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}\n✅ Tmux configuration copied successfully.${NC}"
@@ -150,8 +149,7 @@ fi
 if [ -d "$HOME/dotfiles/dot_config/nvim" ]; then
   echo -e "${GREEN}\n🚀 Copying Neovim configuration...${NC}"
 
-  mkdir -p "$HOME/.config/nvim"
-  cp -r "$HOME/dotfiles/dot_config/nvim/" "$HOME/.config/nvim"
+  cp -r "$HOME/dotfiles/dot_config/nvim/" "$HOME/.config/"
 
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}\n✅ Neovim configuration copied successfully.${NC}"
