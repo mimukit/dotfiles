@@ -99,7 +99,7 @@ if ! command -v starship &>/dev/null; then
   if [ -f "$HOME/dotfiles/dot_config/starship/starship.toml" ]; then
     echo -e "${GREEN}\n🚀 Copying Starship configuration...${NC}"
 
-    cp "$HOME/dotfiles/dot_config/starship/" "$HOME/.config/"
+    cp -r "$HOME/dotfiles/dot_config/starship/" "$HOME/.config/"
 
     if [ $? -eq 0 ]; then
       echo -e "${GREEN}\n✅ Starship configuration copied successfully.${NC}"
