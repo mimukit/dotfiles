@@ -17,6 +17,10 @@ echo -e "${GREEN}\n🚀 Updating and upgrading the system...${NC}"
 
 $SUDO apt update && $SUDO apt upgrade -y
 
+# Add necessary ppa sources
+# Nodejs
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+
 if [ $? -eq 0 ]; then
   echo -e "${GREEN}\n✅ System updated and upgraded successfully.${NC}"
 else
@@ -36,6 +40,7 @@ $SUDO apt install -y \
   eza \
   git \
   neovim \
+  nodejs \
   ripgrep \
   tmux \
   tree \
@@ -141,41 +146,6 @@ else
   echo -e "${GREEN}\n⚠️  fzf already installed. Skipping clone and installation.${NC}"
 fi
 
-# Install Node.js using NVM as an alternative to FNM
-if ! command -v nvm &>/dev/null; then
-  echo -e "${GREEN}\n🚀 Installing NVM (Node Version Manager)...${NC}"
-
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-  source ~/.bashrc # Source .bashrc to make nvm command available
-
-  if [ $? -eq 0 ]; then
-    echo -e "${GREEN}\n✅ NVM installed successfully.${NC}"
-
-    nvm install --lts
-
-    if [ $? -eq 0 ]; then
-      echo -e "${GREEN}\n✅ Node.js LTS installed successfully using NVM.${NC}"
-    else
-      echo -e "${RED}\n❌ Failed to install Node.js LTS.${NC}"
-      exit 1
-    fi
-  else
-    echo -e "${RED}\n❌ Failed to install NVM.${NC}"
-    exit 1
-  fi
-else
-  echo -e "${GREEN}\n⚠️  NVM already installed. Skipping installation.${NC}"
-
-  nvm install --lts
-
-  if [ $? -eq 0 ]; then
-    echo -e "${GREEN}\n✅ Node.js LTS installed successfully using NVM.${NC}"
-  else
-    echo -e "${RED}\n❌ Failed to install Node.js LTS.${NC}"
-    exit 1
-  fi
-fi
-
 # Copy Neovim and tmux configurations
 if [ -d "$HOME/dotfiles/dot_config/nvim" ]; then
   echo -e "${GREEN}\n🚀 Copying Neovim configuration...${NC}"
@@ -193,4 +163,21 @@ else
   echo -e "${RED}\n❌ Neovim configuration not found in dotfiles repository. Please fix.${NC}"
 fi
 
-echo -e "${GREEN}\n\n✅ All tasks completed successfully.${NC}"
+# Remove dotfiles directory finally
+
+if [ -d "$HOME/dotfiles" ]; then
+  echo -e "${GREEN}\n🚀 Removing dotfiles directory...${NC}"
+
+  rm -rf "$HOME/dotfiles"
+
+  if [ $? -eq 0 ]; then
+    echo -e "${GREEN}\n✅ Dotfiles directory removed successfully.${NC}"
+  else
+    echo -e "${RED}\n❌ Failed to remove dotfiles directory.${NC}"
+    exit 1
+  fi
+else
+  echo -e "${RED}\n⚠️  Dotfiles directory not found. Skipping removal.${NC}"
+fi
+
+echo -e "${GREEN}\n\n✅ ✅ ✅ All tasks completed successfully ✅ ✅ ✅${NC}"
