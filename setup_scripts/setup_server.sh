@@ -150,6 +150,7 @@ if [ -d "$HOME/dotfiles/dot_config/nvim" ]; then
   echo -e "${GREEN}\n🚀 Copying Neovim configuration...${NC}"
 
   cp -r "$HOME/dotfiles/dot_config/nvim/" "$HOME/.config/"
+  mv ~/.config/nvim/dot_neoconf.json ~/.config/nvim/.neoconf.json
 
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}\n✅ Neovim configuration copied successfully.${NC}"
