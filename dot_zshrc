@@ -69,11 +69,16 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Shell integrations
-eval "$(starship init zsh)"
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
-eval "$(atuin init zsh --disable-up-arrow)"
-eval "$(/opt/homebrew/bin/mise activate zsh)"
+
+# Shell integrations for macos only
+if [[ "$OSTYPE" == "darwin"* ]]; then
+   eval "$(starship init zsh)"
+   eval "$(atuin init zsh --disable-up-arrow)"
+   eval "$(/opt/homebrew/bin/mise activate zsh)"
+fi
+
 
 # Alias list
 alias ..='cd ..'
