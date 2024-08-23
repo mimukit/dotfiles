@@ -19,7 +19,7 @@ $SUDO apt update && $SUDO apt upgrade -y
 
 # Add necessary ppa sources
 # Nodejs
-curl -fsSL https://deb.nodesource.com/setup_lts.x | $SUDO bash -
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 
 if [ $? -eq 0 ]; then
   echo -e "${GREEN}\n✅ System updated and upgraded successfully.${NC}"
@@ -110,8 +110,7 @@ fi
 if [ -f "$HOME/dotfiles/dot_config/starship/starship.toml" ]; then
   echo -e "${GREEN}\n🚀 Copying Starship configuration...${NC}"
 
-  mkdir -p "$HOME/.config/starship"
-  cp -r "$HOME/dotfiles/dot_config/starship/starship.toml" "$HOME/.config/starship/starship.toml"
+  cp -r "$HOME/dotfiles/dot_config/starship/" "$HOME/.config/starship/"
 
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}\n✅ Starship configuration copied successfully.${NC}"
