@@ -26,7 +26,6 @@ require("lazy").setup({
 
     -- add ui plugins
     { import = "lazyvim.plugins.extras.ui.alpha" },
-    { import = "lazyvim.plugins.extras.ui.edgy" },
 
     -- add lazyvim extra plugins
     { import = "lazyvim.plugins.extras.coding.copilot" },
