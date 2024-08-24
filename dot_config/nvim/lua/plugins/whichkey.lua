@@ -8,6 +8,7 @@ return {
         border = "rounded",
         title = false,
       },
+      sort = { "alphanum" },
       spec = {
         {
           mode = { "n", "v" },
@@ -41,9 +42,12 @@ return {
             end,
           },
           { "gx", desc = "Open with system app" },
+
           { "<leader>y", group = "yank modifiers", icon = { icon = "© ", color = "cyan" } },
           { "<leader>p", group = "put modifiers", icon = { icon = "℗ ", color = "cyan" } },
           { "<leader>v", group = "visual modifiers", icon = { icon = "⊹ ", color = "yellow" } },
+          { "<leader>cg", group = "lsp + lspsaga", icon = { icon = "♔ ", color = "yellow" } },
+          { "<leader>ac", group = "Copilot", icon = { icon = "♔ ", color = "green" } },
         },
       },
     },
