@@ -18,8 +18,8 @@ end
 
 -- Settings
 
-config.color_scheme = "Catppuccin Mocha"
--- config.color_scheme = "Banana Blueberry"
+config.color_scheme = "Banana Blueberry"
+-- config.color_scheme = "Catppuccin Mocha"
 -- config.color_scheme = 'Outrun Dark (base16)'
 -- config.color_scheme = 'Omni (Gogh)'
 -- config.color_scheme = 'Nightfly (Gogh)'
@@ -28,7 +28,6 @@ config.color_scheme = "Catppuccin Mocha"
 config.font = wezterm.font_with_fallback({
 	{
 		family = "MesloLGS Nerd Font Mono",
-		scale = 1.15,
 		weight = "Medium",
 	},
 	{
@@ -41,6 +40,9 @@ config.font = wezterm.font_with_fallback({
 		scale = 1.2,
 	},
 })
+
+config.font_size = 13.0
+config.line_height = 1.2
 
 config.window_background_opacity = 0.97
 config.window_decorations = "RESIZE"
