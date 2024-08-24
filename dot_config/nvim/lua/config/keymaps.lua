@@ -49,4 +49,9 @@ vim.keymap.set(
 )
 
 -- External commands
-vim.keymap.set("n", "cx", ":!chmod +x %<cr>", { desc = "make file executable" })
+vim.keymap.set("n", "cx", ":!chmod +x %<cr>", { desc = "Make file executable" })
+
+-- Copilot
+vim.keymap.set("n", "<leader>acp", "<cmd>Copilot panel<cr>", { desc = "Copilot panel" })
+vim.keymap.set("n", "<leader>acs", "<cmd>Copilot status<cr>", { desc = "Copilot status" })
+vim.keymap.set("n", "<leader>act", "<cmd>Copilot toggle<cr>", { desc = "Copilot toggle" })
