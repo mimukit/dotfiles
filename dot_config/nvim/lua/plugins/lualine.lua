@@ -1,34 +1,25 @@
-local colors = {
-  black = "#080808",
-  blue = "#89b4fa",
-  green = "#a6e3a1",
-  mauve = "#cba6f7",
-  peach = "#fab387",
-  surface = "#313244",
-  red = "#f38ba8",
-  white = "#cdd6f4",
-}
+local colors = require("catppuccin.palettes").get_palette("mocha")
 
 local catppuccin_custom = {
   normal = {
-    a = { fg = colors.black, bg = colors.peach },
-    b = { fg = colors.white, bg = colors.surface },
-    c = { fg = colors.white },
+    a = { fg = colors.crust, bg = colors.peach },
+    b = { fg = colors.text, bg = colors.surface0 },
+    c = { fg = colors.text },
 
-    -- x = { fg = colors.white },
-    -- y = { fg = colors.white, bg = colors.surface },
-    -- z = { fg = colors.black, bg = colors.peach },
+    -- x = { fg = colors.text },
+    -- y = { fg = colors.text, bg = colors.surface0 },
+    -- z = { fg = colors.crust, bg = colors.peach },
   },
 
-  insert = { a = { fg = colors.black, bg = colors.green } },
-  visual = { a = { fg = colors.black, bg = colors.blue } },
-  replace = { a = { fg = colors.black, bg = colors.red } },
-  command = { a = { fg = colors.black, bg = colors.mauve } },
+  insert = { a = { fg = colors.crust, bg = colors.green } },
+  visual = { a = { fg = colors.crust, bg = colors.blue } },
+  replace = { a = { fg = colors.crust, bg = colors.red } },
+  command = { a = { fg = colors.crust, bg = colors.mauve } },
 
   inactive = {
-    a = { fg = colors.white, bg = colors.surface },
-    b = { fg = colors.white, bg = colors.surface },
-    c = { fg = colors.white },
+    a = { fg = colors.text, bg = colors.surface0 },
+    b = { fg = colors.text, bg = colors.surface0 },
+    c = { fg = colors.text },
   },
 }
 
