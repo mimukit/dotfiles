@@ -1,6 +1,17 @@
 return {
+  -- set the colorscheme
+  {
+    "LazyVim/LazyVim",
+    opts = {
+      colorscheme = "catppuccin",
+      -- colorscheme = "cyberdream",
+    },
+  },
+
+  -- catppuccin
   {
     "catppuccin/nvim",
+    enabled = true,
     lazy = false,
     name = "catppuccin",
     priority = 1000,
@@ -43,5 +54,25 @@ return {
         which_key = true,
       },
     },
+  },
+
+  -- cyberdream
+  {
+    "scottmckendry/cyberdream.nvim",
+    enabled = false,
+    lazy = false,
+    priority = 1000,
+    opts = function(_, opts)
+      opts.transparent = true
+      opts.italic_comments = true
+      opts.borderless_telescope = false
+    end,
+  },
+
+  -- modicator (auto color line number based on vim mode)
+  {
+    "mawkler/modicator.nvim",
+    event = "BufReadPre",
+    opts = {},
   },
 }
