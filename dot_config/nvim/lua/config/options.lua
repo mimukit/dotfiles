@@ -22,6 +22,8 @@ vim.opt.scrolloff = 20
 vim.opt.wrap = true
 vim.opt.hlsearch = true
 vim.opt.incsearch = true
+vim.opt.conceallevel = 0
+vim.opt.cmdheight = 0
 
 -- Fold unfold settings
 vim.o.foldcolumn = "0" -- '0' is not bad
