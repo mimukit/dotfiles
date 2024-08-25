@@ -2449,7 +2449,7 @@
 			<key>Blur</key>
 			<true/>
 			<key>Blur Radius</key>
-			<real>20</real>
+			<real>24.984815492021276</real>
 			<key>Bold Color</key>
 			<dict>
 				<key>Alpha Component</key>
@@ -2679,12 +2679,16 @@
 			</dict>
 			<key>Guid</key>
 			<string>B2EC99F9-9D1A-4C8F-A977-273589AC543F</string>
+			<key>Hide After Opening</key>
+			<false/>
 			<key>Horizontal Spacing</key>
 			<real>1</real>
 			<key>Idle Code</key>
 			<integer>0</integer>
 			<key>Initial Text</key>
 			<string></string>
+			<key>Initial Use Transparency</key>
+			<true/>
 			<key>Jobs to Ignore</key>
 			<array>
 				<string>rlogin</string>
@@ -3217,7 +3221,7 @@
 			<key>Normal Font</key>
 			<string>MesloLGLNFM-Regular 13</string>
 			<key>Only The Default BG Color Uses Transparency</key>
-			<false/>
+			<true/>
 			<key>Option Key Sends</key>
 			<integer>2</integer>
 			<key>Prompt Before Closing 2</key>
@@ -3489,7 +3493,7 @@
 			<key>Thin Strokes</key>
 			<integer>4</integer>
 			<key>Transparency</key>
-			<real>0.050000000000000017</real>
+			<real>0.20036458333333335</real>
 			<key>Underline Color</key>
 			<dict>
 				<key>Alpha Component</key>
