@@ -49,7 +49,6 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.test.core" },
 
     { import = "lazyvim.plugins.extras.util.dot" },
-    { import = "lazyvim.plugins.extras.util.mini-hipatterns" },
 
     -- add language plugins
     { import = "lazyvim.plugins.extras.lang.docker" },

@@ -65,7 +65,6 @@ return {
       --  INFO: Already install modules by LazyVim plugins
       -- - mini-ai
       -- - mini-comment
-      -- - mini-hipattern
       -- - mini-move
       -- - mini-pairs
       -- - mini-surround
