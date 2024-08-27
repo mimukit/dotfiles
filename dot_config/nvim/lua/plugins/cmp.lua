@@ -1,9 +1,8 @@
 return {
   {
     "hrsh7th/nvim-cmp",
-    opts = function(_, opts)
-      local cmp = require("cmp")
-      opts.window = {
+    opts = {
+      window = {
         completion = {
           border = "rounded",
           winhighlight = "Normal:MyHighlight",
@@ -14,13 +13,18 @@ return {
           winhighlight = "Normal:MyHighlight",
           winblend = 0,
         },
-      }
+      },
       -- Set view to follow cursor while typing
-      opts.view = {
+      view = {
         entries = {
           follow_cursor = true,
         },
-      }
-    end,
+      },
+      -- performance
+      performance = {
+        debounce = 0, -- default is 60ms
+        throttle = 0, -- default is 30ms
+      },
+    },
   },
 }
