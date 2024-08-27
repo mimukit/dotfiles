@@ -7,29 +7,28 @@ local neovimLines = {
   [[    █████████ ██████████ █████████ █████ █████ ████ █████   ]],
   [[  ███████████ ███    ███ █████████ █████ █████ ████ █████  ]],
   [[ ██████  █████████████████████ ████ █████ █████ ████ ██████ ]],
-  [[                                                                       ]],
 }
 
 -- Define and set highlight groups for each logo line
-vim.api.nvim_set_hl(0, "DashboardLogo1", { fg = "#f38ba8" })
-vim.api.nvim_set_hl(0, "DashboardLogo2", { fg = "#eba0ac" })
-vim.api.nvim_set_hl(0, "DashboardLogo3", { fg = "#f5c2e7" })
-vim.api.nvim_set_hl(0, "DashboardLogo4", { fg = "#cba6f7" })
-vim.api.nvim_set_hl(0, "DashboardLogo5", { fg = "#89b4fa" })
-vim.api.nvim_set_hl(0, "DashboardLogo6", { fg = "#74c7ec" })
-vim.api.nvim_set_hl(0, "DashboardLogo7", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "DashboardLogo8", { fg = "#94e2d5" })
+vim.api.nvim_set_hl(0, "DashboardColor1", { fg = "#f38ba8" })
+vim.api.nvim_set_hl(0, "DashboardColor2", { fg = "#eba0ac" })
+vim.api.nvim_set_hl(0, "DashboardColor3", { fg = "#f5c2e7" })
+vim.api.nvim_set_hl(0, "DashboardColor4", { fg = "#cba6f7" })
+vim.api.nvim_set_hl(0, "DashboardColor5", { fg = "#89b4fa" })
+vim.api.nvim_set_hl(0, "DashboardColor6", { fg = "#74c7ec" })
+vim.api.nvim_set_hl(0, "DashboardColor7", { fg = "#89dceb" })
+vim.api.nvim_set_hl(0, "DashboardColor8", { fg = "#94e2d5" })
 
 local function lineColor(lines, popStart, popEnd)
   local out = {}
   for i, line in ipairs(lines) do
-    local hi = "DashboardLogo" .. i
+    local hi = "DashboardColor" .. i
     if i > popStart and i <= popEnd then
-      hi = "DashboardLogo" .. i - popStart
+      hi = "DashboardColor" .. i - popStart
     elseif i > popStart then
-      hi = "DashboardLogo" .. i - popStart
+      hi = "DashboardColor" .. i - popStart
     else
-      hi = "DashboardLogo" .. i
+      hi = "DashboardColor" .. i
     end
     table.insert(out, { hi = hi, line = line })
   end
@@ -82,7 +81,7 @@ local function configure()
   local buttons = {
     type = "group",
     val = {
-      { type = "text", val = "Quick links", opts = { hl = "DashboardLogo3", position = "center" } },
+      { type = "text", val = "Quick links", opts = { hl = "DashboardColor3", position = "center" } },
       { type = "padding", val = 2 },
       dashboard.button("f", " " .. " Find file", "<cmd> Telescope find_files <cr>"),
       { type = "padding", val = 1 },
@@ -106,6 +105,7 @@ local function configure()
     header_color(),
     { type = "padding", val = 2 },
     buttons,
+    { type = "padding", val = 2 },
   }
 
   return themeconfig
@@ -113,8 +113,43 @@ end
 
 return {
   "goolord/alpha-nvim",
-  dependencies = { "nvim-tree/nvim-web-devicons" },
+  event = "VimEnter",
+  enabled = true,
+  init = false,
   config = function()
+    -- close Lazy and re-open when the dashboard is ready
+    if vim.o.filetype == "lazy" then
+      vim.cmd.close()
+      vim.api.nvim_create_autocmd("User", {
+        once = true,
+        pattern = "AlphaReady",
+        callback = function()
+          require("lazy").show()
+        end,
+      })
+    end
+
     require("alpha").setup(configure())
+
+    vim.api.nvim_create_autocmd("User", {
+      once = true,
+      pattern = "LazyVimStarted",
+      callback = function()
+        local theme = require("alpha.themes.theta")
+        local themeconfig = theme.config
+        local stats = require("lazy").stats()
+        local ms = (math.floor(stats.startuptime * 100 + 0.5) / 100)
+
+        themeconfig.layout[6] = {
+          type = "text",
+          val = "⚡ Neovim loaded " .. stats.loaded .. "/" .. stats.count .. " plugins in " .. ms .. "ms",
+          opts = {
+            hl = "DashboardColor8",
+            position = "center",
+          },
+        }
+        pcall(vim.cmd.AlphaRedraw)
+      end,
+    })
   end,
 }
