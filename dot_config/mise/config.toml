@@ -9,6 +9,7 @@ node = "lts"
 "npm:serve" = "latest"
 "npm:trash-cli" = "latest"
 "npm:tsx" = "latest"
+"npm:vercel" = "latest"
 "npm:yarn" = "latest"
 
 [settings]
