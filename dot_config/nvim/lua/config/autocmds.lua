@@ -15,7 +15,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
 -- INFO: Disable diagnostics for .env files
 vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-  pattern = "*.env",
+  pattern = "*.env*",
   callback = function()
     vim.diagnostic.enable(false)
   end,
