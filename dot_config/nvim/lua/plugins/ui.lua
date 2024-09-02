@@ -12,7 +12,8 @@ return {
   {
     "catppuccin/nvim",
     enabled = true,
-    lazy = false,
+    lazy = true,
+    event = "VimEnter",
     name = "catppuccin",
     priority = 1000,
     opts = {
@@ -60,7 +61,8 @@ return {
   {
     "scottmckendry/cyberdream.nvim",
     enabled = false,
-    lazy = false,
+    lazy = true,
+    event = "VimEnter",
     priority = 1000,
     opts = function(_, opts)
       opts.transparent = true
