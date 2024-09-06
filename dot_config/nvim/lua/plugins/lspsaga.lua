@@ -1,7 +1,7 @@
 return {
   {
     "nvimdev/lspsaga.nvim",
-    event = "BufReadPre",
+    event = "LspAttach",
     dependencies = {
       "nvim-treesitter/nvim-treesitter", -- optional
     },
