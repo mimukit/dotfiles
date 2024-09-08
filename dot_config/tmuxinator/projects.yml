@@ -1,7 +1,7 @@
 # /Users/mukit/.config/tmuxinator/projects.yml
 
 name: projects
-root: ~/Projects/js
+root: ~/Projects
 windows:
   - projects:
       layout: even-horizontal
