@@ -8,7 +8,7 @@ windows:
       panes:
         - brew_update:
             - clear
-            - brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup
+            - brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all
         - mise_update:
             - clear
             - mise outdated
