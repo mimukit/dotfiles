@@ -1,0 +1,30 @@
+# /Users/mukit/.config/tmuxinator/unishopr.yml
+
+name: unishopr
+root: ~/Github/unishoprplatforms/unishopr
+windows:
+  - unishopr:
+      focus: true
+      layout: main-horizontal
+      panes:
+        - api:
+            - cd api
+            - clear
+        - frontend:
+            - cd frontend
+            - clear
+        - admin:
+            - cd admin
+            - clear
+  - editor:
+      layout: main-horizontal
+      panes:
+        - editor:
+            - clear
+            - nvim
+  - local_alias:
+      layout: main-horizontal
+      panes:
+        - local_alias:
+            - localias stop && localias start
+            - exit
