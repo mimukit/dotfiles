@@ -10,6 +10,7 @@ brew upgrade
 # Install repo sources
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew sources...' $COLOR_REST
 brew tap homebrew/cask-fonts
+brew tap mongodb/brew
 
 # Install packages
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew packages...' $COLOR_REST
@@ -52,6 +53,7 @@ apps=(
   mkcert
   mise
   mongosh
+  mongodb-database-tools
   mycli
   neovim
   noti
