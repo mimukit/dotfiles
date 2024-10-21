@@ -51,6 +51,7 @@ apps=(
   mackup
   mkcert
   mise
+  mongosh
   mycli
   neovim
   noti
