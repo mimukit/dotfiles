@@ -15,6 +15,9 @@ return {
         },
         always_show = {
           ".env",
+          ".npmrc",
+          ".nvmrc",
+          ".mise.local.yml",
         },
       },
     },
