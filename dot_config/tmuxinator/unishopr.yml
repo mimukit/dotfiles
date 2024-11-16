@@ -1,20 +1,19 @@
 # /Users/mukit/.config/tmuxinator/unishopr.yml
 
-name: unishopr
-root: ~/Github/unishoprplatforms/unishopr
+name: unishopr-platform
+root: ~/Github/unishoprplatforms/unishopr-platform
 windows:
   - unishopr:
       focus: true
       layout: main-horizontal
       panes:
-        - api:
-            - cd api
+        - root:
             - clear
-        - frontend:
-            - cd frontend
+        - server:
+            - cd server
             - clear
-        - admin:
-            - cd admin
+        - web:
+            - cd web
             - clear
   - editor:
       layout: main-horizontal
