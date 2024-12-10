@@ -137,6 +137,7 @@ cask_apps=(
   vlc
   wezterm
   whatsapp
+  windsurf
   zoom
 )
 
