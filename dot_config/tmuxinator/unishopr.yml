@@ -15,15 +15,10 @@ windows:
         - web:
             - cd web
             - clear
-  - editor:
+  - lazygit:
       layout: main-horizontal
       panes:
-        - editor:
+        - lazygit:
+            - windsurf .
             - clear
-            - nvim
-  - local_alias:
-      layout: main-horizontal
-      panes:
-        - local_alias:
-            - localias stop && localias start
-            - exit
+            - lazygit
