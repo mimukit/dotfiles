@@ -1,0 +1,22 @@
+# /Users/mukit/.config/tmuxinator/americatobd.yml
+
+name: americatobd
+root: ~/Github/analixer/americatobd
+windows:
+  - americatobd:
+      focus: true
+      layout: even-horizontal
+      panes:
+        - server:
+            - cd server
+            - clear
+        - web:
+            - cd web
+            - clear
+  - lazygit:
+      layout: main-horizontal
+      panes:
+        - lazygit:
+            - windsurf .
+            - clear
+            - lazygit
