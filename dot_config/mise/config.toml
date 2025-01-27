@@ -13,6 +13,7 @@ node = "lts"
 "npm:tsx" = "latest"
 "npm:turbo" = "latest"
 "npm:vercel" = "latest"
+"npm:wrangler" = "latest"
 "npm:yarn" = "latest"
 
 [settings]
