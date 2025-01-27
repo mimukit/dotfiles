@@ -2,6 +2,7 @@ return {
   {
     "folke/which-key.nvim",
     opts = {
+      preset = "modern",
       defaults = {},
       win = {
         no_overlap = false,
