@@ -72,6 +72,7 @@ apps=(
   ssh-copy-id
   sshs
   starship
+  stats
   stremio
   svn
   terminal-notifier
