@@ -128,6 +128,7 @@ cask_apps=(
   slack
   spotify
   sublime-text
+  tableplus
   telegram-desktop
   tempbox
   ticktick
