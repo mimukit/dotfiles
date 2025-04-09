@@ -30,6 +30,7 @@ apps=(
   fd
   ffmpeg
   fish
+  fileicon
   fnm
   fzf
   gh
