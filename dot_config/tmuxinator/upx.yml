@@ -9,6 +9,7 @@ windows:
         - brew_update:
             - clear
             - brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all
+            - bash ~/setup_scripts/update_app_icons.sh
         - mise_update:
             - clear
             - mise outdated
