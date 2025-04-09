@@ -11,8 +11,14 @@
             "id": "45159d924cecfe7c",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {}
+              "type": "markdown",
+              "state": {
+                "file": "content/courses/learn-problem-solving-basic/4-mix-array-elements.mdx",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "4-mix-array-elements"
             }
           }
         ]
@@ -34,8 +40,11 @@
             "state": {
               "type": "file-explorer",
               "state": {
-                "sortOrder": "alphabetical"
-              }
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
             }
           },
           {
@@ -50,7 +59,9 @@
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical"
-              }
+              },
+              "icon": "lucide-search",
+              "title": "Search"
             }
           },
           {
@@ -58,7 +69,9 @@
             "type": "leaf",
             "state": {
               "type": "bookmarks",
-              "state": {}
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
             }
           }
         ]
@@ -81,6 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "content/courses/learn-problem-solving-basic/4-mix-array-elements.mdx",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -88,7 +102,9 @@
                 "searchQuery": "",
                 "backlinkCollapsed": false,
                 "unlinkedCollapsed": true
-              }
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for 4-mix-array-elements"
             }
           },
           {
@@ -97,9 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "content/courses/learn-problem-solving-basic/4-mix-array-elements.mdx",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
-              }
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from 4-mix-array-elements"
             }
           },
           {
@@ -109,8 +128,12 @@
               "type": "tag",
               "state": {
                 "sortOrder": "frequency",
-                "useHierarchy": true
-              }
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
             }
           },
           {
@@ -118,7 +141,14 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {}
+              "state": {
+                "file": "content/courses/learn-problem-solving-basic/4-mix-array-elements.mdx",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of 4-mix-array-elements"
             }
           },
           {
@@ -126,7 +156,9 @@
             "type": "leaf",
             "state": {
               "type": "advanced-tables-toolbar",
-              "state": {}
+              "state": {},
+              "icon": "lucide-file",
+              "title": "Plugin no longer active"
             }
           }
         ],
@@ -151,6 +183,11 @@
   },
   "active": "45159d924cecfe7c",
   "lastOpenFiles": [
+    "content/courses/learn-problem-solving-basic/3-convert-min-sec.mdx",
+    "content/courses/learn-problem-solving-basic/2-two-string.mdx",
+    "content/courses/learn-problem-solving-basic/1-welcome.mdx",
+    "notes/Hello World.md",
+    "courses.md",
     "content/courses/learn-problem-solving-basic/24-congratulation.mdx",
     "content/courses/learn-problem-solving-basic/1-1-time-complexity.mdxb",
     "content/courses/learn-problem-solving-basic/1-a-time-complexity.mdxb",
@@ -159,10 +196,6 @@
     "content/courses/learn-problem-solving-basic/21-fibonacci.mdx",
     "content/courses/learn-problem-solving-basic/12-sum-digit.mdx",
     "content/courses/learn-problem-solving-basic/11-pattern.mdx",
-    "content/courses/learn-problem-solving-basic/25-congratulation.mdx",
-    "content/courses/learn-problem-solving-basic/23-pattern.mdx",
-    "content/courses/learn-problem-solving-basic/22-factor-number.mdx",
-    "courses.md",
     "content/courses/learn-problem-solving-basic/0-index.md",
     "content/courses/learn-problem-solving-basic/index.md",
     "content/courses/learn-problem-solving-basic/2-two-string.md",
