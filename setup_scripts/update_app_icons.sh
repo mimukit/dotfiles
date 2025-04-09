@@ -40,8 +40,6 @@ declare -a APP_ICON_PAIRS=(
   "/Applications/TickTick.app|${HOME}/.config/icons/ticktick.icns"
   "/Applications/VLC.app|${HOME}/.config/icons/vlc.icns"
   "/Applications/Visual Studio Code.app|${HOME}/.config/icons/vscode.icns"
-  "/System/Applications/Calendar.app|${HOME}/.config/icons/system_calender.icns"
-  "/System/Applications/System Settings.app|${HOME}/.config/icons/system_settings.icns"
 )
 
 # Loop through the app/icon pairs
