@@ -15,6 +15,7 @@ node = "lts"
 "npm:vercel" = "latest"
 "npm:wrangler" = "latest"
 "npm:yarn" = "latest"
+rust = "latest"
 
 [settings]
 # plugins can read the versions files used by other version managers (if enabled by the plugin)
