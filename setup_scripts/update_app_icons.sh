@@ -36,6 +36,7 @@ declare -a APP_ICON_PAIRS=(
   "/Applications/iTerm.app|${HOME}/.config/icons/terminal_7.icns"
   "/Applications/Notion.app|${HOME}/.config/icons/notion.icns"
   "/Applications/Obsidian.app|${HOME}/.config/icons/obsidian.icns"
+  "/Applications/Progressive Downloader.app|${HOME}/.config/icons/downloader.icns"
   "/Applications/Slack.app|${HOME}/.config/icons/slack.icns"
   "/Applications/Telegram Desktop.app|${HOME}/.config/icons/telegram.icns"
   "/Applications/TickTick.app|${HOME}/.config/icons/ticktick.icns"
