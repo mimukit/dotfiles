@@ -16,8 +16,11 @@ brew tap mongodb/brew
 printf '%s%s%s\n' $COLOR_GREEN 'Installing brew packages...' $COLOR_REST
 apps=(
   act
+  ansible
   atuin
+  awscli
   bat
+  brotli
   btop
   caddy
   chezmoi
@@ -25,13 +28,15 @@ apps=(
   cmake
   composer
   coreutils
+  cryptography
+  deno
   dockutil
   eza
   fd
   ffmpeg
-  fish
   fileicon
-  fnm
+  fileicon
+  fish
   fzf
   gh
   gifsicle
@@ -45,16 +50,16 @@ apps=(
   hub
   imagemagick
   jq
-  joshmedeski/sesh/sesh
   lazydocker
   lazygit
   lf
   libpq
   mackup
-  mkcert
   mise
-  mongosh
+  mkcert
+  mongocli
   mongodb-database-tools
+  mongosh
   mycli
   neovim
   noti
@@ -68,19 +73,20 @@ apps=(
   ripgrep
   ruby
   rust
-  rustdesk
+  sesh
   shellcheck
   ssh-copy-id
   sshs
   starship
-  stats
-  stremio
   svn
   terminal-notifier
   tldr
   tmux
   tmuxinator
+  tmuxinator-completion
+  trash
   tree
+  tree-sitter
   vim
   wget
   zoxide
@@ -114,6 +120,7 @@ cask_apps=(
   herd
   iina
   imageoptim
+  istat-menus
   iterm2
   jordanbaird-ice
   keycastr
