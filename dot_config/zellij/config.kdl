@@ -424,7 +424,7 @@ serialize_pane_viewport true
  
 // How often in seconds sessions are serialized
 // 
-serialization_interval 10000
+serialization_interval 60
  
 // Enable or disable writing of session metadata to disk (if disabled, other sessions might not know
 // metadata info on this session)
