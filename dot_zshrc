@@ -142,6 +142,8 @@ alias v='nvim'
 alias vim='nvim'
 alias vconf='cd ~/.config/nvim && nvim && cd -'
 alias zconf='nvim ~/.zshrc'
+alias zl='zellij -l welcome'
+alias zn='zellij attach --create default'
 alias zsrc='source ~/.zshrc'
 
 # Alias for macos only
