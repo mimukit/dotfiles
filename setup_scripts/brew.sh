@@ -86,6 +86,7 @@ apps=(
   trash
   tree
   tree-sitter
+  uv
   vim
   wget
   zoxide
