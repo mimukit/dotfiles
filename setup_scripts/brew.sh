@@ -156,6 +156,7 @@ cask_apps=(
   wezterm
   whatsapp
   windsurf
+  yaak
   zed
   zoom
 )
