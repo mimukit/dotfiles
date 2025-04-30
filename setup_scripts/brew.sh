@@ -32,6 +32,7 @@ apps=(
   dockutil
   eza
   fd
+  font-symbols-only-nerd-font
   ffmpeg
   fileicon
   fileicon
@@ -67,12 +68,15 @@ apps=(
   peterldowns/tap/localias
   pgcli
   pnpm
+  poppler
   psgrep
   python
+  resvg
   ripgrep
   ruby
   rust
   sesh
+  sevenzip
   shellcheck
   ssh-copy-id
   sshs
@@ -89,6 +93,7 @@ apps=(
   uv
   vim
   wget
+  yazi
   zoxide
 )
 
