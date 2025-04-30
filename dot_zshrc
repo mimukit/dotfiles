@@ -153,6 +153,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   alias rm='trash'
 fi
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+
   # Setup yazi file manager alias
   function y() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
@@ -164,21 +166,22 @@ fi
   }
 
 
-# Herd injected PHP 8.4 configuration.
-export HERD_PHP_84_INI_SCAN_DIR="/Users/mukit/Library/Application Support/Herd/config/php/84/"
+  # Herd injected PHP 8.4 configuration.
+  export HERD_PHP_84_INI_SCAN_DIR="/Users/mukit/Library/Application Support/Herd/config/php/84/"
 
 
-# Herd injected PHP binary.
-export PATH="/Users/mukit/Library/Application Support/Herd/bin/":$PATH
+  # Herd injected PHP binary.
+  export PATH="/Users/mukit/Library/Application Support/Herd/bin/":$PATH
 
 
-# Herd injected PHP 8.3 configuration.
-export HERD_PHP_83_INI_SCAN_DIR="/Users/mukit/Library/Application Support/Herd/config/php/83/"
+  # Herd injected PHP 8.3 configuration.
+  export HERD_PHP_83_INI_SCAN_DIR="/Users/mukit/Library/Application Support/Herd/config/php/83/"
 
-# pnpm
-export PNPM_HOME="/Users/mukit/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
+  # pnpm
+  export PNPM_HOME="/Users/mukit/Library/pnpm"
+  case ":$PATH:" in
+    *":$PNPM_HOME:"*) ;;
+    *) export PATH="$PNPM_HOME:$PATH" ;;
+  esac
+  # pnpm end
+fi
