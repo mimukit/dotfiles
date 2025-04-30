@@ -16,6 +16,8 @@ The script should do this: \(ai.prompt)</string>
 	<string>https://api.openai.com/v1/completions</string>
 	<key>AllowClipboardAccess</key>
 	<true/>
+	<key>AlwaysOpenWindowAtStartup</key>
+	<true/>
 	<key>AutoHideTmuxClientSession</key>
 	<true/>
 	<key>ClosingTmuxWindowKillsTmuxWindows</key>
