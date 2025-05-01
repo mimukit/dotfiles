@@ -5,14 +5,11 @@ layout {
         }
         pane split_direction="vertical" {
             pane split_direction="horizontal" {
-            pane command="fish" close_on_exit=true {
-                args "-c" "brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup"
+            pane command="zsh" close_on_exit=false {
+                args "-c" "brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all && sh ~/setup_scripts/update_app_icons.sh"
             }
-            pane size="30%" command="fish" close_on_exit=true {
+            pane size="30%" command="zsh" close_on_exit=true {
                 args "-c" "mise outdated && mise up"
-            }
-            pane size="30%" command="fish" close_on_exit=true {
-                args "-c" "fisher update"
             }
         }
         }
