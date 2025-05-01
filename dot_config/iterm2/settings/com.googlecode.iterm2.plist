@@ -17,7 +17,7 @@ The script should do this: \(ai.prompt)</string>
 	<key>AllowClipboardAccess</key>
 	<true/>
 	<key>AlwaysOpenWindowAtStartup</key>
-	<true/>
+	<false/>
 	<key>AutoHideTmuxClientSession</key>
 	<true/>
 	<key>ClosingTmuxWindowKillsTmuxWindows</key>
@@ -4668,6 +4668,8 @@ The script should do this: \(ai.prompt)</string>
 	<true/>
 	<key>ShowNewOutputIndicator</key>
 	<true/>
+	<key>ShowSessionRestoredBanner</key>
+	<false/>
 	<key>SmartPlacement</key>
 	<true/>
 	<key>SoundForEsc</key>
