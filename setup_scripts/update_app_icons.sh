@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+whoami
+
 # Define colored output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -31,7 +33,6 @@ declare -a APP_ICON_PAIRS=(
   "/Applications/1Password.app|${HOME}/.config/icons/1password.icns"
   "/Applications/Discord.app|${HOME}/.config/icons/discord.icns"
   "/Applications/Firefox.app|${HOME}/.config/icons/firefox.icns"
-  "/Applications/Ghostty.app|${HOME}/.config/icons/terminal.icns"
   "/Applications/Google Chrome.app|${HOME}/.config/icons/chrome.icns"
   "/Applications/iTerm.app|${HOME}/.config/icons/terminal_7.icns"
   "/Applications/Notion.app|${HOME}/.config/icons/notion.icns"
