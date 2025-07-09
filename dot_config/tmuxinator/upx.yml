@@ -15,9 +15,9 @@ windows:
             - mise outdated
             - mise up
             - exit
-        - fisher_update:
+        - commands_sync:
             - clear
-            - fisher update
+            - atuin sync
             - exit
         - zinit_update:
             - clear

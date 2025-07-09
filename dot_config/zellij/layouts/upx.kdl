@@ -9,6 +9,9 @@ layout {
                 args "-c" "brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all && sh ~/setup_scripts/update_app_icons.sh"
             }
             pane size="30%" command="zsh" close_on_exit=true {
+                args "-c" "atuin sync"
+            }
+            pane size="30%" command="zsh" close_on_exit=true {
                 args "-c" "mise outdated && mise up"
             }
         }
