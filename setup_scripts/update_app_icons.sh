@@ -31,13 +31,10 @@ fi
 # Array of app/icon path pairs (format: "APP_PATH|ICON_PATH")
 declare -a APP_ICON_PAIRS=(
   "/Applications/1Password.app|${HOME}/.config/icons/1password.icns"
-  "/Applications/Discord.app|${HOME}/.config/icons/discord.icns"
   "/Applications/Firefox.app|${HOME}/.config/icons/firefox.icns"
   "/Applications/Google Chrome.app|${HOME}/.config/icons/chrome.icns"
   "/Applications/iTerm.app|${HOME}/.config/icons/terminal_7.icns"
   "/Applications/Notion.app|${HOME}/.config/icons/notion.icns"
-  "/Applications/Obsidian.app|${HOME}/.config/icons/obsidian.icns"
-  "/Applications/Progressive Downloader.app|${HOME}/.config/icons/downloader.icns"
   "/Applications/Slack.app|${HOME}/.config/icons/slack.icns"
   "/Applications/Telegram Desktop.app|${HOME}/.config/icons/telegram.icns"
   "/Applications/TickTick.app|${HOME}/.config/icons/ticktick.icns"
