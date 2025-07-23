@@ -2,6 +2,7 @@
 usage = "latest"
 node = "lts"
 "npm:@antfu/ni" = "latest"
+"npm:@kayvan/markdown-tree-parser" = "latest"
 "npm:npm" = "latest"
 "npm:npkill" = "latest"
 "npm:neovim" = "latest"
