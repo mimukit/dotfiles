@@ -193,17 +193,6 @@ keybinds clear-defaults=true {
     shared_except "normal" "locked" "entersearch" "renametab" "renamepane" {
         bind "esc" { SwitchToMode "normal"; }
     }
-    shared_except "locked" {
-        bind "Ctrl u" { 
-            // Note: you must use the absolute path to the plugin file
-            LaunchOrFocusPlugin "file:/Users/mukit/.config/zellij/plugins/zsm.wasm" {
-                floating true
-                move_to_focused_tab true
-                session_separator "-"
-                show_resurrectable_sessions true
-            }
-        }
-    }
     shared_among "pane" "tmux" {
         bind "x" { CloseFocus; SwitchToMode "normal"; }
     }
