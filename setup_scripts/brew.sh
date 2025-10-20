@@ -149,7 +149,6 @@ cask_apps=(
   tableplus
   telegram-desktop
   ticktick
-  toptracker
   tradingview
   visual-studio-code
   vlc
