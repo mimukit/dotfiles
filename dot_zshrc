@@ -145,6 +145,7 @@ alias upx='tmuxinator start upx'
 alias upz='zellij --layout upx attach --create system-updates'
 alias uva='source .venv/bin/activate'
 alias v='nvim'
+alias lv="NVIM_APPNAME=lazyvim nvim"
 alias vconf='cd ~/.config/nvim && nvim && cd -'
 alias vim='nvim'
 alias wr='wrangler'
