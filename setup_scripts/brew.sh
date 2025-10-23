@@ -142,7 +142,6 @@ cask_apps=(
   raycast
   shortcat
   shottr
-  slack
   spotify
   sublime-text
   surfshark
@@ -157,7 +156,6 @@ cask_apps=(
   windsurf
   yaak
   zed
-  zoom
 )
 
 for item in "${cask_apps[@]}"; do
