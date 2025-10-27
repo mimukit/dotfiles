@@ -130,6 +130,7 @@ alias ms='session=$(tmuxinator list --newline | grep -v "^tmuxinator projects" |
 alias nb='nr build'
 alias ncu='npx npm-check-updates'
 alias nd='nr dev'
+alias nq='networkQuality'
 alias ns='nr start'
 alias nvf='fzf | xargs -o nvim'
 alias o='open .'
