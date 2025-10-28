@@ -7,29 +7,15 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-    "git": {
-        
+    "features": {
+        "edit_prediction_provider": "copilot"
     },
-    "collaboration_panel": {
-        "button": false,
-        "dock": "right"
-    },
-    "git_panel": {
-        "dock": "right"
-    },
-    "outline_panel": {
-        "dock": "right"
-    },
-    "project_panel": {
-        "show_diagnostics": "errors",
-        "entry_spacing": "standard",
-        "dock": "right"
-    },
+    "git": {},
     "prettier": {
         "allowed": true
     },
     "inlay_hints": {
-        "enabled": false
+        "enabled": true
     },
     "soft_wrap": "prefer_line",
     "tab_size": 4,
@@ -44,7 +30,6 @@
         "thumb": "hover",
         "show": "auto"
     },
-    "relative_line_numbers": false,
     "autoscroll_on_clicks": true,
     "show_wrap_guides": true,
     "rounded_selection": true,
@@ -55,28 +40,132 @@
     "buffer_font_weight": 400.0,
     "buffer_font_family": "MesloLGL Nerd Font Mono",
     "auto_update": false,
-    "telemetry": {
-        "diagnostics": false,
-        "metrics": false
-    },
     "restore_on_startup": "last_workspace",
     "agent": {
         "dock": "left",
         "default_model": {
-            "provider": "copilot_chat",
-            "model": "gpt-5-mini"
+            "provider": "google",
+            "model": "gemini-2.5-flash"
         },
         "model_parameters": []
     },
     "context_servers": {},
     "icon_theme": "Material Icon Theme",
     "base_keymap": "Cursor",
-    "vim_mode": true,
     "ui_font_size": 15.0,
     "buffer_font_size": 14.0,
     "theme": {
         "mode": "system",
         "light": "One Light",
-        "dark": "One Dark"
+        "dark": "Fleet Dark Purple"
+    },
+    // NOTE: Change the font family to your preference
+    // Vim mode settings
+    "vim_mode": true,
+    "vim": {
+        "use_system_clipboard": "never",
+        "use_smartcase_find": true
+    },
+    "relative_line_numbers": true,
+    "tab_bar": {
+        "show": true
+    },
+    "scrollbar": {
+        "show": "auto"
+    },
+    // Only show error on tab
+    "tabs": {
+        "show_diagnostics": "errors"
+    },
+    // Indentation, rainbow indentation
+    "indent_guides": {
+        "enabled": true,
+        "coloring": "indent_aware"
+    },
+    // NOTE: Zen mode, refer https://github.com/zed-industries/zed/issues/4382 when it's resolved
+    "centered_layout": {
+        "left_padding": 0.15,
+        "right_padding": 0.15
+    },
+    // LSP
+    "lsp": {
+        "tailwindcss-language-server": {
+            "settings": {
+                "classAttributes": ["class", "className", "ngClass", "styles"]
+            }
+        }
+    },
+    "languages": {
+        // Refer https://zed.dev/docs/languages/javascript and https://zed.dev/docs/languages/typescript for more info
+        "TypeScript": {
+            // Refer https://github.com/jellydn/ts-inlay-hints for how to setup for Neovim and VSCode
+            "inlay_hints": {
+                "enabled": true,
+                "show_parameter_hints": false,
+                "show_other_hints": true,
+                "show_type_hints": true
+            }
+        }
+    },
+    // Use zed commit editor
+    "terminal": {
+        "env": {
+            "EDITOR": "zed --wait"
+        }
+    },
+    // File syntax highlighting
+    "file_types": {
+        "Dockerfile": ["Dockerfile", "Dockerfile.*"],
+        "JSON": ["json", "jsonc", "*.code-snippets"]
+    },
+    // File scan exclusions, hide on the file explorer and search
+    "file_scan_exclusions": [
+        "**/.git",
+        "**/.svn",
+        "**/.hg",
+        "**/CVS",
+        "**/.DS_Store",
+        "**/Thumbs.db",
+        "**/.classpath",
+        "**/.settings",
+        // above is default from Zed
+        "**/out",
+        "**/dist",
+        "**/.husky",
+        "**/.turbo",
+        "**/.vscode-test",
+        "**/.vscode",
+        "**/.next",
+        "**/.storybook",
+        "**/.tap",
+        "**/.nyc_output",
+        "**/report",
+        "**/node_modules"
+    ],
+    // Turn off telemetry
+    "telemetry": {
+        "diagnostics": false,
+        "metrics": false
+    },
+    // Move all panel to the right
+    "project_panel": {
+        "show_diagnostics": "errors",
+        "entry_spacing": "standard",
+        "dock": "right",
+        "button": true,
+        "git_status": true
+    },
+    "outline_panel": {
+        "dock": "right"
+    },
+    "notification_panel": {
+        "dock": "left"
+    },
+    "collaboration_panel": {
+        "button": false,
+        "dock": "right"
+    },
+    "git_panel": {
+        "dock": "right"
     }
 }
