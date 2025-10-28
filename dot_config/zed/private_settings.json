@@ -1,0 +1,82 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+    "git": {
+        
+    },
+    "collaboration_panel": {
+        "button": false,
+        "dock": "right"
+    },
+    "git_panel": {
+        "dock": "right"
+    },
+    "outline_panel": {
+        "dock": "right"
+    },
+    "project_panel": {
+        "show_diagnostics": "errors",
+        "entry_spacing": "standard",
+        "dock": "right"
+    },
+    "prettier": {
+        "allowed": true
+    },
+    "inlay_hints": {
+        "enabled": false
+    },
+    "soft_wrap": "prefer_line",
+    "tab_size": 4,
+    "toolbar": {
+        "code_actions": true,
+        "agent_review": true,
+        "quick_actions": true,
+        "breadcrumbs": true
+    },
+    "minimap": {
+        "thumb_border": "left_open",
+        "thumb": "hover",
+        "show": "auto"
+    },
+    "relative_line_numbers": false,
+    "autoscroll_on_clicks": true,
+    "show_wrap_guides": true,
+    "rounded_selection": true,
+    "current_line_highlight": "all",
+    "cursor_shape": "bar",
+    "agent_buffer_font_size": 12.0,
+    "agent_ui_font_size": 15.0,
+    "buffer_font_weight": 400.0,
+    "buffer_font_family": "MesloLGL Nerd Font Mono",
+    "auto_update": false,
+    "telemetry": {
+        "diagnostics": false,
+        "metrics": false
+    },
+    "restore_on_startup": "last_workspace",
+    "agent": {
+        "dock": "left",
+        "default_model": {
+            "provider": "copilot_chat",
+            "model": "gpt-5-mini"
+        },
+        "model_parameters": []
+    },
+    "context_servers": {},
+    "icon_theme": "Material Icon Theme",
+    "base_keymap": "Cursor",
+    "vim_mode": true,
+    "ui_font_size": 15.0,
+    "buffer_font_size": 14.0,
+    "theme": {
+        "mode": "system",
+        "light": "One Light",
+        "dark": "One Dark"
+    }
+}
