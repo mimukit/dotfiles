@@ -9,7 +9,10 @@ windows:
         - brew_update:
             - clear
             - brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all
+            - sh ~/setup_scripts/brew_apps_backup.sh
+        - mac_store_update:
             - mas outdated && mas upgrade
+            - exit
         - mise_update:
             - clear
             - mise outdated
