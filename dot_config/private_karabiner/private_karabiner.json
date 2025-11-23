@@ -5,6 +5,45 @@
             "complex_modifications": {
                 "rules": [
                     {
+                        "description": "Capslock to Hyper",
+                        "manipulators": [
+                            {
+                                "description": "Click to Capslock, Hold to Hyper",
+                                "from": {
+                                    "key_code": "caps_lock",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "right_shift",
+                                        "modifiers": ["right_command", "right_control", "right_option"]
+                                    }
+                                ],
+                                "to_if_alone": [{ "key_code": "caps_lock" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Disable the Fn Key",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "fn",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [
+                                    {
+                                        "hold_down_milliseconds": 100,
+                                        "key_code": "fn"
+                                    },
+                                    { "key_code": "vk_none" }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "(Vim 1/11) caps_lock -> on, caps_lock, esc, control+[ or any pointing_button -> off",
                         "enabled": false,
                         "manipulators": [
@@ -3746,6 +3785,7 @@
                     },
                     {
                         "description": "Toggle caps_lock by pressing left_shift then right_shift",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
@@ -3775,6 +3815,7 @@
                     },
                     {
                         "description": "Double tap cmd+qq to close apps",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
