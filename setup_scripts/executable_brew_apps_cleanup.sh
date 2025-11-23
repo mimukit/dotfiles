@@ -82,9 +82,18 @@ echo -e "${GREEN}✅ Found ${INSTALLED_FORMULAE_COUNT} installed formulae and ${
 echo ""
 echo -e "${CYAN}🔍 Comparing installed packages with Brewfile...${RESET}"
 
+# Use temporary files for comm (more portable than process substitution)
+TMP_DIR=$(mktemp -d)
+trap "rm -rf '$TMP_DIR'" EXIT INT TERM
+
+echo "$INSTALLED_FORMULAE" > "$TMP_DIR/installed_formulae.txt"
+echo "$BREWFILE_FORMULAE" > "$TMP_DIR/brewfile_formulae.txt"
+echo "$INSTALLED_CASKS" > "$TMP_DIR/installed_casks.txt"
+echo "$BREWFILE_CASKS" > "$TMP_DIR/brewfile_casks.txt"
+
 # Use comm to find differences (comm -23 shows lines only in first file)
-EXTRA_FORMULAE=$(comm -23 <(echo "$INSTALLED_FORMULAE") <(echo "$BREWFILE_FORMULAE") 2>/dev/null || echo "")
-EXTRA_CASKS=$(comm -23 <(echo "$INSTALLED_CASKS") <(echo "$BREWFILE_CASKS") 2>/dev/null || echo "")
+EXTRA_FORMULAE=$(comm -23 "$TMP_DIR/installed_formulae.txt" "$TMP_DIR/brewfile_formulae.txt" 2>/dev/null || echo "")
+EXTRA_CASKS=$(comm -23 "$TMP_DIR/installed_casks.txt" "$TMP_DIR/brewfile_casks.txt" 2>/dev/null || echo "")
 
 EXTRA_FORMULAE_COUNT=$(echo "$EXTRA_FORMULAE" | grep -c . || echo "0")
 EXTRA_CASKS_COUNT=$(echo "$EXTRA_CASKS" | grep -c . || echo "0")
