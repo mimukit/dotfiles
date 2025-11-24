@@ -4697,7 +4697,7 @@ The script should do this: \(ai.prompt)</string>
 	<key>SeparateWindowTitlePerTab</key>
 	<true/>
 	<key>ShowFullScreenTabBar</key>
-	<false/>
+	<true/>
 	<key>ShowNewOutputIndicator</key>
 	<true/>
 	<key>ShowSessionRestoredBanner</key>
