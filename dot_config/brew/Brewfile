@@ -167,3 +167,13 @@ cask "wezterm"
 cask "whatsapp"
 cask "yaak"
 cask "zed"
+mas "Battery Monitor", id: 836505650
+mas "Bear", id: 1091189122
+mas "Deskeen", id: 6746357941
+mas "Kindle", id: 302584613
+mas "Klack", id: 6446206067
+mas "Pastel", id: 413897608
+mas "TeraCopy", id: 1378806557
+mas "The Unarchiver", id: 425424353
+mas "Unsplash Wallpapers", id: 1284863847
+mas "Xcode", id: 497799835
