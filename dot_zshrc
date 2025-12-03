@@ -213,3 +213,6 @@ if [ -f '/usr/local/share/google-cloud-sdk/completion.zsh.inc' ]; then . '/usr/l
 
 # SSH Agent Sock
 SSH_AUTH_SOCK=/Users/mukit/.bitwarden-ssh-agent.sock
+
+# Added by Antigravity
+export PATH="/Users/mukit/.antigravity/antigravity/bin:$PATH"
