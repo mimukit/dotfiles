@@ -53,7 +53,6 @@ brew "mise"
 brew "mkcert"
 brew "mongocli"
 brew "mongosh"
-brew "pydantic"
 brew "mycli"
 brew "neovim"
 brew "noti"
@@ -169,6 +168,7 @@ cask "yaak"
 cask "zed"
 mas "Battery Monitor", id: 836505650
 mas "Bear", id: 1091189122
+mas "Convert & Compress", id: 6752861983
 mas "Deskeen", id: 6746357941
 mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
