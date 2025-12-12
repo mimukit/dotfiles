@@ -9,9 +9,18 @@ windows:
         - brew_update:
             - clear
             - brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all
+        - topgrade:
+            - clear
+            - topgrade --disable containers --disable chezmoi --disable vscode --disable brew_formula --disable brew_cask
+        - brew_apps_backup:
+            - clear
             - sh ~/setup_scripts/brew_apps_backup.sh
-            - topgrade --disable containers --disable chezmoi --disable vscode
+            - exit
         - commands_sync:
             - clear
             - atuin sync
+            - exit
+        - mackup_backup:
+            - clear
+            - mackup backup --force
             - exit
