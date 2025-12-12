@@ -41,6 +41,7 @@ zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
 zinit light MichaelAquilina/zsh-you-should-use
 
+
 # Add in snippets
 zinit snippet OMZP::command-not-found
 zinit snippet OMZP::git
@@ -115,6 +116,7 @@ alias dcud='docker compose up -d'
 alias dnsflush='sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
 alias dps='docker ps'
 alias dpsa='docker ps -a'
+alias e='exit'
 alias fdd='cd "$(find . -type d | fzf)"'
 alias ff='fd -t f | fzf --preview "bat --color=always --style=numbers {}"'
 alias fm='fzf-make'
@@ -141,6 +143,7 @@ alias ncu='npx npm-check-updates'
 alias nd='nr dev'
 alias nq='networkQuality'
 alias ns='nr start'
+alias nt='terminal-notifier -message "Running task completed" -sound "default"'
 alias nvf='fzf | xargs -o nvim'
 alias o='open .'
 alias ob='open -a Bloom .'
