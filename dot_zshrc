@@ -190,17 +190,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   }
 
 
-  # Herd injected PHP 8.4 configuration.
-  export HERD_PHP_84_INI_SCAN_DIR="/Users/mukit/Library/Application Support/Herd/config/php/84/"
-
-
-  # Herd injected PHP binary.
-  export PATH="/Users/mukit/Library/Application Support/Herd/bin/":$PATH
-
-
-  # Herd injected PHP 8.3 configuration.
-  export HERD_PHP_83_INI_SCAN_DIR="/Users/mukit/Library/Application Support/Herd/config/php/83/"
-
   # pnpm
   export PNPM_HOME="/Users/mukit/Library/pnpm"
   case ":$PATH:" in
@@ -210,8 +199,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   # pnpm end
 fi
 
-# Added by Windsurf
-export PATH="/Users/mukit/.codeium/windsurf/bin:$PATH"
+# Add sbin folder to path
+export PATH="/usr/local/sbin:$PATH"
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/usr/local/share/google-cloud-sdk/path.zsh.inc' ]; then . '/usr/local/share/google-cloud-sdk/path.zsh.inc'; fi
