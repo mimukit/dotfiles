@@ -20,7 +20,3 @@ windows:
             - clear
             - atuin sync
             - exit
-        - mackup_backup:
-            - clear
-            - mackup backup --force
-            - exit
