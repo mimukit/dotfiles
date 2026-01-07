@@ -211,7 +211,7 @@ if [ -f '/usr/local/share/google-cloud-sdk/path.zsh.inc' ]; then . '/usr/local/s
 if [ -f '/usr/local/share/google-cloud-sdk/completion.zsh.inc' ]; then . '/usr/local/share/google-cloud-sdk/completion.zsh.inc'; fi
 
 # SSH Agent Sock
-SSH_AUTH_SOCK=/Users/mukit/.bitwarden-ssh-agent.sock
+SSH_AUTH_SOCK="~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 # Add by Antigravity
 export PATH="/Users/mukit/.antigravity/antigravity/bin:$PATH"
