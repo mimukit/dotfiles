@@ -19,6 +19,11 @@ gui:
       - "#cdd6f4"
     searchingActiveBorderColor:
       - "#f9e2af"
-
   authorColors:
     "*": "#b4befe"
+customCommands:
+  - key: "<c-g>" # Ctrl + G to trigger
+    context: "files"
+    description: "Generate AI Commit with Raycast"
+    # 1. Get staged diff, 2. copy to clipboard, 3. open Raycast deep link
+    command: 'git diff --cached -U4 | pbcopy && open "raycast://ai-commands/generate-git-commit"'
