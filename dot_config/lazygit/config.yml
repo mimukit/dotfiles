@@ -22,7 +22,7 @@ gui:
   authorColors:
     "*": "#b4befe"
 customCommands:
-  - key: "<c-g>" # Ctrl + G to trigger
+  - key: "G" # Shift + g to trigger
     context: "files"
     description: "Generate AI Commit with Raycast"
     # 1. Get staged diff, 2. copy to clipboard, 3. open Raycast deep link
