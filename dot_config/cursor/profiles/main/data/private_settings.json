@@ -31,24 +31,6 @@
     "source.fixAll": "explicit",
     "source.fixAll.eslint": "never"
   },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[html]": {
-    "editor.defaultFormatter": "vscode.html-language-features"
-  },
-  "[yaml]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
   "files.associations": {
     "*.md": "markdown",
     "*.yml": "yaml",
@@ -213,9 +195,6 @@
 
   "security.workspace.trust.untrustedFiles": "open",
   "editor.inlineSuggest.enabled": true,
-  "[css]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
   "editor.lineNumbers": "on",
   "git.mergeEditor": true,
   "svg.preview.transparencyGrid": false,
@@ -308,15 +287,13 @@
   "gitlens.plusFeatures.enabled": false,
   "gitlens.launchpad.indicator.enabled": false,
   "editor.largeFileOptimizations": false,
-  "[php]": {
-    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
-  },
   "[plaintext]": {
     "editor.unicodeHighlight.ambiguousCharacters": false,
     "editor.unicodeHighlight.invisibleCharacters": false
   },
   "workbench.sideBar.location": "right",
   "workbench.activityBar.location": "top",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "workbench.editor.customLabels.patterns": {
     "**/app/**/layout.tsx": "${dirname(1)}/${dirname} - Layout",
     "**/app/**/page.tsx": "${dirname(1)}/${dirname} - Page",
@@ -355,7 +332,7 @@
     }
   },
   "sync.removeExtensions": false,
-  "sync.gist": "a76af3a45ae0f08b961ef35fc4742eb4",
+  "sync.gist": "",
   "svelte.enable-ts-plugin": true,
   "git.autofetch": true,
   "diffEditor.ignoreTrimWhitespace": false,
@@ -363,21 +340,18 @@
   "json.schemaDownload.enable": true,
   "cursor.composer.shouldAllowCustomModes": true,
   "makefile.configureOnOpen": true,
-  "kilo-code.allowedCommands": [
-    "npm test",
-    "npm install",
-    "tsc",
-    "git log",
-    "git diff",
-    "git show"
-  ],
-  "kilo-code.deniedCommands": [],
   "search.useParentIgnoreFiles": true,
   "search.useGlobalIgnoreFiles": true,
   "cursor.composer.textSizeScale": 0.85,
   "typescript.tsserver.useSyntaxServer": "never",
   "cursor.composer.usageSummaryDisplay": "always",
-  "extensions.gallery.serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery"
+  "extensions.gallery.serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
   // Recording Only
   // "breadcrumbs.enabled": false,
   // "workbench.editor.showTabs": "none",

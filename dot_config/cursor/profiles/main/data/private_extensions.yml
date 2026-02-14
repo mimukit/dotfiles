@@ -1,19 +1,16 @@
 builtin:
   disabled:
+    - anysphere.cursor-commits
     - undefined.cursor-themes
 disabled:
-  - id: astro-build.astro-vscode
-    uuid: 1fbbc8b0-7432-4b7e-8774-3336151da2f3
-  - id: biomejs.biome
-    uuid: 2c992d35-3965-4369-856e-fdfbb0af2ce2
+  - id: lokalise.i18n-ally
+    uuid: 8ab81d13-c812-4a2f-8f19-c32e3655e53c
   - id: ms-python.debugpy
     uuid: 4bd5d2c9-9d65-401a-b0b2-7498d9f17615
   - id: ms-python.python
     uuid: f1f59ae4-9318-4f3c-a9b5-81b2eaa5f8a5
   - id: ms-python.vscode-pylance
     uuid: 364d2426-116a-433a-a5d8-a5098dc3afbd
-  - id: nrwl.angular-console
-    uuid: d10af6bf-270f-4cf0-b94b-1bea4bda1e2e
   - id: rust-lang.rust-analyzer
     uuid: 06574cb4-e5dc-4631-8174-a543a4533621
   - id: tauri-apps.tauri-vscode
@@ -29,6 +26,8 @@ enabled:
     uuid: b689fcc8-d494-4dbf-a228-2c694a578afc
   - id: alefragnani.project-manager
     uuid: 1b747f06-3789-4ebd-ac99-f1fe430c3347
+  - id: astro-build.astro-vscode
+    uuid: 1fbbc8b0-7432-4b7e-8774-3336151da2f3
   - id: BeardedBear.beardedtheme
     uuid: d1818e93-bccc-4812-8b8b-37aabc5a7a94
   - id: bradlc.vscode-tailwindcss
@@ -39,16 +38,12 @@ enabled:
     uuid: 0b15b6fc-4458-4546-8b5e-bba85e07df24
   - id: dbaeumer.vscode-eslint
     uuid: 583b2b34-2c1e-4634-8c0b-0b82e283ea3a
-  - id: dotenv.dotenv-vscode
-    uuid: bfc47172-d830-4aab-9c7b-ecfdb1e97a29
+  - id: diodeiot.uuid-tools
+    uuid: 434a41ac-b565-4c6c-bfe9-cfff1bae9485
   - id: eamodio.gitlens
     uuid: 4de763bd-505d-4978-9575-2b7696ecf94e
   - id: esbenp.prettier-vscode
     uuid: 96fa4707-6983-4489-b7c5-d5ffdfdcce90
-  - id: GitHub.vscode-pull-request-github
-    uuid: 69ddd764-339a-4ecc-97c1-9c4ece58e36d
-  - id: lokalise.i18n-ally
-    uuid: 8ab81d13-c812-4a2f-8f19-c32e3655e53c
   - id: ms-azuretools.vscode-docker
     uuid: 0479fc1c-3d67-49f9-b087-fb9069afe48f
   - id: ms-vscode.makefile-tools
