@@ -1,0 +1,286 @@
+{
+  "workbench.activityBar.location": "top",
+  "workbench.sideBar.location": "right",
+  "sync.gist": "27b85f89c6f55275fd2af1b9ce3f348b",
+  "editor.formatOnSave": true,
+  "editor.fontSize": 15,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": true,
+  "editor.autoIndent": "full",
+  "editor.wordWrap": "on",
+  "editor.minimap.enabled": true,
+  "terminal.integrated.macOptionIsMeta": true,
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact",
+    "typescriptreact": "typescriptreact"
+  },
+  "terminal.integrated.copyOnSelection": true,
+  "editor.autoClosingBrackets": "always",
+  "terminal.integrated.cursorStyle": "block",
+  "terminal.integrated.cursorBlinking": true,
+  "git.confirmSync": false,
+  "explorer.confirmDelete": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.fixAll.eslint": "never"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "files.associations": {
+    "*.md": "markdown",
+    "*.yml": "yaml",
+    "Caddyfile": "plaintext",
+    ".env*": "dotenv",
+    "wrangler.json": "jsonc"
+  },
+  "explorer.compactFolders": false,
+  "tailwindCSS.includeLanguages": {
+    "typescriptreact": "javascript",
+    "typescript": "javascript"
+  },
+  "tailwindCSS.emmetCompletions": true,
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "explorer.confirmDragAndDrop": false,
+  "editor.fontFamily": "'FiraMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",
+  "terminal.integrated.fontSize": 15,
+  "terminal.integrated.cursorStyleInactive": "block",
+  "merge-conflict.autoNavigateNextConflict.enabled": true,
+  "diffEditor.renderSideBySide": true,
+  "vim.enableNeovim": false,
+  "vim.neovimUseConfigFile": false,
+  "vim.easymotion": true,
+  "vim.incsearch": true,
+  "vim.hlsearch": true,
+  "vim.camelCaseMotion.enable": true,
+  "vim.surround": true,
+  "vim.foldfix": true,
+  "vim.leader": "<space>",
+  "vim.normalModeKeyBindings": [
+    {
+      "before": ["tab"],
+      "commands": ["editor.action.indentLines"]
+    },
+    {
+      "before": ["<S-tab>"],
+      "commands": ["editor.action.outdentLines"]
+    }
+  ],
+  "vim.normalModeKeyBindingsNonRecursive": [
+    // Insert empty line
+    {
+      "before": ["g", "o"],
+      "commands": ["editor.action.insertLineAfter"]
+    },
+    {
+      "before": ["g", "O"],
+      "commands": ["editor.action.insertLineBefore"]
+    },
+    // Easy motion trigger
+    {
+      "before": ["s"],
+      "after": ["<leader>", "<leader>", "2", "s"]
+    },
+    // Navigation
+    {
+      "before": ["<S-h>"],
+      "commands": [":bprevious"]
+    },
+    {
+      "before": ["S-l>"],
+      "commands": [":bnext"]
+    },
+    // Splits
+    {
+      "before": ["leader", "v"],
+      "commands": [":vsplit"]
+    },
+    {
+      "before": ["leader", "h"],
+      "commands": [":split"]
+    },
+    // Nice to have
+    {
+      "before": ["leader", "w"],
+      "commands": [":w!"]
+    },
+    {
+      "before": ["leader", "q"],
+      "commands": [":q!"]
+    },
+    {
+      "before": ["leader", "x"],
+      "commands": [":x!"]
+    },
+    {
+      "before": ["[", "d"],
+      "commands": ["editor.action.marker.prev"]
+    },
+    {
+      "before": ["]", "d"],
+      "commands": ["editor.action.marker.next"]
+    },
+    {
+      "before": ["<leader>", "c", "a"],
+      "commands": ["editor.action.quickFix"]
+    },
+    {
+      "before": ["leader", "s", "f"],
+      "commands": ["workbench.action.quickOpen"]
+    }
+  ],
+  "vim.insertModeKeyBindings": [
+    {
+      "before": ["j", "j"],
+      "after": ["<Esc>"]
+    }
+  ],
+  "vim.visualModeKeyBindings": [
+    // Navigation between files
+    {
+      "before": ["<S-h>"],
+      "commands": [":bprevious"]
+    },
+    {
+      "before": ["S-l>"],
+      "commands": [":bnext"]
+    },
+    // Stay in visual mode while indenting
+    {
+      "before": ["<"],
+      "commands": ["editor.action.outdentLines"]
+    },
+    {
+      "before": [">"],
+      "commands": ["editor.action.indentLines"]
+    },
+    {
+      "before": ["tab"],
+      "commands": ["editor.action.indentLines"]
+    },
+    {
+      "before": ["<S-tab>"],
+      "commands": ["editor.action.outdentLines"]
+    },
+    // Copy and paste
+    {
+      "before": ["g", "y"],
+      "commands": ["editor.action.clipboardCopyAction"]
+    },
+    {
+      "before": ["g", "p"],
+      "commands": ["editor.action.clipboardPasteAction"]
+    }
+  ],
+  "editor.scrollBeyondLastLine": false,
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.cursorBlinking": "expand",
+  "editor.lineHeight": 2.5,
+  "terminal.integrated.lineHeight": 1.6,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "redhat.telemetry.enabled": false,
+  "terminal.integrated.scrollback": 100000000,
+  "terminal.integrated.fontFamily": "FiraCode Nerd Font Mono",
+  "editor.accessibilitySupport": "off",
+
+  "security.workspace.trust.untrustedFiles": "open",
+  "editor.inlineSuggest.enabled": true,
+  "editor.lineNumbers": "on",
+  "git.mergeEditor": true,
+  "turboConsoleLog.addSemicolonInTheEnd": true,
+  "turboConsoleLog.logMessagePrefix": "🐞🐞🐞",
+  "editor.gotoLocation.multipleDefinitions": "gotoAndPeek",
+  "editor.gotoLocation.multipleTypeDefinitions": "gotoAndPeek",
+
+  "terminal.integrated.env.osx": {},
+  "editor.suggest.shareSuggestSelections": true,
+  "diffEditor.diffAlgorithm": "advanced",
+  "gitlens.telemetry.enabled": false,
+  "editor.cursorSurroundingLines": 10,
+  "vim.useSystemClipboard": false,
+  "typescript.suggest.paths": true,
+  "javascript.suggest.paths": true,
+  "gitlens.graph.layout": "editor",
+  "editor.linkedEditing": true,
+  "javascript.preferences.renameMatchingJsxTags": true,
+  "typescript.preferences.renameMatchingJsxTags": true,
+  "terminal.integrated.gpuAcceleration": "on",
+  "editor.stickyScroll.enabled": false,
+  "editor.guides.indentation": false,
+  "editor.guides.highlightActiveBracketPair": true,
+  "editor.guides.highlightActiveIndentation": false,
+  "workbench.tree.renderIndentGuides": "none",
+  "workbench.layoutControl.enabled": false,
+  "editor.renderWhitespace": "none",
+  "editor.renderLineHighlight": "gutter",
+  "editor.scrollbar.horizontal": "hidden",
+  "editor.scrollbar.vertical": "hidden",
+  "files.insertFinalNewline": true,
+  "editor.overviewRulerBorder": false,
+  "files.exclude": {
+    "**/.env*": false
+  },
+  "search.exclude": {
+    "**/.env*": false
+  },
+  "window.zoomLevel": -1,
+  "gitlens.plusFeatures.enabled": false,
+  "gitlens.launchpad.indicator.enabled": false,
+  "editor.largeFileOptimizations": false,
+  "workbench.editor.customLabels.patterns": {
+    "**/app/**/layout.tsx": "${dirname(1)}/${dirname} - Layout",
+    "**/app/**/page.tsx": "${dirname(1)}/${dirname} - Page",
+    "**/app/**/route.ts": "${dirname(1)}/${dirname} - Route",
+    "**/app/**/loading.tsx": "${dirname(1)}/${dirname} - Loading",
+    "**/app/**/_components/**/*.tsx": "${filename} - ${dirname(2)}/${dirname(1)} - Component",
+    "**/components/**/*.tsx": "${filename} - Component",
+    "**/data-layer/**/*.ts": "${filename} - Data Layer",
+    "**/entities/**/*.ts": "${filename} - Entity",
+    "**/hooks/**/*.ts": "${filename} - Hook",
+    "**/lib/**/*.ts": "${filename} - Library",
+    "**/utils/**/*.ts": "${filename} - Utility",
+    "**/env/**/*.ts": "${filename} - Environment",
+    "**/src/app/**/[...path]/route.ts": "${dirname(1)} - API Route",
+    "**/src/app/**/[param].tsx": "${dirname(1)} - ${param} Page"
+  },
+  "turboConsoleLog.insertEnclosingFunction": false,
+  "workbench.navigationControl.enabled": false,
+  "emmet.excludeLanguages": ["markdown", "typescript"],
+  "editor.tokenColorCustomizations": {
+    "textMateRules": []
+  },
+  "[markdown]": {
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    }
+  },
+  "git.autofetch": true,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "projectManager.git.baseFolders": ["~/Projects", "~/Github"],
+  "search.useParentIgnoreFiles": true,
+  "search.useGlobalIgnoreFiles": true,
+  "makefile.configureOnOpen": true,
+  "workbench.colorTheme": "Bearded Theme Arc Blueberry"
+}

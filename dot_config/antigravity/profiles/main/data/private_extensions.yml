@@ -1,0 +1,60 @@
+disabled:
+  - id: lokalise.i18n-ally
+    uuid: 8ab81d13-c812-4a2f-8f19-c32e3655e53c
+  - id: Shan.code-settings-sync
+    uuid: 00000000-0000-0000-0000-000000000000
+  - id: vitest.explorer
+    uuid: ab3534a7-eaae-4f75-9735-62bfd758b220
+enabled:
+  - id: aaron-bond.better-comments
+    uuid: 7a0110bb-231a-4598-aa1b-0769ea46d28b
+  - id: alefragnani.project-manager
+    uuid: 1b747f06-3789-4ebd-ac99-f1fe430c3347
+  - id: astro-build.astro-vscode
+    uuid: 1fbbc8b0-7432-4b7e-8774-3336151da2f3
+  - id: BeardedBear.beardedtheme
+    uuid: d1818e93-bccc-4812-8b8b-37aabc5a7a94
+  - id: bradlc.vscode-tailwindcss
+    uuid: 4db62a7c-7d70-419c-96d2-6c3a4dc77ea5
+  - id: ChakrounAnas.turbo-console-log
+    uuid: 6623619a-676d-4cde-943f-a3c193b44fc0
+  - id: coderabbit.coderabbit-vscode
+    uuid: 0b15b6fc-4458-4546-8b5e-bba85e07df24
+  - id: dbaeumer.vscode-eslint
+    uuid: 583b2b34-2c1e-4634-8c0b-0b82e283ea3a
+  - id: eamodio.gitlens
+    uuid: 4de763bd-505d-4978-9575-2b7696ecf94e
+  - id: EditorConfig.EditorConfig
+    uuid: f60a60a6-95ba-42d4-b41c-3d24c1b89588
+  - id: esbenp.prettier-vscode
+    uuid: 96fa4707-6983-4489-b7c5-d5ffdfdcce90
+  - id: jock.svg
+    uuid: 4ae6dc82-7981-4f10-bd81-2d72aec37f39
+  - id: ms-azuretools.vscode-containers
+    uuid: 2cd1d691-3d69-4d2d-ae39-fda4bc4cfd3d
+  - id: ms-azuretools.vscode-docker
+    uuid: 0479fc1c-3d67-49f9-b087-fb9069afe48f
+  - id: ms-vscode.makefile-tools
+    uuid: e09cf600-90a1-414e-92a0-031f1a5391c6
+  - id: pflannery.vscode-versionlens
+    uuid: 07fc4a0a-11fc-4121-ba9a-f0d534c729d8
+  - id: prettier.prettier-vscode
+    uuid: baa185f3-22aa-4a14-ac21-5c421de53415
+  - id: przybylski.cursor-harpoon
+    uuid: 8529c3d2-ec5a-44d5-b175-c8200d1c43e1
+  - id: redhat.vscode-yaml
+    uuid: 2061917f-f76a-458a-8da9-f162de22b97e
+  - id: swiftlydaniel.oklch-color-visualiser
+    uuid: bde95b9f-1cb9-4b09-9f1e-42e61770692f
+  - id: unifiedjs.vscode-mdx
+    uuid: af8cfc85-cb72-45d0-bae2-9a98cd0c69f3
+  - id: usernamehw.errorlens
+    uuid: 9d8c32ab-354c-4daf-a9bf-20b633734435
+  - id: vscodevim.vim
+    uuid: d96e79c6-8b25-4be3-8545-0e0ecefcae03
+  - id: YoavBls.pretty-ts-errors
+    uuid: 1e149c89-8f97-447e-863d-1146f0ad1b70
+  - id: yzhang.markdown-all-in-one
+    uuid: 98790d67-10fa-497c-9113-f6c7489207b2
+  - id: zokugun.cron-tasks
+    uuid: b7bbbbd5-7a39-4312-87aa-ef6a41de67fb
