@@ -69,6 +69,7 @@ brew "poppler"
 brew "psgrep"
 brew "python-setuptools"
 brew "python@3.11"
+brew "railway"
 brew "resvg"
 brew "ripgrep"
 brew "ruby"
@@ -128,6 +129,7 @@ cask "forklift"
 cask "free-download-manager"
 cask "gcloud-cli"
 cask "google-chrome"
+cask "google-chrome@beta"
 cask "hyperwhisper"
 cask "iina"
 cask "imageoptim"
@@ -176,6 +178,7 @@ mas "Deskeen", id: 6746357941
 mas "DevHub", id: 6476452351
 mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
+mas "Pastel", id: 413897608
 mas "TeraCopy", id: 1378806557
 mas "The Unarchiver", id: 425424353
 mas "Unsplash Wallpapers", id: 1284863847
