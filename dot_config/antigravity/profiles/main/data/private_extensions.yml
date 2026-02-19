@@ -22,6 +22,8 @@ enabled:
     uuid: f60a60a6-95ba-42d4-b41c-3d24c1b89588
   - id: esbenp.prettier-vscode
     uuid: 96fa4707-6983-4489-b7c5-d5ffdfdcce90
+  - id: jlcodes.antigravity-cockpit
+    uuid: e917e8d1-50ad-4283-aab8-45e58be1ca3d
   - id: jock.svg
     uuid: 4ae6dc82-7981-4f10-bd81-2d72aec37f39
   - id: ms-azuretools.vscode-containers
