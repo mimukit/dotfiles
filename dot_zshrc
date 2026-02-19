@@ -84,9 +84,11 @@ eval "$(starship init zsh)"
 # Shell integrations for macos only
 if [[ "$OSTYPE" == "darwin"* ]]; then
    eval "$(fzf --zsh)"
-   eval "$(atuin init zsh --disable-up-arrow)"
+   eval "$(atuin init zsh --disable-up-arrow --disable-ctrl-r)"
    eval "$(zoxide init zsh --cmd cd)"
    eval "$(mise activate zsh)"
+
+   bindkey '^f' atuin-search
 fi
 
 # Alias list
