@@ -4188,6 +4188,19 @@ The script should do this: \(ai.prompt)</string>
 			<string>{"entries":[{"start":2432,"count":128,"fontName":"Baloo Da 2"}],"version":1}</string>
 			<key>Sync Title</key>
 			<false/>
+			<key>Tab Color</key>
+			<dict>
+				<key>Alpha Component</key>
+				<real>1</real>
+				<key>Blue Component</key>
+				<real>0.94901961088180542</real>
+				<key>Color Space</key>
+				<string>sRGB</string>
+				<key>Green Component</key>
+				<real>0.08235294371843338</real>
+				<key>Red Component</key>
+				<real>0.44313725829124451</real>
+			</dict>
 			<key>Tab Color (Dark)</key>
 			<dict>
 				<key>Alpha Component</key>
@@ -4222,6 +4235,19 @@ The script should do this: \(ai.prompt)</string>
 			<integer>4</integer>
 			<key>Transparency</key>
 			<real>0.040000000000000001</real>
+			<key>Underline Color</key>
+			<dict>
+				<key>Alpha Component</key>
+				<real>1</real>
+				<key>Blue Component</key>
+				<real>0.27450981736183167</real>
+				<key>Color Space</key>
+				<string>sRGB</string>
+				<key>Green Component</key>
+				<real>0.78823530673980713</real>
+				<key>Red Component</key>
+				<real>0.9529411792755127</real>
+			</dict>
 			<key>Underline Color (Dark)</key>
 			<dict>
 				<key>Alpha Component</key>
