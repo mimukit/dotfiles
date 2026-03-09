@@ -7,8 +7,8 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-    "features": {
-        "edit_prediction_provider": "copilot",
+    "edit_predictions": {
+        "provider": "copilot",
     },
     "git": {},
     "prettier": {
@@ -42,16 +42,34 @@
     "auto_update": false,
     "restore_on_startup": "last_workspace",
     "agent": {
+        "favorite_models": [
+            {
+                "provider": "copilot_chat",
+                "model": "claude-sonnet-4.6",
+                "enable_thinking": false
+            },
+            {
+                "provider": "copilot_chat",
+                "model": "gemini-3.1-pro-preview",
+                "enable_thinking": false
+            },
+            {
+                "provider": "copilot_chat",
+                "model": "gemini-3-flash-preview",
+                "enable_thinking": false
+            }
+        ],
+        "default_profile": "ask",
         "dock": "left",
         "default_model": {
-            "provider": "google",
-            "model": "gemini-2.5-flash",
+            "provider": "copilot_chat",
+            "model": "gemini-3-flash-preview",
         },
         "model_parameters": [],
     },
     "context_servers": {},
     "icon_theme": "Material Icon Theme",
-    "base_keymap": "Cursor",
+    "base_keymap": "VSCode",
     "ui_font_size": 15.0,
     "buffer_font_size": 14.0,
     "theme": {
