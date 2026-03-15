@@ -12,7 +12,7 @@ windows:
             - brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all
         - topgrade:
             - clear
-            - topgrade --disable containers --disable chezmoi --disable vscode --disable brew_formula --disable brew_cask
+            - topgrade --disable containers --disable chezmoi --disable brew_formula --disable brew_cask
         - commands_sync:
             - clear
             - atuin sync
