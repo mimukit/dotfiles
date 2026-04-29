@@ -1,5 +1,4 @@
 {
-  "model": "opus",
   "env": {
     "DISABLE_TELEMETRY": "1"
   },
@@ -46,5 +45,6 @@
         ]
       }
     ]
-  }
+  },
+  "effortLevel": "medium"
 }
