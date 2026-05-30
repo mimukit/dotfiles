@@ -42,6 +42,7 @@
     "auto_update": false,
     "restore_on_startup": "last_workspace",
     "agent": {
+        "play_sound_when_agent_done": "when_hidden",
         "favorite_models": [
             {
                 "provider": "copilot_chat",
