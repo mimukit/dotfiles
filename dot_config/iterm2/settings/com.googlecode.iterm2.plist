@@ -2430,6 +2430,8 @@ The script should do this: \(ai.prompt)</string>
 	<string>B2EC99F9-9D1A-4C8F-A977-273589AC543F</string>
 	<key>DisableFullscreenTransparency</key>
 	<true/>
+	<key>DisallowCopyEmptyString</key>
+	<true/>
 	<key>EnableDivisionView</key>
 	<true/>
 	<key>FlashTabBarInFullscreen</key>
@@ -3620,6 +3622,19 @@ The script should do this: \(ai.prompt)</string>
 					<integer>11</integer>
 					<key>Text</key>
 					<string>0x1b 0x7f</string>
+				</dict>
+				<key>0xd-0x20000-0x24</key>
+				<dict>
+					<key>Action</key>
+					<integer>11</integer>
+					<key>Apply Mode</key>
+					<integer>1</integer>
+					<key>Escaping</key>
+					<integer>2</integer>
+					<key>Text</key>
+					<string>0x1b 0x0d</string>
+					<key>Version</key>
+					<integer>2</integer>
 				</dict>
 				<key>0xf700-0x220000</key>
 				<dict>
