@@ -17,12 +17,7 @@
       "Bash(npm:*)",
       "Bash(pnpm:*)"
     ],
-    "deny": [
-      "Bash(curl:*)",
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Bash(rm:*)"
-    ]
+    "deny": ["Bash(curl:*)", "Read(./.env)", "Read(./.env.*)", "Bash(rm:*)"]
   },
   "hooks": {
     "Notification": [
@@ -46,10 +41,14 @@
       }
     ]
   },
-  "effortLevel": "medium",
-  "theme": "dark",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
+  },
+  "effortLevel": "medium",
+  "theme": "dark",
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }
