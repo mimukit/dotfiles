@@ -1,7 +1,0 @@
-{
-  "Console log detailed": {
-    "prefix": "cld",
-    "body": ["console.log('🐞🐞🐞 $1:', $1);"],
-    "description": "Console log detailed"
-  }
-}
