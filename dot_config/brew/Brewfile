@@ -2,187 +2,369 @@ tap "anomalyco/tap"
 tap "gromgit/brewtils"
 tap "infisical/get-cli"
 tap "peterldowns/tap"
+# Run your GitHub Actions locally
 brew "act"
+# Display directories as trees (with optional color/HTML output)
 brew "tree"
+# Automate deployment, configuration, and upgrading
 brew "ansible"
+# Improved shell history for zsh, bash, fish and nushell
 brew "atuin"
+# Official Amazon AWS command-line interface
 brew "awscli"
+# Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
+# Toolchain of the web
 brew "biome"
+# Generic-purpose lossless compression algorithm by Google
 brew "brotli"
+# Open-source, cross-platform JavaScript runtime environment
 brew "node"
+# Secure and free password manager for all of your devices
 brew "bitwarden-cli"
+# Resource monitor. C++ version and continuation of bashtop and bpytop
 brew "btop"
+# Powerful, enterprise-ready, open source web server with automatic HTTPS
 brew "caddy"
+# Manage your dotfiles across multiple diverse machines, securely
 brew "chezmoi"
+# Cloudflare Tunnel client (formerly Argo Tunnel)
 brew "cloudflared"
+# Cross-platform make
 brew "cmake"
+# Postgres C API library
 brew "libpq"
+# Dependency Manager for PHP
 brew "composer"
+# GNU File, Shell, and Text utilities
 brew "coreutils"
+# Secure runtime for JavaScript and TypeScript
 brew "deno"
+# Tool for managing dock items
 brew "dockutil"
+# Utility for exporting data from Ente and decrypt the export from Ente Auth
 brew "ente-cli"
+# Modern, maintained replacement for ls
 brew "eza"
+# Simple, fast and user-friendly alternative to find
 brew "fd"
+# Play, record, convert, and stream select audio and video codecs
 brew "ffmpeg"
+# macOS CLI for managing custom icons for files and folders
 brew "fileicon"
+# User-friendly command-line shell for UNIX-like operating systems
 brew "fish"
+# Terminal JSON viewer
 brew "fx"
+# Command-line fuzzy finder written in Go
 brew "fzf"
+# Fuzzy finder with preview window for various command runners including make
 brew "fzf-make"
+# GitHub command-line tool
 brew "gh"
+# GIF image/animation creator/editor
 brew "gifsicle"
+# Distributed revision control system
 brew "git"
+# GNU Privacy Guard (OpenPGP)
 brew "gnupg"
+# Open source programming language to build simple/reliable/efficient software
 brew "go"
+# GNU grep, egrep and fgrep
 brew "grep"
+# Command-line tool for generating regular expressions
 brew "grex"
+# GNU troff text-formatting system
 brew "groff"
+# Idempotent command-line utility for managing your /etc/hosts file
 brew "hostess"
+# User-friendly cURL replacement (command-line HTTP client)
 brew "httpie"
+# Add GitHub support to git on the command-line
 brew "hub"
+# Tools and libraries to manipulate images in select formats
 brew "imagemagick"
+# Lightweight and flexible command-line JSON processor
 brew "jq"
+# Lazier way to manage everything docker
 brew "lazydocker"
+# Simple terminal UI for git commands
 brew "lazygit"
+# Terminal file manager
 brew "lf"
+# Exposes your localhost to the world for easy testing and sharing
 brew "localtunnel"
+# Keep your Mac's application settings in sync
 brew "mackup"
+# Mac App Store command-line interface
 brew "mas"
+# Polyglot runtime manager (asdf rust clone)
 brew "mise"
+# Simple tool to make locally trusted development certificates
 brew "mkcert"
+# Deep clean and optimize your Mac
 brew "mole"
+# MongoDB CLI enables you to manage your MongoDB in the Cloud
 brew "mongocli"
+# MongoDB Shell to connect, configure, query, and work with your MongoDB database
 brew "mongosh"
+# Data validation using Python type hints
 brew "pydantic"
+# CLI for MySQL with auto-completion and syntax highlighting
 brew "mycli"
+# Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
+# Trigger notifications when a process completes
 brew "noti"
+# Simplistic interactive filtering tool
 brew "peco"
+# Command-line tools for MySQL, MariaDB and system tasks
 brew "percona-toolkit"
+# CLI for Postgres with auto-completion and syntax highlighting
 brew "pgcli"
+# Package compiler and linker metadata toolkit
 brew "pkgconf"
+# Fast, disk space efficient package manager
 brew "pnpm"
+# PDF rendering library (based on the xpdf-3.0 code base)
 brew "poppler"
+# Shortcut for the 'ps aux | grep' idiom
 brew "psgrep"
+# Easily download, build, install, upgrade, and uninstall Python packages
 brew "python-setuptools"
+# Interpreted, interactive, object-oriented programming language
 brew "python@3.11"
+# Develop and deploy code with zero configuration
 brew "railway"
+# Rsync for cloud storage
 brew "rclone"
+# SVG rendering tool and library
 brew "resvg"
+# Search tool like grep and The Silver Searcher
 brew "ripgrep"
-brew "ruby", link: false
+# Powerful, clean, object-oriented scripting language
+brew "ruby"
+# Safe, concurrent, practical language
 brew "rust"
+# Smart session manager for the terminal
 brew "sesh"
+# 7-Zip is a file archiver with a high compression ratio
 brew "sevenzip"
+# Static analysis and lint tool, for (ba)sh scripts
 brew "shellcheck"
+# Add a public key to a remote machine's authorized_keys file
 brew "ssh-copy-id"
+# Graphical command-line client for SSH
 brew "sshs"
+# Cross-shell prompt for astronauts
 brew "starship"
+# Version control system designed to be a better CVS
 brew "subversion"
+# Easiest, most secure way to use WireGuard and 2FA
 brew "tailscale"
+# Send macOS User Notifications from the command-line
 brew "terminal-notifier"
+# Official tldr client written in Rust
 brew "tlrc"
+# Terminal multiplexer
 brew "tmux"
+# Manage complex tmux sessions easily
 brew "tmuxinator"
+# Upgrade all the things
 brew "topgrade"
+# CLI tool that moves files or folder to the trash
 brew "trash"
+# Parser generator tool
 brew "tree-sitter-cli"
+# Extremely fast Python package installer and resolver, written in Rust
 brew "uv"
+# Vi 'workalike' with many additional features
 brew "vim"
+# Internet file retriever
 brew "wget"
+# Successor of GNU Wget, a file and recursive website downloader
 brew "wget2"
+# Network analyzer and capture tool - without graphical user interface
 brew "wireshark"
+# Blazing fast terminal file manager written in Rust, based on async I/O
 brew "yazi"
+# Pluggable terminal workspace, with terminal multiplexer as the base feature
 brew "zellij"
+# Shell extension to navigate your filesystem faster
 brew "zoxide"
-brew "anomalyco/tap/opencode"
-brew "gromgit/brewtils/taproom"
-brew "infisical/get-cli/infisical"
-brew "peterldowns/tap/localias"
+# The AI coding agent built for the terminal.
+brew "anomalyco/tap/opencode", trusted: true
+# Interactive TUI for Homebrew
+brew "gromgit/brewtils/taproom", trusted: true
+# The official Infisical CLI
+brew "infisical/get-cli/infisical", trusted: true
+# Localias is a tool for developers to securely manage local aliases for development servers.
+brew "peterldowns/tap/localias", trusted: true
+# Password manager that keeps all passwords secure behind one password
 cask "1password"
+# Command-line interface for 1Password
 cask "1password-cli"
+# Stand alone ad blocker
 cask "adguard"
+# Menu bar tool to limit maximum charging percentage
 cask "aldente"
+# Transfer files from and to an Android smartphone
 cask "android-file-transfer"
+# Android SDK component
 cask "android-platform-tools"
+# Agent orchestration platform
 cask "antigravity"
+# Terminal interface for Antigravity agents
 cask "antigravity-cli"
+# AI Coding Agent IDE
 cask "antigravity-ide"
+# Allows connection to a computer remotely
 cask "anydesk"
+# Multi-track audio editor and recorder
 cask "audacity"
+# Utility to create and modify archives
 cask "betterzip"
+# Desktop password and login vault
 cask "bitwarden"
+# Send any size file between devices
 cask "blip"
+# File manager
 cask "bloom"
+# Prevents your sleeping computer from connecting to Bluetooth accessories
 cask "bluesnooze"
+# E-books management software
 cask "calibre"
+# Terminal-based AI coding assistant
 cask "claude-code"
+# Screen capturing tool
 cask "cleanshot"
+# AI code review CLI
 cask "coderabbit"
+# OpenAI's coding agent that runs in your terminal
 cask "codex"
+# OpenAI's Codex desktop app for managing coding agents
 cask "codex-app"
+# Write, edit, and chat about your code with AI
 cask "cursor"
+# Disk space visualiser
 cask "daisydisk"
+# All-in-one toolbox for developers
 cask "devutils"
+# Window peeking utility app
 cask "dockdoor"
+# Desktop client for Ente Auth
 cask "ente-auth"
+# Web browser
 cask "firefox"
+# Download manager with a torrent client
 cask "folx"
 cask "font-meslo-lg-nerd-font"
 cask "font-symbols-only-nerd-font"
+# Finder replacement and FTP, SFTP, WebDAV and Amazon s3 client
 cask "forklift"
+# Download accelerator and organiser
 cask "free-download-manager"
+# Set of tools to manage resources and applications hosted on Google Cloud
+cask "gcloud-cli"
+# Web browser
 cask "google-chrome"
+# Web browser
 cask "google-chrome@beta"
+# Native desktop AI assistant from Google
 cask "google-gemini"
+# AI-powered speech-to-text transcription
 cask "hyperwhisper"
+# Free and open-source media player
 cask "iina"
+# Tool to optimise images to a smaller size
 cask "imageoptim"
+# System monitoring app
 cask "istat-menus"
+# Terminal emulator as alternative to Apple's Terminal app
 cask "iterm2"
+# Keyboard customiser
 cask "karabiner-elements"
+# File archiver
 cask "keka"
+# Open-source keystroke visualiser
 cask "keycastr"
+# App to manage software development and track bugs
 cask "linear"
+# WordPress local development tool by Flywheel
 cask "local"
+# Trims video and audio files losslessly
 cask "losslesscut"
+# Extensible two-pane file manager
 cask "marta"
+# Free up RAM manually and automatically
 cask "memory-cleaner"
+# Utility that automatically downloads firmwares and installers
 cask "mist"
+# Create and edit MP4 videos
 cask "mp4tools"
+# App to write, plan, collaborate, and get organised
 cask "notion"
+# Calculator and converter application
 cask "numi"
+# Open-source software for live streaming and screen recording
 cask "obs"
+# Verify system files structure, run miscellaneous maintenance and more
 cask "onyx"
+# Replacement for Docker Desktop
 cask "orbstack"
+# Utility to uninstall apps and remove leftover files from old/uninstalled apps
 cask "pearcleaner"
+# Podcast platform
 cask "pocket-casts"
+# Proxy client
 cask "proxifier"
+# HTTP debugging proxy
 cask "proxyman"
+# Control your tools with a few keystrokes
 cask "raycast"
+# Spaced-repetition powered note-taking tool
 cask "remnote"
+# App that enables mouse-free UI interaction
 cask "shortcat"
+# Screenshot measurement and annotation tool
 cask "shottr"
+# Music streaming service
 cask "spotify"
+# Video game digital distribution service
 cask "steam"
+# Text editor for code, markup and prose
 cask "sublime-text"
+# VPN client for secure internet access and private browsing
 cask "surfshark"
+# Native GUI tool for relational databases
 cask "tableplus"
+# Mesh VPN based on WireGuard
 cask "tailscale-app"
+# Desktop client for Telegram messenger
 cask "telegram-desktop"
+# Menu bar manager
 cask "thaw"
+# To-do & task list manager
 cask "ticktick"
+# Charting and social-networking for investment traders
 cask "tradingview"
+# Open-source code editor
 cask "visual-studio-code"
+# Multimedia player
 cask "vlc"
+# GPU-accelerated cross-platform terminal emulator and multiplexer
 cask "wezterm"
+# Native desktop client for WhatsApp
 cask "whatsapp"
+# Network protocol analyzer
 cask "wireshark-app"
+# Voice-to-text dictation with AI-powered auto-editing
 cask "wispr-flow"
+# REST, GraphQL and gRPC client
 cask "yaak"
+# Multiplayer code editor
 cask "zed"
+# Mesh VPN client
 cask "zerotier-one"
 mas "Battery Monitor", id: 836505650
 mas "Bear", id: 1091189122
