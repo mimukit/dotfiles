@@ -1,6 +1,46 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "effortLevel": "medium",
   "env": {
-    "DISABLE_TELEMETRY": "1"
+    "DISABLE_TELEMETRY": "1",
+    "IS_DEMO": "1"
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "command": "terminal-notifier -title 'Claude Code' -message 'Awaiting your input'",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "bash '/Users/mukit/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "terminal-notifier -title 'Claude Code' -message 'Task completed'",
+            "type": "command"
+          }
+        ]
+      }
+    ]
   },
   "permissions": {
     "allow": [
@@ -17,38 +57,16 @@
       "Bash(npm:*)",
       "Bash(pnpm:*)"
     ],
-    "deny": ["Bash(curl:*)", "Read(./.env)", "Read(./.env.*)", "Bash(rm:*)"]
-  },
-  "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "terminal-notifier -title 'Claude Code' -message 'Awaiting your input'"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "terminal-notifier -title 'Claude Code' -message 'Task completed'"
-          }
-        ]
-      }
+    "deny": [
+      "Bash(curl:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(rm:*)"
     ]
   },
   "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline-command.sh"
+    "command": "bash ~/.claude/statusline-command.sh",
+    "type": "command"
   },
-  "effortLevel": "medium",
-  "theme": "dark",
-  "attribution": {
-    "commit": "",
-    "pr": ""
-  }
+  "theme": "dark"
 }
