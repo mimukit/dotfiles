@@ -1,7 +1,7 @@
-tap "anomalyco/tap"
-tap "gromgit/brewtils"
-tap "infisical/get-cli"
-tap "peterldowns/tap"
+tap "anomalyco/tap", trusted: true
+tap "gromgit/brewtils", trusted: true
+tap "infisical/get-cli", trusted: true
+tap "peterldowns/tap", trusted: true
 # Run your GitHub Actions locally
 brew "act"
 # Display directories as trees (with optional color/HTML output)
@@ -76,6 +76,8 @@ brew "grep"
 brew "grex"
 # GNU troff text-formatting system
 brew "groff"
+# Agent multiplexer that lives in your terminal
+brew "herdr"
 # Idempotent command-line utility for managing your /etc/hosts file
 brew "hostess"
 # User-friendly cURL replacement (command-line HTTP client)
@@ -234,6 +236,8 @@ cask "bloom"
 cask "bluesnooze"
 # E-books management software
 cask "calibre"
+# Anthropic's official Claude AI desktop app
+cask "claude"
 # Terminal-based AI coding assistant
 cask "claude-code"
 # Screen capturing tool
