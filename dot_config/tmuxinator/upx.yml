@@ -9,7 +9,7 @@ windows:
         - brew_update:
             - clear
             - sh ~/setup_scripts/brew_apps_backup.sh
-            - brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all
+            - brewupx
         - topgrade:
             - clear
             - topgrade --disable containers --disable chezmoi --disable brew_formula --disable brew_cask --disable vim --yes
