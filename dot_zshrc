@@ -85,7 +85,6 @@ eval "$(starship init zsh)"
 if [[ "$OSTYPE" == "darwin"* ]]; then
    eval "$(fzf --zsh)"
    eval "$(atuin init zsh --disable-up-arrow --disable-ctrl-r)"
-   eval "$(zoxide init zsh --cmd cd)"
    eval "$(mise activate zsh)"
 
    bindkey '^f' atuin-search
@@ -105,16 +104,16 @@ alias cc='clear; tmux clear-history; clear'
 alias clc='claude --model claude-opus-4-8'
 alias clcy='claude --allow-dangerously-skip-permissions'
 alias co='code .'
-alias conf='cd ~/.config && nvim && cd -'
+alias conf='cd "$(chezmoi source-path ~/.config)" && nvim && cd - && chezmoi apply'
 alias ct='cloudflared tunnel'
 alias cur='cursor'
 alias cz='chezmoi'
 alias cza='chezmoi -v apply'
-alias czaa='czra'
-alias czav='chezmoi forget ~/.config/nvim --force && chezmoi add ~/.config/nvim && chezmoi forget ~/.config/lazyvim --force && chezmoi add ~/.config/lazyvim'
 alias czc='code ~/.local/share/chezmoi'
+alias cze='chezmoi edit --apply'
+alias czf='chezmoi forget'
 alias czg='cd ~/.local/share/chezmoi && lazygit && cd -'
-alias czra='chezmoi re-add'
+alias czr='chezmoi re-add'
 alias czv='cd ~/.local/share/chezmoi && nvim && cd -'
 alias dc='docker compose'
 alias dcud='docker compose up -d'
@@ -169,12 +168,12 @@ alias upz='zellij --layout upx attach --create system-updates'
 alias uva='source .venv/bin/activate'
 alias v='nvim'
 alias lv="NVIM_APPNAME=lazyvim nvim"
-alias vconf='cd ~/.config/nvim && nvim && cd -'
+alias vconf='cd "$(chezmoi source-path ~/.config/nvim)" && nvim && cd - && chezmoi apply'
 alias vim='nvim'
 alias wr='wrangler'
 alias x='exit'
 alias yup='yarn global upgrade-interactive --latest'
-alias zconf='nvim ~/.zshrc'
+alias zconf='chezmoi edit ~/.zshrc --apply'
 alias zj='zellij'
 alias zl='session=$(zj ls -n -s | fzf --prompt="⚡Zellij Session → "); [[ -n $session ]] && zj attach --create "$session"'
 alias zll='layout=$(ls ~/.config/zellij/layouts | grep -v / | sed "s/\.[^.]*$//" | fzf --prompt="⚡Zellij Layout → "); [[ -n $layout ]] && zj --layout "$layout" attach --create "$layout"'
@@ -223,6 +222,11 @@ SSH_AUTH_SOCK="~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 # Add by Antigravity
 export PATH="/Users/mukit/.antigravity/antigravity/bin:$PATH"
 
-# Add Postgres cli tools 
+# Add Postgres cli tools
 export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"
 export PATH="/usr/local/opt/postgresql@18/bin:$PATH"
+
+# Initialize zoxide last, after all PATH changes (per zoxide doctor)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  eval "$(zoxide init zsh --cmd cd)"
+fi
