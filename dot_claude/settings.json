@@ -66,8 +66,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "/Users/mukit/.claude/statusline.sh",
-    "padding": 2
+    "command": "/Users/mukit/.claude/statusline.sh"
   },
   "theme": "dark"
 }
