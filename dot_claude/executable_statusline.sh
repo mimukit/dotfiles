@@ -8,20 +8,27 @@
 input=$(cat)
 
 # ---------------------------------------------------------------------------
-# 2. ANSI color helpers
+# 2. ANSI color helpers — Catppuccin Mocha (truecolor)
 #    Palette:
-#      Soft blue  (0-60%)   — #6699cc → closest 256-color: 68
-#      Lavender   (60-70%)  — #b0a4e3 → closest 256-color: 146
-#      Peach      (70-80%)  — #ffb347 → closest 256-color: 215
-#      Soft pink  (80%+)    — #ff9aac → closest 256-color: 211
+#      Blue      (0-60%)   — #89b4fa
+#      Lavender  (60-70%)  — #b4befe
+#      Peach     (70-80%)  — #fab387
+#      Red       (80%+)    — #f38ba8
+#      Overlay1  (muted)   — #7f849c  (replaces the old DIM)
 # ---------------------------------------------------------------------------
 RESET="\033[0m"
-DIM="\033[2m"
 
-SOFT_BLUE="\033[38;5;68m"    # 0-60%
-LAVENDER="\033[38;5;146m"    # 60-70%
-PEACH="\033[38;5;215m"       # 70-80%
-SOFT_PINK="\033[38;5;211m"   # 80%+
+# Usage-load ramp (applied to ctx / 5h / 7d percentages)
+GREEN="\033[38;2;166;227;161m"   # Green    0-60%
+LAVENDER="\033[38;2;180;190;254m"    # Lavender 60-70%
+PEACH="\033[38;2;250;179;135m"       # Peach    70-80%
+SOFT_PINK="\033[38;2;243;139;168m"   # Red      80%+
+
+# Per-segment identity colors
+MAUVE="\033[38;2;203;166;247m"       # Mauve    — model name
+SKY="\033[38;2;137;220;235m"         # Sky      — directory
+LABEL="\033[38;2;147;153;178m"       # Overlay2 — segment labels (ctx/5h/7d)
+SEP="\033[38;2;88;91;112m"           # Surface2 — separators
 
 # ---------------------------------------------------------------------------
 # 3. Parse JSON with jq
@@ -76,16 +83,7 @@ pick_color() {
     if   [ "$pct" -ge 80 ]; then printf '%b' "$SOFT_PINK"
     elif [ "$pct" -ge 70 ]; then printf '%b' "$PEACH"
     elif [ "$pct" -ge 60 ]; then printf '%b' "$LAVENDER"
-    else                          printf '%b' "$SOFT_BLUE"
-    fi
-}
-
-pick_icon() {
-    local pct="$1"
-    if   [ "$pct" -ge 80 ]; then echo "💗"
-    elif [ "$pct" -ge 70 ]; then echo "🌸"
-    elif [ "$pct" -ge 60 ]; then echo "💭"
-    else                          echo ""
+    else                          printf '%b' "$GREEN"
     fi
 }
 
@@ -111,70 +109,44 @@ make_segment() {
     local pct="$2"
     local color
     color=$(pick_color "$pct")
-    local icon
-    icon=$(pick_icon "$pct")
     local bar
     bar=$(make_bar "$pct")
-    # Format: [icon ]bar pct%  label
-    local seg
-    if [ -n "$icon" ]; then
-        seg="${icon} ${color}${bar} ${pct}%${RESET}"
-    else
-        seg="${color}${bar} ${pct}%${RESET}"
-    fi
-    # Prepend label in dim
-    printf '%b' "${DIM}${label}${RESET} ${seg}"
+    printf '%b' "${LABEL}${label}${RESET} ${color}${bar} ${pct}%${RESET}"
 }
 
 # ---------------------------------------------------------------------------
 # 9. Assemble the status line
 # ---------------------------------------------------------------------------
 
-# Dimmed model name
-SEG_MODEL="${DIM}${MODEL}${RESET}"
+# Separator
+BAR_SEP="${SEP} | ${RESET}"
 
-# Dimmed directory
-SEG_DIR="${DIM}${DIRNAME}${RESET}"
+# Model name (mauve)
+SEG_MODEL="${MAUVE}${MODEL}${RESET}"
+
+# Directory (sky)
+SEG_DIR="${SKY}${DIRNAME}${RESET}"
 
 # Context window segment
 CTX_COLOR=$(pick_color "$CTX_PCT")
-CTX_ICON=$(pick_icon  "$CTX_PCT")
 CTX_BAR=$(make_bar    "$CTX_PCT")
-if [ -n "$CTX_ICON" ]; then
-    SEG_CTX="${CTX_ICON} ${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}"
-else
-    SEG_CTX="${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}"
-fi
+SEG_CTX="${LABEL}ctx${RESET} ${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}"
 
 # Build base line
-LINE="${SEG_MODEL} | ${SEG_DIR} | ctx ${SEG_CTX}"
+LINE="${SEG_MODEL}${BAR_SEP}${SEG_DIR}${BAR_SEP}${SEG_CTX}"
 
 # 5-hour rate limit segment (only when data present)
 if [ -n "$FIVE_H" ]; then
     FH_PCT=$(clamp_pct "$FIVE_H")
     FH_COLOR=$(pick_color "$FH_PCT")
-    FH_ICON=$(pick_icon  "$FH_PCT")
-    FH_BAR=$(make_bar    "$FH_PCT")
-    if [ -n "$FH_ICON" ]; then
-        SEG_5H="${FH_ICON} ${FH_COLOR}${FH_BAR} ${FH_PCT}%${RESET}"
-    else
-        SEG_5H="${FH_COLOR}${FH_BAR} ${FH_PCT}%${RESET}"
-    fi
-    LINE="${LINE} | 5h ${SEG_5H}"
+    LINE="${LINE}${BAR_SEP}${LABEL}5h${RESET} ${FH_COLOR}${FH_PCT}%${RESET}"
 fi
 
 # 7-day rate limit segment (only when data present)
 if [ -n "$SEVEN_D" ]; then
     SD_PCT=$(clamp_pct "$SEVEN_D")
     SD_COLOR=$(pick_color "$SD_PCT")
-    SD_ICON=$(pick_icon  "$SD_PCT")
-    SD_BAR=$(make_bar    "$SD_PCT")
-    if [ -n "$SD_ICON" ]; then
-        SEG_7D="${SD_ICON} ${SD_COLOR}${SD_BAR} ${SD_PCT}%${RESET}"
-    else
-        SEG_7D="${SD_COLOR}${SD_BAR} ${SD_PCT}%${RESET}"
-    fi
-    LINE="${LINE} | 7d ${SEG_7D}"
+    LINE="${LINE}${BAR_SEP}${LABEL}7d${RESET} ${SD_COLOR}${SD_PCT}%${RESET}"
 fi
 
 # ---------------------------------------------------------------------------
