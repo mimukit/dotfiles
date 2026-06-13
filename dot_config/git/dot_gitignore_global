@@ -9,3 +9,5 @@ npm-debug.log
 
 # Act
 act.secrets
+
+**/.claude/settings.local.json
