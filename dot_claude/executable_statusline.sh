@@ -43,6 +43,10 @@ if command -v jq >/dev/null 2>&1; then
     # Rate limits
     FIVE_H=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
     SEVEN_D=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+
+    # Rate-limit window reset times (ISO 8601 or unix epoch)
+    FIVE_H_RESET=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+    SEVEN_D_RESET=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
 else
     MODEL=$(echo "$input" | grep -o '"display_name":"[^"]*"' | head -1 | cut -d'"' -f4)
     MODEL="${MODEL:-Claude}"
@@ -50,6 +54,8 @@ else
     RAW_CTX=""
     FIVE_H=""
     SEVEN_D=""
+    FIVE_H_RESET=""
+    SEVEN_D_RESET=""
 fi
 
 # ---------------------------------------------------------------------------
@@ -65,6 +71,22 @@ clamp_pct() {
 }
 
 CTX_PCT=$(clamp_pct "$RAW_CTX")
+
+# ---------------------------------------------------------------------------
+# 4b. Format a reset timestamp (ISO 8601 or unix epoch) -> local HH:MM
+# ---------------------------------------------------------------------------
+fmt_reset() {
+    local ts="$1"
+    local fmt="${2:-%H:%M}"
+    [ -z "$ts" ] && return
+    if [[ "$ts" =~ ^[0-9]+$ ]]; then
+        # Unix epoch seconds
+        date -r "$ts" +"$fmt" 2>/dev/null
+    else
+        # ISO 8601 (e.g. 2026-06-13T15:00:00Z) — parse as UTC, print local
+        date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "${ts%%[+.Z]*}Z" +"$fmt" 2>/dev/null
+    fi
+}
 
 # ---------------------------------------------------------------------------
 # 5. Directory basename (dimmed)
@@ -135,18 +157,26 @@ SEG_CTX="${LABEL}ctx${RESET} ${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}"
 # Build base line
 LINE="${SEG_MODEL}${BAR_SEP}${SEG_DIR}${BAR_SEP}${SEG_CTX}"
 
-# 5-hour rate limit segment (only when data present)
-if [ -n "$FIVE_H" ]; then
-    FH_PCT=$(clamp_pct "$FIVE_H")
-    FH_COLOR=$(pick_color "$FH_PCT")
-    LINE="${LINE}${BAR_SEP}${LABEL}5h${RESET} ${FH_COLOR}${FH_PCT}%${RESET}"
-fi
-
 # 7-day rate limit segment (only when data present)
 if [ -n "$SEVEN_D" ]; then
     SD_PCT=$(clamp_pct "$SEVEN_D")
     SD_COLOR=$(pick_color "$SD_PCT")
     LINE="${LINE}${BAR_SEP}${LABEL}7d${RESET} ${SD_COLOR}${SD_PCT}%${RESET}"
+    SD_RESET=$(fmt_reset "$SEVEN_D_RESET" "%b %d")
+    if [ -n "$SD_RESET" ]; then
+        LINE="${LINE} ${LABEL}(${SD_RESET})${RESET}"
+    fi
+fi
+
+# 5-hour rate limit segment (only when data present)
+if [ -n "$FIVE_H" ]; then
+    FH_PCT=$(clamp_pct "$FIVE_H")
+    FH_COLOR=$(pick_color "$FH_PCT")
+    LINE="${LINE}${BAR_SEP}${LABEL}5h${RESET} ${FH_COLOR}${FH_PCT}%${RESET}"
+    FH_RESET=$(fmt_reset "$FIVE_H_RESET")
+    if [ -n "$FH_RESET" ]; then
+        LINE="${LINE} ${LABEL}(${FH_RESET})${RESET}"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
