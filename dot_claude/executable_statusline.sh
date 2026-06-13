@@ -8,79 +8,59 @@
 input=$(cat)
 
 # ---------------------------------------------------------------------------
-# 2. ANSI helpers
+# 2. ANSI color helpers
+#    Palette:
+#      Soft blue  (0-60%)   — #6699cc → closest 256-color: 68
+#      Lavender   (60-70%)  — #b0a4e3 → closest 256-color: 146
+#      Peach      (70-80%)  — #ffb347 → closest 256-color: 215
+#      Soft pink  (80%+)    — #ff9aac → closest 256-color: 211
 # ---------------------------------------------------------------------------
 RESET="\033[0m"
 DIM="\033[2m"
-GREEN="\033[92m"       # bright green  (0-60%)
-DIM_GREEN="\033[2;32m" # dim green     (60-70%)
-YELLOW="\033[93m"      # yellow        (70-80%)
-RED="\033[91m"         # red           (80-100%)
+
+SOFT_BLUE="\033[38;5;68m"    # 0-60%
+LAVENDER="\033[38;5;146m"    # 60-70%
+PEACH="\033[38;5;215m"       # 70-80%
+SOFT_PINK="\033[38;5;211m"   # 80%+
 
 # ---------------------------------------------------------------------------
-# 3. Parse JSON with jq (graceful fallback if jq absent)
+# 3. Parse JSON with jq
 # ---------------------------------------------------------------------------
 if command -v jq >/dev/null 2>&1; then
     MODEL=$(echo "$input" | jq -r '.model.display_name // "Claude"')
     CWD=$(echo "$input"   | jq -r '.workspace.current_dir // .cwd // ""')
-    TRANSCRIPT=$(echo "$input" | jq -r '.transcript_path // ""')
-    SESSION_ID=$(echo "$input" | jq -r '.session_id // ""')
 
-    # Context: prefer pre-calculated used_percentage
-    RAW_PCT=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
+    # Context window used percentage (pre-calculated)
+    RAW_CTX=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 
-    # If not available, try deriving from token counts
-    if [ -z "$RAW_PCT" ]; then
-        TOTAL_INPUT=$(echo "$input" | jq -r '
-            (.context_window.total_input_tokens
-             // (.context_window.current_usage |
-                 if . then
-                     (.input_tokens // 0)
-                     + (.cache_read_input_tokens // 0)
-                     + (.cache_creation_input_tokens // 0)
-                 else empty end)
-            ) // empty')
-        if [ -n "$TOTAL_INPUT" ] && [ "$TOTAL_INPUT" != "null" ]; then
-            RAW_PCT=$(echo "$TOTAL_INPUT" | awk '{printf "%.2f", ($1/160000)*100}')
-        fi
-    fi
+    # Rate limits
+    FIVE_H=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
+    SEVEN_D=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 else
-    # Fallback: crude grep-based extraction
     MODEL=$(echo "$input" | grep -o '"display_name":"[^"]*"' | head -1 | cut -d'"' -f4)
     MODEL="${MODEL:-Claude}"
     CWD=$(echo "$input" | grep -o '"current_dir":"[^"]*"' | head -1 | cut -d'"' -f4)
-    TRANSCRIPT=""
-    RAW_PCT=""
+    RAW_CTX=""
+    FIVE_H=""
+    SEVEN_D=""
 fi
-
-# If still no percentage, try reading the transcript file
-if [ -z "$RAW_PCT" ] && [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
-    # Last message that contains token usage fields
-    LAST_TOKENS=$(grep -o '"input_tokens":[0-9]*' "$TRANSCRIPT" 2>/dev/null | tail -1 | grep -o '[0-9]*')
-    LAST_CACHE_READ=$(grep -o '"cache_read_input_tokens":[0-9]*' "$TRANSCRIPT" 2>/dev/null | tail -1 | grep -o '[0-9]*')
-    LAST_CACHE_WRITE=$(grep -o '"cache_creation_input_tokens":[0-9]*' "$TRANSCRIPT" 2>/dev/null | tail -1 | grep -o '[0-9]*')
-    T=${LAST_TOKENS:-0}
-    CR=${LAST_CACHE_READ:-0}
-    CW=${LAST_CACHE_WRITE:-0}
-    TOTAL=$(( T + CR + CW ))
-    if [ "$TOTAL" -gt 0 ]; then
-        RAW_PCT=$(echo "$TOTAL" | awk '{printf "%.2f", ($1/160000)*100}')
-    fi
-fi
-
-# Default to 0 if still empty
-RAW_PCT="${RAW_PCT:-0}"
-
-# Clamp to 0-100
-PCT=$(echo "$RAW_PCT" | awk '{
-    v = int($1 + 0.5)
-    if (v < 0) v = 0
-    if (v > 100) v = 100
-    print v
-}')
 
 # ---------------------------------------------------------------------------
-# 4. Directory basename
+# 4. Clamp percentage helper (integer, 0-100)
+# ---------------------------------------------------------------------------
+clamp_pct() {
+    echo "${1:-0}" | awk '{
+        v = int($1 + 0.5)
+        if (v < 0)   v = 0
+        if (v > 100) v = 100
+        print v
+    }'
+}
+
+CTX_PCT=$(clamp_pct "$RAW_CTX")
+
+# ---------------------------------------------------------------------------
+# 5. Directory basename (dimmed)
 # ---------------------------------------------------------------------------
 if [ -n "$CWD" ]; then
     DIRNAME="${CWD##*/}"
@@ -89,110 +69,115 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Context color based on threshold
+# 6. Color + icon selector based on percentage
 # ---------------------------------------------------------------------------
-if [ "$PCT" -ge 80 ]; then
-    CTX_COLOR="$RED"
-elif [ "$PCT" -ge 70 ]; then
-    CTX_COLOR="$YELLOW"
-elif [ "$PCT" -ge 60 ]; then
-    CTX_COLOR="$DIM_GREEN"
-else
-    CTX_COLOR="$GREEN"
-fi
-
-# ---------------------------------------------------------------------------
-# 6. 10-block progress bar: ▰ filled, ▱ empty
-# ---------------------------------------------------------------------------
-FILLED=$(( PCT / 10 ))
-EMPTY=$(( 10 - FILLED ))
-BAR=""
-for ((i=0; i<FILLED; i++)); do BAR="${BAR}▰"; done
-for ((i=0; i<EMPTY;  i++)); do BAR="${BAR}▱"; done
-
-# ---------------------------------------------------------------------------
-# 7. Git branch (run in CWD; silently skip if not a repo)
-# ---------------------------------------------------------------------------
-GIT_BRANCH=""
-if [ -n "$CWD" ] && [ -d "$CWD" ]; then
-    GIT_BRANCH=$(git -C "$CWD" --no-optional-locks branch --show-current 2>/dev/null)
-fi
-
-# ---------------------------------------------------------------------------
-# 8. Session elapsed time
-#    Claude Code does not expose start time in JSON, so we use the transcript
-#    file mtime as a proxy for session start (oldest reliable timestamp).
-#    If unavailable, we fall back to a session-file-based approach.
-# ---------------------------------------------------------------------------
-ELAPSED=""
-if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
-    # macOS stat
-    FILE_MTIME=$(stat -f "%m" "$TRANSCRIPT" 2>/dev/null)
-    if [ -z "$FILE_MTIME" ]; then
-        # GNU stat fallback
-        FILE_MTIME=$(stat -c "%Y" "$TRANSCRIPT" 2>/dev/null)
+pick_color() {
+    local pct="$1"
+    if   [ "$pct" -ge 80 ]; then printf '%b' "$SOFT_PINK"
+    elif [ "$pct" -ge 70 ]; then printf '%b' "$PEACH"
+    elif [ "$pct" -ge 60 ]; then printf '%b' "$LAVENDER"
+    else                          printf '%b' "$SOFT_BLUE"
     fi
-    if [ -n "$FILE_MTIME" ]; then
-        NOW=$(date +%s)
-        SECS=$(( NOW - FILE_MTIME ))
-        if [ "$SECS" -lt 0 ]; then SECS=0; fi
-        H=$(( SECS / 3600 ))
-        M=$(( (SECS % 3600) / 60 ))
-        S=$(( SECS % 60 ))
-        if [ "$H" -gt 0 ]; then
-            ELAPSED=$(printf "%dh%02dm" "$H" "$M")
-        else
-            ELAPSED=$(printf "%dm%02ds" "$M" "$S")
-        fi
+}
+
+pick_icon() {
+    local pct="$1"
+    if   [ "$pct" -ge 80 ]; then echo "💗"
+    elif [ "$pct" -ge 70 ]; then echo "🌸"
+    elif [ "$pct" -ge 60 ]; then echo "💭"
+    else                          echo ""
     fi
-fi
-ELAPSED="${ELAPSED:-0m00s}"
+}
 
 # ---------------------------------------------------------------------------
-# 9. Warning message
+# 7. Progress bar builder: ◆ filled, ◇ empty, 10 blocks
 # ---------------------------------------------------------------------------
-WARN_MSG=""
-WARN_COLOR=""
-if [ "$PCT" -ge 80 ]; then
-    WARN_MSG="  [!!!] /handoff-prompt EXECUTE NOW"
-    WARN_COLOR="$RED"
-elif [ "$PCT" -ge 70 ]; then
-    WARN_MSG="  [!!] /handoff-prompt - dontsleeponai.com"
-    WARN_COLOR="$YELLOW"
-elif [ "$PCT" -ge 60 ]; then
-    WARN_MSG="  [!] HANDOFF >> dontsleeponai.com/handoff-prompt"
-    WARN_COLOR="$DIM_GREEN"
-fi
+make_bar() {
+    local pct="$1"
+    local filled=$(( pct / 10 ))
+    local empty=$(( 10 - filled ))
+    local bar=""
+    local i
+    for ((i=0; i<filled; i++)); do bar="${bar}◆"; done
+    for ((i=0; i<empty;  i++)); do bar="${bar}◇"; done
+    echo "$bar"
+}
 
 # ---------------------------------------------------------------------------
-# 10. Assemble the status line
+# 8. Segment builder: bar + percentage (+ optional icon)
 # ---------------------------------------------------------------------------
-# Segment: model (dimmed)
+make_segment() {
+    local label="$1"
+    local pct="$2"
+    local color
+    color=$(pick_color "$pct")
+    local icon
+    icon=$(pick_icon "$pct")
+    local bar
+    bar=$(make_bar "$pct")
+    # Format: [icon ]bar pct%  label
+    local seg
+    if [ -n "$icon" ]; then
+        seg="${icon} ${color}${bar} ${pct}%${RESET}"
+    else
+        seg="${color}${bar} ${pct}%${RESET}"
+    fi
+    # Prepend label in dim
+    printf '%b' "${DIM}${label}${RESET} ${seg}"
+}
+
+# ---------------------------------------------------------------------------
+# 9. Assemble the status line
+# ---------------------------------------------------------------------------
+
+# Dimmed model name
 SEG_MODEL="${DIM}${MODEL}${RESET}"
 
-# Segment: directory (dimmed)
+# Dimmed directory
 SEG_DIR="${DIM}${DIRNAME}${RESET}"
 
-# Segment: context bar + percentage
-SEG_CTX="${CTX_COLOR}${BAR} ${PCT}%${RESET}"
-
-# Build the line
-LINE="${SEG_MODEL} | ${SEG_DIR} | ${SEG_CTX}"
-
-# Segment: git branch (if present)
-if [ -n "$GIT_BRANCH" ]; then
-    LINE="${LINE} | ${DIM}${GIT_BRANCH}${RESET}"
+# Context window segment
+CTX_COLOR=$(pick_color "$CTX_PCT")
+CTX_ICON=$(pick_icon  "$CTX_PCT")
+CTX_BAR=$(make_bar    "$CTX_PCT")
+if [ -n "$CTX_ICON" ]; then
+    SEG_CTX="${CTX_ICON} ${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}"
+else
+    SEG_CTX="${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}"
 fi
 
-# Segment: elapsed time
-LINE="${LINE} | ${DIM}${ELAPSED}${RESET}"
+# Build base line
+LINE="${SEG_MODEL} | ${SEG_DIR} | ctx ${SEG_CTX}"
 
-# Append warning (if any)
-if [ -n "$WARN_MSG" ]; then
-    LINE="${LINE}${WARN_COLOR}${WARN_MSG}${RESET}"
+# 5-hour rate limit segment (only when data present)
+if [ -n "$FIVE_H" ]; then
+    FH_PCT=$(clamp_pct "$FIVE_H")
+    FH_COLOR=$(pick_color "$FH_PCT")
+    FH_ICON=$(pick_icon  "$FH_PCT")
+    FH_BAR=$(make_bar    "$FH_PCT")
+    if [ -n "$FH_ICON" ]; then
+        SEG_5H="${FH_ICON} ${FH_COLOR}${FH_BAR} ${FH_PCT}%${RESET}"
+    else
+        SEG_5H="${FH_COLOR}${FH_BAR} ${FH_PCT}%${RESET}"
+    fi
+    LINE="${LINE} | 5h ${SEG_5H}"
+fi
+
+# 7-day rate limit segment (only when data present)
+if [ -n "$SEVEN_D" ]; then
+    SD_PCT=$(clamp_pct "$SEVEN_D")
+    SD_COLOR=$(pick_color "$SD_PCT")
+    SD_ICON=$(pick_icon  "$SD_PCT")
+    SD_BAR=$(make_bar    "$SD_PCT")
+    if [ -n "$SD_ICON" ]; then
+        SEG_7D="${SD_ICON} ${SD_COLOR}${SD_BAR} ${SD_PCT}%${RESET}"
+    else
+        SEG_7D="${SD_COLOR}${SD_BAR} ${SD_PCT}%${RESET}"
+    fi
+    LINE="${LINE} | 7d ${SEG_7D}"
 fi
 
 # ---------------------------------------------------------------------------
-# 11. Print — use printf to honour escape sequences
+# 10. Print — printf to honour ANSI escape sequences
 # ---------------------------------------------------------------------------
 printf '%b\n' "$LINE"
