@@ -1,1 +1,12 @@
-.DS_Store
+**/.DS_Store
+
+# editor/app scratch + state
+**/*.tmp
+.config/zed/.tmp*
+**/ui-state.yml
+
+# binary DB / lock noise
+.config/zed/prompts/prompts-library-db.*
+
+# local-only backups
+.config/raycast/settings-backup.rayconfig
