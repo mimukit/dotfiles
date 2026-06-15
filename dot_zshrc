@@ -85,6 +85,10 @@ eval "$(starship init zsh)"
 if [[ "$OSTYPE" == "darwin"* ]]; then
    eval "$(fzf --zsh)"
    eval "$(atuin init zsh --disable-up-arrow --disable-ctrl-r)"
+
+   # Security-sensitive mise settings are only honored from the global config or
+   # env vars; setting it here avoids "ignored in non-global config" warnings.
+   export MISE_TRUSTED_CONFIG_PATHS="$HOME/Projects"
    eval "$(mise activate zsh)"
 
    bindkey '^f' atuin-search
@@ -101,7 +105,7 @@ alias brewupx='brew update && brew upgrade --greedy --verbose --yes && brew clea
 alias bt='taproom -s Installs'
 alias c='clear'
 alias cc='clear; tmux clear-history; clear'
-alias clc='claude --model claude-opus-4-8'
+alias clc='claude --model "claude-opus-4-8[1m]"'
 alias clcy='claude --allow-dangerously-skip-permissions'
 alias co='code .'
 alias conf='cd "$(chezmoi source-path ~/.config)" && nvim && cd - && chezmoi apply'
@@ -199,10 +203,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
 
   # pnpm
-  export PNPM_HOME="/Users/mukit/Library/pnpm"
+  export PNPM_HOME="$HOME/Library/pnpm"
   case ":$PATH:" in
-    *":$PNPM_HOME:"*) ;;
-    *) export PATH="$PNPM_HOME:$PATH" ;;
+    *":$PNPM_HOME/bin:"*) ;;
+    *) export PATH="$PNPM_HOME/bin:$PATH" ;;
   esac
   # pnpm end
 fi
