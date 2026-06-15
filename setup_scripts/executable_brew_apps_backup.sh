@@ -26,3 +26,13 @@ brew bundle dump --file "$BREWFILE" --force --debug --no-vscode
 echo -e "${GREEN}✅ Brewfile backup completed successfully!${RESET}"
 echo -e "${YELLOW}ℹ️ Brewfile backup location: $BREWFILE${RESET}"
 
+# Sync the freshly dumped Brewfile back into the chezmoi source so the change
+# is tracked without a manual `chezmoi add`/`re-add`.
+if command -v chezmoi >/dev/null 2>&1; then
+    echo -e "${CYAN}⏳ Syncing Brewfile into chezmoi...${RESET}"
+    chezmoi re-add "$BREWFILE"
+    echo -e "${GREEN}✅ Brewfile synced into chezmoi source.${RESET}"
+else
+    echo -e "${YELLOW}ℹ️ chezmoi not found on PATH; skipped sync.${RESET}"
+fi
+
