@@ -5,8 +5,7 @@
   },
   "effortLevel": "medium",
   "env": {
-    "DISABLE_TELEMETRY": "1",
-    "IS_DEMO": "1"
+    "DISABLE_TELEMETRY": "1"
   },
   "hooks": {
     "Notification": [
@@ -66,7 +65,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "/Users/mukit/.claude/statusline.sh"
+    "command": "~/.claude/statusline.sh"
   },
   "theme": "dark"
 }
