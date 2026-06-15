@@ -254,6 +254,8 @@ cask "cursor"
 cask "daisydisk"
 # All-in-one toolbox for developers
 cask "devutils"
+# Voice and text chat software
+cask "discord"
 # Window peeking utility app
 cask "dockdoor"
 # Desktop client for Ente Auth
