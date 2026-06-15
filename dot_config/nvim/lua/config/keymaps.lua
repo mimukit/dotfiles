@@ -13,3 +13,9 @@ vim.keymap.set({ "n", "t" }, "<C-h>", "<CMD>NavigatorLeft<CR>")
 vim.keymap.set({ "n", "t" }, "<C-l>", "<CMD>NavigatorRight<CR>")
 vim.keymap.set({ "n", "t" }, "<C-k>", "<CMD>NavigatorUp<CR>")
 vim.keymap.set({ "n", "t" }, "<C-j>", "<CMD>NavigatorDown<CR>")
+
+-- Clipboard management
+vim.keymap.set("n", "<leader>yb", "<cmd>%y+<CR>", { desc = "Copy whole file" })
+vim.keymap.set("v", "<leader>y", '"+y', { desc = "Copy selection to system clipboard" })
+vim.keymap.set("n", "<leader>yy", '"+yy', { desc = "Copy line to system clipboard" })
+vim.keymap.set({ "n", "v" }, "<leader>p", '"+p', { desc = "Paste from system clipboard" })
