@@ -11,6 +11,10 @@ return {
               },
             },
           },
+          files = {
+            hidden = true, -- Shows hidden files (like .env)
+            ignored = true, -- Shows gitignored files
+          },
         },
       },
     },
