@@ -1,45 +1,10 @@
 {
-  "attribution": {
-    "commit": "",
-    "pr": ""
-  },
-  "effortLevel": "medium",
   "env": {
     "DISABLE_TELEMETRY": "1"
   },
-  "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "command": "terminal-notifier -title 'Claude Code' -message 'Awaiting your input'",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "bash '/Users/mukit/.claude/hooks/herdr-agent-state.sh' session",
-            "timeout": 10,
-            "type": "command"
-          }
-        ],
-        "matcher": "*"
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "command": "terminal-notifier -title 'Claude Code' -message 'Task completed'",
-            "type": "command"
-          }
-        ]
-      }
-    ]
+  "attribution": {
+    "commit": "",
+    "pr": ""
   },
   "permissions": {
     "allow": [
@@ -54,18 +19,70 @@
       "Bash(wc:*)",
       "Bash(xargs:*)",
       "Bash(npm:*)",
-      "Bash(pnpm:*)"
+      "Bash(pnpm:*)",
+      "Bash(gh issue list*)",
+      "Bash(gh issue view*)",
+      "Bash(gh issue create*)",
+      "Bash(gh issue edit*)",
+      "Bash(gh issue comment*)",
+      "Bash(gh issue close*)",
+      "Bash(gh issue reopen*)",
+      "Bash(bash /Users/mukit/.claude/statusline-command.sh)",
+      "Bash(bash ~/.claude/statusline-command.sh)",
+      "Bash(echo \"---EXIT: $?---\")",
+      "Bash(chmod +x /Users/mukit/.claude/statusline.sh)",
+      "Bash(/Users/mukit/.claude/statusline.sh)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('statusLine'\\),indent=2\\)\\)\")",
+      "Bash(echo \"[exit $?]\")",
+      "Bash(bash /Users/mukit/.claude/statusline.sh)"
     ],
     "deny": [
       "Bash(curl:*)",
       "Read(./.env)",
       "Read(./.env.*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(gh issue delete*)"
+    ],
+    "defaultMode": "auto"
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -title 'Claude Code' -message 'Awaiting your input'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/mukit/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -title 'Claude Code' -message 'Task completed'"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh"
   },
+  "effortLevel": "medium",
   "theme": "dark"
 }
