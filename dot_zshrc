@@ -105,7 +105,7 @@ alias brewupx='brew update && brew upgrade --greedy --verbose --yes && brew clea
 alias bt='taproom -s Installs'
 alias c='clear'
 alias cc='clear; tmux clear-history; clear'
-alias clc='claude --model "claude-opus-4-8[1m]"'
+alias clc='claude'
 alias clcy='claude --allow-dangerously-skip-permissions'
 alias co='code .'
 alias conf='cd "$(chezmoi source-path ~/.config)" && nvim && cd - && chezmoi apply'
@@ -186,7 +186,7 @@ alias zsrc='source ~/.zshrc'
 
 # Alias for macos only
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  alias rm='trash'
+  alias rmm='trash'
 fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -232,5 +232,5 @@ export PATH="/usr/local/opt/postgresql@18/bin:$PATH"
 
 # Initialize zoxide last, after all PATH changes (per zoxide doctor)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  eval "$(zoxide init zsh --cmd cd)"
+  eval "$(zoxide init zsh)"
 fi
