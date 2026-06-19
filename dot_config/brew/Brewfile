@@ -66,6 +66,8 @@ brew "gh"
 brew "gifsicle"
 # Distributed revision control system
 brew "git"
+# GNU implementation of the famous stream editor
+brew "gnu-sed"
 # GNU Privacy Guard (OpenPGP)
 brew "gnupg"
 # Open source programming language to build simple/reliable/efficient software
@@ -236,6 +238,8 @@ cask "bloom"
 cask "bluesnooze"
 # E-books management software
 cask "calibre"
+# OpenAI's official ChatGPT desktop app
+cask "chatgpt"
 # Anthropic's official Claude AI desktop app
 cask "claude"
 # Terminal-based AI coding assistant
@@ -272,6 +276,8 @@ cask "forklift"
 cask "free-download-manager"
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask "gcloud-cli"
+# Android emulator
+cask "genymotion"
 # Web browser
 cask "google-chrome"
 # Web browser
@@ -340,6 +346,8 @@ cask "spotify"
 cask "steam"
 # Text editor for code, markup and prose
 cask "sublime-text"
+# Terminal for orchestrating agents
+cask "superset"
 # VPN client for secure internet access and private browsing
 cask "surfshark"
 # Native GUI tool for relational databases
@@ -364,8 +372,6 @@ cask "wezterm"
 cask "whatsapp"
 # Network protocol analyzer
 cask "wireshark-app"
-# Voice-to-text dictation with AI-powered auto-editing
-cask "wispr-flow"
 # REST, GraphQL and gRPC client
 cask "yaak"
 # Multiplayer code editor
