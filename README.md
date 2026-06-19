@@ -30,6 +30,19 @@ chezmoi -v apply
 chezmoi add $FILE
 ```
 
+- Some tools (Topgrade, AI-skill installers, Neovim plugin managers, app
+  auto-updaters) edit files in `$HOME` directly without going through
+  `chezmoi edit`, so those changes never reach the chezmoi source. To pull them
+  back in, run the sync script (or the `czs` alias). It re-adds modified files,
+  adds new ones in the listed dirs, and (after confirmation) prunes source
+  entries that were deleted from the target. Edit the path lists at the top of
+  the script to control what gets synced:
+
+```
+~/setup_scripts/chezmoi_sync.sh            # sync listed paths into the source
+~/setup_scripts/chezmoi_sync.sh --dry-run  # preview what would change
+```
+
 - If you are not happy with the changes to a file then either edit it with:
 
 ```
