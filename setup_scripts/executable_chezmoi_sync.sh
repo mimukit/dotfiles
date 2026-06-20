@@ -52,13 +52,23 @@ RE_ADD_PATHS=(
   "$HOME/.claude/statusline.sh"
   "$HOME/.config/nvim"
   "$HOME/.config/brew/Brewfile"
+  # Codex (~/.codex): stable config files only. Secrets (auth.json), history,
+  # logs, caches, sqlite DBs, sessions and other runtime state are excluded.
+  "$HOME/.codex/config.toml"
+  "$HOME/.codex/hooks.json"
+  "$HOME/.codex/rules/default.rules"
+  "$HOME/.codex/AGENTS.md"
 )
 
 # New + modified files (recursive; keep these dirs free of runtime junk).
 ADD_PATHS=(
   "$HOME/.agents/"
   "$HOME/.claude/skills"
-
+  # Codex automations: track each automation's definition only. The glob targets
+  # automation.toml files directly (never the parent dir), so generated runtime
+  # siblings (memory.md, .run-jitter-salt) are never pulled in, and new
+  # automations are picked up automatically on the next run.
+  "$HOME"/.codex/automations/*/automation.toml
 )
 # ---------------------------------------------------------------------------
 
