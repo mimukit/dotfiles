@@ -83,6 +83,15 @@
       "pluginName": "mattpocock-skills",
       "installedAt": "2026-06-18T09:15:21.834Z",
       "updatedAt": "2026-06-18T09:15:21.834Z"
+    },
+    "social": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/coreyhaines31/marketingskills.git",
+      "skillPath": "skills/social/SKILL.md",
+      "skillFolderHash": "d8d07c0b778522197035e6585e150009948ce00b",
+      "installedAt": "2026-06-20T09:06:09.751Z",
+      "updatedAt": "2026-06-20T09:06:09.751Z"
     }
   },
   "dismissed": {
