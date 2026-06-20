@@ -56,7 +56,7 @@ RE_ADD_PATHS=(
 
 # New + modified files (recursive; keep these dirs free of runtime junk).
 ADD_PATHS=(
-  "$HOME/.agents/skills"
+  "$HOME/.agents/"
   "$HOME/.claude/skills"
 
 )
