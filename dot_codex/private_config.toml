@@ -3,12 +3,12 @@ model_reasoning_effort = "medium"
 notify = ["/Users/mukit/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
 
 [marketplaces.openai-bundled]
-last_updated = "2026-06-20T08:48:03Z"
+last_updated = "2026-06-24T06:54:08Z"
 source_type = "local"
 source = "/Users/mukit/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-06-20T06:19:54Z"
+last_updated = "2026-06-24T07:08:34Z"
 source_type = "local"
 source = "/Users/mukit/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
@@ -30,6 +30,9 @@ enabled = true
 [plugins."browser@openai-bundled"]
 enabled = true
 
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
 [projects."/Users/mukit/Github/mimukit/resume"]
 trust_level = "trusted"
 
@@ -43,6 +46,36 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [projects."/Users/mukit/Documents/Codex/2026-06-20/i-want-to-set-up-an"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-20/this"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-20/create-a-concise-morning-brief-of-2"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-21/i"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-21/this-chat-thread-will-be-used"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-21/cr"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-21/this-chat-thread-will-be-used-2"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-21/i-2"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-21/ca"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-23/we"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Documents/Codex/2026-06-24/no"]
 trust_level = "trusted"
 
 [tui]
@@ -67,12 +100,12 @@ NODE_REPL_NODE_MODULE_DIRS = "/Applications/Codex.app/Contents/Resources/cua_nod
 NODE_REPL_NODE_PATH = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node"
 NODE_REPL_TRUSTED_CODE_PATHS = "/Users/mukit/.codex"
 CODEX_HOME = "/Users/mukit/.codex"
-NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "4cfaeb70b54d114e1cd56bc0f85d04e1b344a5049cddb729e2b1161b9ff3008a"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "5504c0782b5c86b7dd08314045b9843e973a230e1be8f7e2e0ba3716fc63c55e"
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
 NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
 NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.616.41845"
+BROWSER_USE_CODEX_APP_VERSION = "26.616.81150"
 CODEX_CLI_PATH = "/Applications/Codex.app/Contents/Resources/codex"
 
 [desktop]
