@@ -63,12 +63,8 @@ RE_ADD_PATHS=(
 # New + modified files (recursive; keep these dirs free of runtime junk).
 ADD_PATHS=(
   "$HOME/.agents/"
-  "$HOME/.claude/skills"
-  # Codex automations: track each automation's definition only. The glob targets
-  # automation.toml files directly (never the parent dir), so generated runtime
-  # siblings (memory.md, .run-jitter-salt) are never pulled in, and new
-  # automations are picked up automatically on the next run.
-  "$HOME"/.codex/automations/*/automation.toml
+  "$HOME/.claude/skills/"
+  "$HOME/.codex/automations/"
 )
 # ---------------------------------------------------------------------------
 
