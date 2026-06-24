@@ -92,6 +92,14 @@
             "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=claude \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi"
+          }
+        ]
       }
     ],
     "SessionEnd": [
@@ -112,6 +120,14 @@
             "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=claude \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -121,6 +137,15 @@
           {
             "type": "command",
             "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=claude \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi"
           }
         ]
       }
@@ -134,6 +159,15 @@
             "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=claude \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi"
+          }
+        ]
       }
     ],
     "PermissionRequest": [
@@ -143,6 +177,36 @@
           {
             "type": "command",
             "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=claude \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi"
           }
         ]
       }
