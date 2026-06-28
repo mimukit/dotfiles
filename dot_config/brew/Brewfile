@@ -345,8 +345,6 @@ cask "shortcat"
 cask "shottr"
 # Music streaming service
 cask "spotify"
-# Video game digital distribution service
-cask "steam"
 # Text editor for code, markup and prose
 cask "sublime-text"
 # Terminal for orchestrating agents
