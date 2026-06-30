@@ -178,6 +178,21 @@ if [ "${#prune_roots[@]}" -gt 0 ]; then
   fi
 fi
 
+# --- Side step: backfill zoxide from atuin -----------------------------------
+# Not a chezmoi operation — the zoxide DB is machine-local runtime state and is
+# intentionally unmanaged. Run here only because it shares the same "sync my
+# environment" ritual. Non-fatal: a failure must never abort the chezmoi sync.
+ZOXIDE_SYNC="$HOME/setup_scripts/zoxide_sync.sh"
+if [ -x "$ZOXIDE_SYNC" ]; then
+  echo
+  echo -e "${CYAN}⏳ zoxide  backfill from atuin${RESET}"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    "$ZOXIDE_SYNC" --dry-run || echo -e "${YELLOW}⏭️  zoxide sync skipped (non-fatal).${RESET}"
+  else
+    "$ZOXIDE_SYNC" || echo -e "${YELLOW}⏭️  zoxide sync skipped (non-fatal).${RESET}"
+  fi
+fi
+
 if [ "$DRY_RUN" -eq 1 ]; then
   echo -e "${GREEN}✅ Dry run complete. Re-run without --dry-run to apply.${RESET}"
   exit 0
