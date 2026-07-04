@@ -1,16 +1,6 @@
 {
   "version": 3,
   "skills": {
-    "grill-me": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "skills/productivity/grill-me/SKILL.md",
-      "skillFolderHash": "8320e7b87f7b208f50ce165b1dd43d1e93c8e801",
-      "pluginName": "mattpocock-skills",
-      "installedAt": "2026-06-01T07:22:02.583Z",
-      "updatedAt": "2026-06-18T09:15:21.831Z"
-    },
     "handoff": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -37,15 +27,6 @@
       "skillFolderHash": "d74909eec8906ceb3341a9b30e2e51cdf62a67c7",
       "installedAt": "2026-06-01T07:22:02.588Z",
       "updatedAt": "2026-06-18T06:06:22.305Z"
-    },
-    "triage": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "skills/engineering/triage/SKILL.md",
-      "skillFolderHash": "3e7a49151929d884365035cb322de099c15b33d3",
-      "installedAt": "2026-06-01T07:22:02.589Z",
-      "updatedAt": "2026-06-19T06:51:08.101Z"
     },
     "git-commit": {
       "source": "github/awesome-copilot",
@@ -79,82 +60,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "ab318c66a36253e872b5d0bd271b3df8f6ef816f",
-      "pluginName": "mattpocock-skills",
+      "skillFolderHash": "8b14ca97479f518f3f1ced6a35bf591554d7e0cb",
       "installedAt": "2026-06-18T09:15:21.834Z",
-      "updatedAt": "2026-06-18T09:15:21.834Z"
-    },
-    "social": {
-      "source": "coreyhaines31/marketingskills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/coreyhaines31/marketingskills.git",
-      "skillPath": "skills/social/SKILL.md",
-      "skillFolderHash": "d8d07c0b778522197035e6585e150009948ce00b",
-      "installedAt": "2026-06-20T09:06:09.751Z",
-      "updatedAt": "2026-06-20T09:06:09.751Z"
-    },
-    "orca-cli": {
-      "source": "stablyai/orca",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/stablyai/orca.git",
-      "skillPath": "skills/orca-cli/SKILL.md",
-      "skillFolderHash": "d1175a5a5807a6783a3d896f720645b39f736dbb",
-      "installedAt": "2026-06-24T07:37:02.140Z",
-      "updatedAt": "2026-06-29T15:19:45.823Z"
-    },
-    "orchestration": {
-      "source": "stablyai/orca",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/stablyai/orca.git",
-      "skillPath": "skills/orchestration/SKILL.md",
-      "skillFolderHash": "7ff543c1701d55ffb5dffb2cd8dc5dd3fc47c700",
-      "installedAt": "2026-06-24T07:37:02.146Z",
-      "updatedAt": "2026-06-29T15:20:22.817Z"
-    },
-    "visual-plan": {
-      "source": "builderio/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/builderio/skills.git",
-      "skillPath": "skills/visual-plan/SKILL.md",
-      "skillFolderHash": "93147171c4a4df8b422a498ebfa577aba8af63d7",
-      "installedAt": "2026-06-30T09:27:25.159Z",
-      "updatedAt": "2026-06-30T09:27:25.159Z"
-    },
-    "brainstorming": {
-      "source": "obra/superpowers",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/obra/superpowers.git",
-      "skillPath": "skills/brainstorming/SKILL.md",
-      "skillFolderHash": "27e73ef7b83994e913cba378081b587412d2e9cb",
-      "installedAt": "2026-06-30T09:29:45.753Z",
-      "updatedAt": "2026-06-30T09:29:45.753Z"
-    },
-    "copywriting": {
-      "source": "coreyhaines31/marketingskills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/coreyhaines31/marketingskills.git",
-      "skillPath": "skills/copywriting/SKILL.md",
-      "skillFolderHash": "13d216690bbbcb88e2fee9f3e2d8f5a5bbc4b338",
-      "installedAt": "2026-06-30T09:32:07.042Z",
-      "updatedAt": "2026-06-30T09:32:07.042Z"
-    },
-    "qa": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "skills/deprecated/qa/SKILL.md",
-      "skillFolderHash": "3eed5beeb18e77776349782ed087ee4560fd69c5",
-      "installedAt": "2026-06-30T09:34:27.494Z",
-      "updatedAt": "2026-06-30T09:34:27.494Z"
-    },
-    "review": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "skills/in-progress/review/SKILL.md",
-      "skillFolderHash": "7358042ff9636cf903d3183e1d86744ea7ffda40",
-      "installedAt": "2026-06-30T09:34:27.497Z",
-      "updatedAt": "2026-06-30T09:34:27.497Z"
+      "updatedAt": "2026-07-03T09:56:14.033Z"
     }
   },
   "dismissed": {
