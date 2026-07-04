@@ -58,6 +58,8 @@ RE_ADD_PATHS=(
   "$HOME/.codex/hooks.json"
   "$HOME/.codex/rules/default.rules"
   "$HOME/.codex/AGENTS.md"
+  "$HOME/.config/yazi/package.toml"
+
 )
 
 # New + modified files (recursive; keep these dirs free of runtime junk).
