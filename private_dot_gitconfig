@@ -1,7 +1,7 @@
 [user]
     name = Mukitul Islam Mukit
     email = hellomukit@gmail.com
-	  signingkey = ~/.ssh/github_mimukit
+    signingkey = ~/.ssh/github_mimukit
 [commit]
     gpgsign = true
 [merge]
@@ -12,7 +12,7 @@
     ff = only
 [core]
     excludesfile = ~/.config/git/.gitignore_global
-	  ignoreCase = false
+    ignoreCase = false
 [credential "https://github.com"]
     helper = !/opt/homebrew/bin/gh auth git-credential
 [credential "https://gist.github.com"]
@@ -21,3 +21,5 @@
     format = ssh
 [alias]
 	  lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+[gpg "ssh"]
+	allowedSignersFile = /Users/mukit/.ssh/allowed_signers
