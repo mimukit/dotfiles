@@ -1,0 +1,35 @@
+# Added by OrbStack: 'orb' SSH host for Linux machines
+# This only works if it's at the top of ssh_config (before any Host blocks).
+# This won't be added again if you remove it.
+Include ~/.orbstack/ssh/config
+Include ~/.ssh/1Password/config
+
+
+# GitHub: sign/push using the local key file directly, bypassing the
+# 1Password agent so no Touch ID / fingerprint prompt is needed (e.g. remote sessions).
+# Placed before "Host *" because ssh uses the first matching value per keyword.
+Host github.com
+	HostName github.com
+	User git
+	IdentitiesOnly yes
+	IdentityAgent none
+	IdentityFile ~/.ssh/github_mimukit
+
+Host trackwell-test-ec2
+	User ubuntu
+	HostName ec2-44-209-70-66.compute-1.amazonaws.com
+	IdentityFile ~/.ssh/trackwell.pem
+
+Host trackwell-productioin-ec2
+	User ubuntu
+	HostName ec2-18-213-127-250.compute-1.amazonaws.com
+	IdentityFile ~/.ssh/trackwell.pem
+
+Host ubuntu-vnc-ts
+	User root
+	HostName ubuntu-vnc.tail31a6dd.ts.net
+  IdentitiesOnly yes
+	IdentityFile ~/.ssh/hetzner-key
+
+Host *
+	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
