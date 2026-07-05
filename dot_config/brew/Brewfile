@@ -390,5 +390,4 @@ mas "TeraCopy", id: 1378806557
 mas "The Unarchiver", id: 425424353
 mas "Unsplash Wallpapers", id: 1284863847
 mas "WireGuard", id: 1451685025
-mas "Xcode", id: 497799835
 npm "corepack"
