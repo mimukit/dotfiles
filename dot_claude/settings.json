@@ -150,6 +150,6 @@
     "type": "command",
     "command": "~/.claude/statusline.sh"
   },
-  "effortLevel": "medium",
+  "effortLevel": "high",
   "theme": "dark"
 }
