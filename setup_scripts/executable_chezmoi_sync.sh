@@ -180,6 +180,23 @@ if [ "${#prune_roots[@]}" -gt 0 ]; then
   fi
 fi
 
+# --- Side step: refresh the Homebrew Brewfile --------------------------------
+# Same "sync my environment" ritual as `bbk`: regenerate ~/.config/brew/Brewfile
+# with `brew bundle dump` so newly installed packages are captured, then re-add
+# it into the source. The brew script self-syncs into chezmoi, so this only runs
+# the shared backup script. It has no --dry-run mode, so we skip it on dry runs.
+# Non-fatal: a brew failure must never abort the chezmoi sync.
+BREW_BACKUP="$HOME/setup_scripts/brew_apps_backup.sh"
+if [ -x "$BREW_BACKUP" ] && command -v brew >/dev/null 2>&1; then
+  echo
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo -e "${YELLOW}ℹ️ Dry run: would regenerate and sync the Brewfile via ${BREW_BACKUP}.${RESET}"
+  else
+    echo -e "${CYAN}⏳ brew    regenerate Brewfile backup${RESET}"
+    "$BREW_BACKUP" || echo -e "${YELLOW}⏭️  Brewfile backup skipped (non-fatal).${RESET}"
+  fi
+fi
+
 # --- Side step: backfill zoxide from atuin -----------------------------------
 # Not a chezmoi operation — the zoxide DB is machine-local runtime state and is
 # intentionally unmanaged. Run here only because it shares the same "sync my
