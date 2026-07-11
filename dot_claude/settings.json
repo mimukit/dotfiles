@@ -40,7 +40,6 @@
       "Bash(curl:*)",
       "Read(./.env)",
       "Read(./.env.*)",
-      "Bash(rm:*)",
       "Bash(gh issue delete*)"
     ],
     "defaultMode": "auto"
@@ -135,6 +134,17 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "S=\"$HOME/.claude/hooks/rm-guard.sh\"; if [ -r \"$S\" ]; then exec bash \"$S\"; fi; CMD=$(cat); if printf '%s' \"$CMD\" | grep -Eq '(^|[^[:alnum:]_])rm([^[:alnum:]_]|$)'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"rm-guard script missing; blocking rm for safety\"}}'; fi; exit 0",
+            "statusMessage": "Checking rm target safety",
+            "timeout": 10
+          }
+        ]
+      },
+      {
         "matcher": "*",
         "hooks": [
           {
@@ -150,6 +160,6 @@
     "type": "command",
     "command": "~/.claude/statusline.sh"
   },
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "theme": "dark"
 }
