@@ -154,6 +154,39 @@
           }
         ]
       }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
