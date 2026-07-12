@@ -12,6 +12,7 @@ fi
 export EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
+export GITHUB_TOKEN=$(gh auth token)
 export FZF_DEFAULT_OPTS=" \
 --prompt=\"⚡Select Option → \" --height=~50% --layout=reverse --border --exit-0 \
 --color=spinner:#f5e0dc,hl:#f38ba8,border:#fab387 \
