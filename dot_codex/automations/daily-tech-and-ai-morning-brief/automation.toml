@@ -8,6 +8,7 @@ rrule = "RRULE:FREQ=WEEKLY;BYHOUR=11;BYMINUTE=0;BYDAY=SU,MO,TU,WE,TH,FR,SA"
 model = "gpt-5.4"
 reasoning_effort = "medium"
 execution_environment = "local"
+target = { type = "projectless" }
 cwds = ["~"]
 created_at = 1781950984398
 updated_at = 1782375347412
