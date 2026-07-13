@@ -1,7 +1,7 @@
 ---
 name: qakit
 description: >-
-  Generate a step-by-step manual QA and test plan for a feature just implemented, grounded in the actual code changes, and save it to ./docs/tests for a human to run. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", or runs /qakit.
+  Generate a step-by-step manual QA and test plan for a feature just implemented, grounded in the actual code changes, and save it to ./docs/qa for a human to run. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", or runs /qakit.
 license: MIT
 metadata:
   internal: false
@@ -9,9 +9,11 @@ metadata:
 
 # qakit
 
-Turn a feature an AI agent just implemented into a **manual QA plan a human can actually run** — concrete steps, expected results, and pass/fail boxes, grounded in what the code actually changed rather than a generic checklist. The plan is written to `./docs/tests/` so a person can walk it top to bottom and sign off on the feature by hand.
+Turn a feature an AI agent just implemented into a **manual QA plan a human can actually run** — concrete steps, expected results, and pass/fail boxes, grounded in what the code actually changed rather than a generic checklist. The plan is written to `./docs/qa/` so a person can walk it top to bottom and sign off on the feature by hand.
 
-This is **manual** QA — steps a human performs and observes (click, type, run a command, read output), not automated test code. The value is a disciplined, diff-grounded plan: what to test, in what order, with what setup, and how to know it passed — including the things that *can't* be verified without a human eye.
+This is **manual** QA — steps that genuinely need a human to perform and judge (click through a flow, read a screen, feel out the UX), not checks a machine can do on its own. The value is a disciplined, diff-grounded plan: what to test, in what order, with what setup, and how to know it passed — focused on the things that *can't* be verified without a human eye.
+
+Anything an AI agent or script can confirm on its own — running a terminal command and reading its output, hitting an endpoint, asserting a return value — does **not** belong in the human's checklist. The agent runs those itself and reports the results in an **Automated verification** section at the end of the plan, so the human sees them confirmed without re-running them by hand.
 
 ## When this fires
 
@@ -43,14 +45,22 @@ Walk every dimension below and generate cases for each one that applies to the f
 - **Performance** — responsiveness under realistic or large data volumes; no obvious slowdown or leak.
 - **Usability / UX** — the feel a human must judge: clear copy, sensible defaults, discoverable actions, helpful empty/loading states.
 
-Prioritize: tag each case Critical (must pass to ship) or Normal. Don't pad — one clear case per behavior beats ten redundant ones. Scale the count to the feature's surface area and risk.
+Prioritize: tag each case with one of three tiers, each carrying an emoji so the tester reads urgency at a glance:
+
+- 🔴 **Critical** — must pass to ship; a failure blocks release.
+- 🟡 **Normal** — should pass; a failure is a real bug but not a blocker.
+- 🟢 **Low** — nice-to-have, polish, or edge cases with minor impact.
+
+Don't pad — one clear case per behavior beats ten redundant ones. Scale the count to the feature's surface area and risk.
+
+**Split human-only from agent-verifiable.** As you generate cases, sort each one: does confirming it *require a human* (visual judgment, real interaction, UX feel), or can an agent/script confirm it by running a command and reading output? Keep only the human-only cases as numbered test cases in the plan. Run the agent-verifiable checks yourself and record their outcomes in the **Automated verification** section — never list a command-and-check-output step as a manual case for the human to run by hand.
 
 ### 3. Write the plan file
-Write to `./docs/tests/<feature-slug>-qa.md` (slug = short kebab-case name of the feature, e.g. `login-throttle-qa.md`). Create `./docs/tests/` if it doesn't exist. If a plan for this feature already exists, ask before overwriting.
+Write to `./docs/qa/<feature-slug>-qa.md` (slug = short kebab-case name of the feature, e.g. `login-throttle-qa.md`). Create `./docs/qa/` if it doesn't exist. If a plan for this feature already exists, ask before overwriting.
 
-Structure the file like this:
+Structure the file like this (the outer fence below is shown with four backticks only so the inner ```sh blocks display — the real file uses normal triple-backtick fences):
 
-```markdown
+````markdown
 # QA Plan: <Feature name>
 
 _Generated <date> · covers <commit range or brief scope>_
@@ -61,14 +71,32 @@ One or two sentences: what the feature does and what "working" means.
 ## Preconditions
 - Environment / branch / build to test on
 - Setup, seed data, credentials, feature flags, config
-- How to launch (URL, command, screen)
+- How to launch — run:
+
+```sh
+<launch command>
+```
+
+## Test cases at a glance
+
+Priority legend: 🔴 Critical · 🟡 Normal · 🟢 Low
+
+| # | Test case | Priority |
+|------|-----------|----------|
+| TC-1 | <short title> | 🔴 Critical |
+| TC-2 | <short title> | 🟡 Normal |
+| TC-3 | <short title> | 🟢 Low |
 
 ## Test cases
 
-### TC-1 — <short title>  ·  Priority: Critical
+### TC-1 — <short title>  ·  🔴 Critical
 **Steps**
 1. <concrete action a human takes>
-2. <next action>
+2. <next action — if it's a command to run, put it in its own block:>
+
+```sh
+<command to run>
+```
 
 **Expected:** <observable result>
 **Actual:** _(tester fills in)_
@@ -76,24 +104,42 @@ One or two sentences: what the feature does and what "working" means.
 - [ ] Pass
 - [ ] Fail
 
-### TC-2 — <short title>  ·  Priority: Normal
+### TC-2 — <short title>  ·  🟡 Normal
 ...
 
 ## Regression checks
 - [ ] <nearby behavior that must still work>
 
+## Automated verification (by AI agent)
+_Checks the agent ran itself — no action needed from the tester; listed here for context and sign-off._
+
+Commands run (grouped where related):
+
+```sh
+<command 1>
+<command 2>
+```
+
+- ✅ <command 1> → <what the output confirmed>
+- ✅ <endpoint / assertion checked> → <result>
+- ❌ <anything that failed, with the actual output> _(if any)_
+
 ## Not covered / needs human judgment
 - <anything that can't be scripted: visual polish, UX feel, external integrations, timing>
-```
+````
 
 Rules for good cases:
 - **Concrete and reproducible** — real values and exact steps, not "test the login" but "enter `bad@example.com` / blank password, click Sign in".
 - **One behavior per case** — a failure should point at exactly one thing.
 - **Observable expected result** — what the tester sees or measures, not internal state they can't check.
 - **Honest about gaps** — list what the plan can't verify under *Not covered* rather than pretending coverage.
+- **Commands go in ```sh code blocks on their own line** — never inline a terminal command in prose or a table cell, so the tester can copy-paste it as-is. Group related commands that run together into a single block; keep unrelated ones in separate blocks.
 
-### 4. Hand off
-Tell the user the file path and give a one-line summary: how many cases, how many critical. Suggest they run it in a fresh checkout/build. Don't mark anything as passed yourself — QA is the human's to execute; this skill only produces the plan.
+### 4. Run the automated checks yourself
+Before handing off, actually run the agent-verifiable checks you split out in step 2 — terminal commands, endpoint hits, return-value assertions — and record each outcome in the plan's **Automated verification** section (✅ passed with what the output confirmed, ❌ failed with the actual output). This is the one part of the plan the agent completes, not the human. If there's no shell/filesystem, say so and leave the section for the human to fill.
+
+### 5. Hand off
+Tell the user the file path and give a one-line summary: how many manual cases (and how many 🔴 critical), plus the automated-verification result (e.g. "6 checks ran, all green"). Suggest they run the manual plan in a fresh checkout/build. Don't mark any *manual* case as passed yourself — those are the human's to execute; the agent only fills the Automated verification section.
 
 ## Notes
 - **Manual only.** qakit's sole output is a manual QA plan for a human to execute — it never writes or runs unit/integration/E2E tests. Automated testing belongs to a separate testkit-style skill; if that's what the user wants, hand off to it rather than producing a plan here.
