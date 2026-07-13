@@ -40,6 +40,9 @@ if command -v jq >/dev/null 2>&1; then
     # Context window used percentage (pre-calculated)
     RAW_CTX=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 
+    # Context window tokens currently in use
+    CTX_TOKENS=$(echo "$input" | jq -r '.context_window.total_input_tokens // empty')
+
     # Rate limits
     FIVE_H=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
     SEVEN_D=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
@@ -52,6 +55,7 @@ else
     MODEL="${MODEL:-Claude}"
     CWD=$(echo "$input" | grep -o '"current_dir":"[^"]*"' | head -1 | cut -d'"' -f4)
     RAW_CTX=""
+    CTX_TOKENS=""
     FIVE_H=""
     SEVEN_D=""
     FIVE_H_RESET=""
@@ -71,6 +75,17 @@ clamp_pct() {
 }
 
 CTX_PCT=$(clamp_pct "$RAW_CTX")
+
+# ---------------------------------------------------------------------------
+# 4a. Format a raw token count -> compact "k" form (e.g. 32700 -> 32.7k)
+# ---------------------------------------------------------------------------
+fmt_tokens() {
+    echo "${1:-0}" | awk '{
+        v = $1 + 0
+        if (v >= 1000) printf "%.1fk", v / 1000
+        else           printf "%d", v
+    }'
+}
 
 # ---------------------------------------------------------------------------
 # 4b. Format a reset timestamp (ISO 8601 or unix epoch) -> local HH:MM
@@ -151,8 +166,10 @@ SEG_DIR="${SKY}${DIRNAME}${RESET}"
 
 # Context window segment
 CTX_COLOR=$(pick_color "$CTX_PCT")
-CTX_BAR=$(make_bar    "$CTX_PCT")
-SEG_CTX="${LABEL}ctx${RESET} ${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}"
+SEG_CTX="${LABEL}ctx${RESET} ${CTX_COLOR}${CTX_PCT}%${RESET}"
+if [ -n "$CTX_TOKENS" ]; then
+    SEG_CTX="${SEG_CTX} ${LABEL}($(fmt_tokens "$CTX_TOKENS"))${RESET}"
+fi
 
 # Build base line
 LINE="${SEG_MODEL}${BAR_SEP}${SEG_DIR}${BAR_SEP}${SEG_CTX}"
