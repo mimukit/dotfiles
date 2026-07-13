@@ -3,6 +3,7 @@ name: qakit
 description: >-
   Generate a step-by-step manual QA and test plan for a feature just implemented, grounded in the actual code changes, and save it to ./docs/qa for a human to run. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", or runs /qakit.
 license: MIT
+allowed-tools: Read, Bash, Write
 metadata:
   internal: false
 ---
@@ -142,6 +143,7 @@ Before handing off, actually run the agent-verifiable checks you split out in st
 Tell the user the file path and give a one-line summary: how many manual cases (and how many 🔴 critical), plus the automated-verification result (e.g. "6 checks ran, all green"). Suggest they run the manual plan in a fresh checkout/build. Don't mark any *manual* case as passed yourself — those are the human's to execute; the agent only fills the Automated verification section.
 
 ## Notes
+- **Scope of shell use.** qakit runs the shell only to read the change and to run the project's own verification checks: `git diff`/`git log` to ground the plan, and the automated checks from step 4 (the project's test, lint, and build commands). Every command it runs is echoed in the plan's **Automated verification** section, so the user sees exactly what ran. It does not fetch remote code, touch credentials, or run anything destructive; if a verification step would modify state or need elevated access, describe it for the human instead of running it.
 - **Manual only.** qakit's sole output is a manual QA plan for a human to execute — it never writes or runs unit/integration/E2E tests. Automated testing belongs to a separate testkit-style skill; if that's what the user wants, hand off to it rather than producing a plan here.
 - **No filesystem or shell?** You can't write the file or read a diff — instead ask the user to paste the change or describe the feature, then print the finished plan as a codeblock for them to save under `docs/tests/` themselves.
 - Keep the plan proportional to the change: a one-line fix needs a few cases, not thirty. Scale the plan to the risk and surface area of what changed.

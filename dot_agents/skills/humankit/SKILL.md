@@ -12,6 +12,8 @@ metadata:
 
 Rewrite text so it stops sounding like a language model produced it. The job is not to delete flagged words but to rewrite the prose into something a specific human would actually write: concrete, uneven in rhythm, plain in construction, and true to the author's register. Cover everything the original covers — a five-paragraph source becomes a five-paragraph rewrite, not a summary.
 
+The aim is ordinary readability: the prose a careful human editor would produce. This is copy-editing to make writing read well, not a way to disguise machine-written work as human where honesty is required — academic submissions, disclosure-bound, or attributed writing. Edit for the reader, not to game any automated check.
+
 ## When this fires
 
 The user hands you text and asks to "humanize" it, "remove the AI tells," "make it sound human," "de-slop this," or "edit out the ChatGPT voice" — or asks you to *review* a draft for those tells without rewriting. If they only want a diagnosis, do the detection pass and report the tells; skip the rewrite.
