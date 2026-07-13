@@ -1,15 +1,6 @@
 {
   "version": 3,
   "skills": {
-    "handoff": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "skills/productivity/handoff/SKILL.md",
-      "skillFolderHash": "3f7df8e717e41dfd6eacd03d47319a2e01248ffb",
-      "installedAt": "2026-06-01T07:22:02.584Z",
-      "updatedAt": "2026-07-08T20:22:39.055Z"
-    },
     "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
@@ -27,24 +18,6 @@
       "skillFolderHash": "0f1f5e31ce921513828ac8f440f358df6fa0751a",
       "installedAt": "2026-06-13T13:04:59.354Z",
       "updatedAt": "2026-06-13T13:04:59.354Z"
-    },
-    "humanizer": {
-      "source": "blader/humanizer",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/blader/humanizer.git",
-      "skillPath": "SKILL.md",
-      "skillFolderHash": "1b48564898e999219882660237fde01bf4843a0f",
-      "installedAt": "2026-06-18T09:10:22.989Z",
-      "updatedAt": "2026-06-30T07:01:21.395Z"
-    },
-    "grilling": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "0ace40ac10f5c0b1534324e4e109ebfa831fb361",
-      "installedAt": "2026-06-18T09:15:21.834Z",
-      "updatedAt": "2026-07-07T13:06:02.387Z"
     },
     "skill-creator": {
       "source": "anthropics/skills",
