@@ -1,14 +1,14 @@
-model = "gpt-5.5"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "medium"
 notify = ["/Users/mukit/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
 
 [marketplaces.openai-bundled]
-last_updated = "2026-07-12T10:16:35Z"
+last_updated = "2026-07-13T06:06:22Z"
 source_type = "local"
 source = "/Users/mukit/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-07-01T08:08:38Z"
+last_updated = "2026-07-13T06:08:20Z"
 source_type = "local"
 source = "/Users/mukit/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
@@ -31,6 +31,9 @@ enabled = true
 enabled = true
 
 [plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
 enabled = true
 
 [projects."/Users/mukit/Github/mimukit/resume"]
