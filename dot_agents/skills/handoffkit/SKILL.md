@@ -4,6 +4,7 @@ description: >-
   Compact the current conversation into a handoff document another agent or session can pick up cold — goal, state, next steps, key artifacts by reference, and constraints. Use when the user wants to hand off work, says "write a handoff", "create a handoff doc", "summarize this for the next session", or "pass this to another agent".
 license: MIT
 disable-model-invocation: true
+allowed-tools: Read, Write
 metadata:
   internal: false
 ---

@@ -3,6 +3,7 @@ name: grillkit
 description: >-
   Grill the user relentlessly about a plan or design before any code is written — one decision at a time, each with a recommended answer, until you both share the same picture. Use when the user wants to stress-test or pressure-test a plan, says "grill me", "grill this plan", "poke holes in this", "interrogate my design", or otherwise asks to interrogate an idea before building.
 license: MIT
+allowed-tools: Read, Grep, Glob, AskUserQuestion
 metadata:
   internal: false
 ---
