@@ -63,7 +63,7 @@
       "skillPath": "skills/commitkit/SKILL.md",
       "skillFolderHash": "4b80439518fcb08caecae6667ac96269cb293af4",
       "installedAt": "2026-07-12T07:54:50.328Z",
-      "updatedAt": "2026-07-12T12:37:16.346Z"
+      "updatedAt": "2026-07-13T07:42:45.055Z"
     },
     "humankit": {
       "source": "mimukit/skills",
@@ -72,7 +72,7 @@
       "skillPath": "skills/humankit/SKILL.md",
       "skillFolderHash": "49983f6ae5d208f6889c26b017588d4484278747",
       "installedAt": "2026-07-12T07:54:50.330Z",
-      "updatedAt": "2026-07-12T12:37:16.349Z"
+      "updatedAt": "2026-07-13T07:42:45.057Z"
     },
     "prkit": {
       "source": "mimukit/skills",
@@ -81,16 +81,34 @@
       "skillPath": "skills/prkit/SKILL.md",
       "skillFolderHash": "cd81322760e87dbec9a1f07c2b0de2404a89533d",
       "installedAt": "2026-07-12T07:54:50.331Z",
-      "updatedAt": "2026-07-12T12:37:16.350Z"
+      "updatedAt": "2026-07-13T07:42:45.057Z"
     },
     "qakit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/qakit/SKILL.md",
-      "skillFolderHash": "ff549e8333c1f571f8aadfd5eaf638c2c867b69d",
+      "skillFolderHash": "25dbba6420afe0c29080fae0085f724056885f31",
       "installedAt": "2026-07-12T12:37:16.350Z",
-      "updatedAt": "2026-07-12T12:37:16.350Z"
+      "updatedAt": "2026-07-13T07:42:45.058Z"
+    },
+    "grillkit": {
+      "source": "mimukit/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mimukit/skills.git",
+      "skillPath": "skills/grillkit/SKILL.md",
+      "skillFolderHash": "e4f933b0717459179eb7062afb0f481c8d84d96c",
+      "installedAt": "2026-07-13T06:59:02.760Z",
+      "updatedAt": "2026-07-13T07:42:45.056Z"
+    },
+    "handoffkit": {
+      "source": "mimukit/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mimukit/skills.git",
+      "skillPath": "skills/handoffkit/SKILL.md",
+      "skillFolderHash": "0df13d627473af103a2bd49dd7c3ab464419df67",
+      "installedAt": "2026-07-13T07:42:45.053Z",
+      "updatedAt": "2026-07-13T07:42:45.053Z"
     }
   },
   "dismissed": {
