@@ -25,6 +25,8 @@ brew "node"
 brew "bitwarden-cli"
 # Resource monitor. C++ version and continuation of bashtop and bpytop
 brew "btop"
+# Incredibly fast JavaScript runtime, bundler, test runner, and package manager
+brew "bun"
 # Powerful, enterprise-ready, open source web server with automatic HTTPS
 brew "caddy"
 # Manage your dotfiles across multiple diverse machines, securely
@@ -365,7 +367,6 @@ mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
 mas "Pastel", id: 413897608
 mas "TeraCopy", id: 1378806557
-mas "The Unarchiver", id: 425424353
 mas "Unsplash Wallpapers", id: 1284863847
-mas "WireGuard", id: 1451685025
+mas "Xcode", id: 497799835
 npm "corepack"
