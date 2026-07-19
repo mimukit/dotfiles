@@ -36,9 +36,9 @@ declare -a APP_ICON_PAIRS=(
   "/Applications/Raycast.app|${HOME}/.config/icons/raycast.icns"
   "/Applications/Telegram Desktop.app|${HOME}/.config/icons/telegram.icns"
   "/Applications/TickTick.app|${HOME}/.config/icons/ticktick.icns"
-  "/Applications/Vivaldi.app|${HOME}/.config/icons/vivaldi.icns"
   "/Applications/VLC.app|${HOME}/.config/icons/vlc.icns"
   "/Applications/Visual Studio Code.app|${HOME}/.config/icons/vscode.icns"
+  "/Applications/Orca.app|${HOME}/.config/icons/orca.icns"
 )
 
 # Loop through the app/icon pairs
