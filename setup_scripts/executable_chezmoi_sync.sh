@@ -48,10 +48,12 @@ RED='\033[0;31m'
 # Modifications only (safe; managed files only).
 RE_ADD_PATHS=(
   "$HOME/.zshrc"
+  "$HOME/.ssh/config"
   "$HOME/.claude/settings.json"
   "$HOME/.claude/statusline.sh"
   "$HOME/.config/nvim"
   "$HOME/.config/brew/Brewfile"
+  "$HOME/.config/icons"
   # Codex (~/.codex): stable config files only. Secrets (auth.json), history,
   # logs, caches, sqlite DBs, sessions and other runtime state are excluded.
   "$HOME/.codex/config.toml"
