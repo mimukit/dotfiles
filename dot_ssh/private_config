@@ -31,5 +31,10 @@ Host ubuntu-vnc-ts
   IdentitiesOnly yes
 	IdentityFile ~/.ssh/hetzner-key
 
+Host brainaloy-dokploy-remote-ts
+	User root
+	HostName brainaloy-dokploy-remote
+  IdentitiesOnly yes
+
 Host *
 	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
