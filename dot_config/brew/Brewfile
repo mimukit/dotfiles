@@ -227,6 +227,8 @@ cask "antigravity-ide"
 cask "anydesk"
 # Multi-track audio editor and recorder
 cask "audacity"
+# Utility to create and modify archives
+cask "betterzip"
 # Desktop password and login vault
 cask "bitwarden"
 # Send any size file between devices
