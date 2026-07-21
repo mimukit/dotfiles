@@ -301,6 +301,8 @@ cask "linear"
 cask "local"
 # Trims video and audio files losslessly
 cask "losslesscut"
+# Markdown previewer with bundled Quick Look extension
+cask "markdown-preview"
 # Free up RAM manually and automatically
 cask "memory-cleaner"
 # App to write, plan, collaborate, and get organised
@@ -364,7 +366,6 @@ cask "zed"
 # Mesh VPN client
 cask "zerotier-one"
 mas "Battery Monitor", id: 836505650
-mas "Bear", id: 1091189122
 mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
 mas "Pastel", id: 413897608
