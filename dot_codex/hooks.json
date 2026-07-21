@@ -1,20 +1,22 @@
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "bash '/Users/mukit/.codex/herdr-agent-state.sh' session",
-            "timeout": 10,
-            "type": "command"
-          }
-        ]
-      },
+    "Notification": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "SUPERSET_AGENT_ID=codex \"/Users/mukit/.superset/hooks/notify.sh\""
+            "command": "if [ -z \"$ORCA_PANE_KEY\" ] && [ -z \"$ORCA_AGENT_HOOK_PORT\" ]; then terminal-notifier -title 'Codex' -message 'Awaiting your input'; fi"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$ORCA_PANE_KEY\" ] && [ -n \"$ORCA_AGENT_HOOK_PORT\" ] && [ -f '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/codex-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
+            "timeout": 10
           }
         ]
       }
@@ -24,7 +26,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SUPERSET_AGENT_ID=codex \"/Users/mukit/.superset/hooks/notify.sh\""
+            "command": "if [ -n \"$ORCA_PANE_KEY\" ] && [ -n \"$ORCA_AGENT_HOOK_PORT\" ] && [ -f '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/codex-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
+            "timeout": 10
           }
         ]
       }
@@ -34,7 +37,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SUPERSET_AGENT_ID=codex \"/Users/mukit/.superset/hooks/notify.sh\""
+            "command": "if [ -z \"$ORCA_PANE_KEY\" ] && [ -z \"$ORCA_AGENT_HOOK_PORT\" ]; then terminal-notifier -title 'Codex' -message 'Task completed'; fi"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$ORCA_PANE_KEY\" ] && [ -n \"$ORCA_AGENT_HOOK_PORT\" ] && [ -f '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/codex-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
+            "timeout": 10
           }
         ]
       }
