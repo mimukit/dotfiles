@@ -245,7 +245,7 @@ On approval:
 gh issue close 42 --comment "Closed by #10 (merged)."
 ```
 
-Never auto-close — always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess** — closing the wrong issue is worse than leaving one open.
+Closing is a lifecycle transition too — strip any active status label (`in-review`, `in-progress`, …) in the same action so a closed issue never carries a stale status (see [step 4](#4-labels--advance-lifecycle-state-unblock-what-s-freed)). Never auto-close — always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess** — closing the wrong issue is worse than leaving one open.
 
 ### 2. Repair — missing link on an existing open PR
 If an **open** PR should reference an issue but doesn't, add `Closes #N` to its body (editing the existing PR, not opening a new one):
@@ -268,6 +268,7 @@ Move issues through the [lifecycle labels](#lifecycle-labels-every-mode) as PRs 
 ```sh
 gh issue edit 44 --remove-label blocked --add-label ready
 gh issue comment 44 --body "Unblocked: #43 (the prerequisite) merged."
+gh issue edit 42 --remove-label in-review   # closing → strip the active status label; the closed state is the signal
 ```
 
 As everywhere in sync, **preview each move and wait for the OK** — never auto-relabel. If a label the map needs isn't provisioned, stop and point the user at **repokit** or the `gh label create` line — issuekit uses labels, it doesn't create them. If the repo predates this map and runs its own status scheme, follow that instead and say you did.
@@ -295,6 +296,7 @@ Produce a **status report** — a table — surfacing:
 - **Stale** — no update in a long while (e.g. 30–60 days; scale to the repo's pace).
 - **Orphaned** — no labels, no assignee, no parent.
 - **Closed-parent / open-children** (and its inverse) — broken hierarchy.
+- **Zombie label** — a **closed** issue still carrying a status label (`in-review`, `in-progress`, …) → strip it; the closed state is the signal.
 - **Stale block** — an issue labeled `blocked` whose `Blocked by #N` target is already closed → it should be `ready` (hand the relabel to `sync`).
 - **Dangling / circular dependency** — a `Blocked by #N` pointing at a missing issue, or two issues blocking each other.
 - **Unmarked** — an open issue carrying no [lifecycle label](#lifecycle-labels-every-mode) at all → offer to classify it (`triage` / `ready` / `blocked`).

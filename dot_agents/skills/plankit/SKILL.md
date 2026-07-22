@@ -45,6 +45,8 @@ Report where the plan landed and offer the next step, in order:
 - **grillkit** — pressure-test and harden the draft (it can update this same file in place).
 - **issuekit** — turn the hardened plan into GitHub issues.
 
+If the planning surfaced project vocabulary worth pinning down or a hard-to-reverse trade-off decision, **domainkit** records it (a `CONTEXT.md` glossary entry or a `docs/adr/` record) — leave that to it rather than inventing a format here.
+
 Do not start either yourself, and never write application code or create issues from here — plankit's job ends at the document.
 
 ## Plan-doc format

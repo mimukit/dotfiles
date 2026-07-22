@@ -34,3 +34,5 @@ grillkit's job is the shared understanding, not a particular file — so end wit
 - **Nothing** — leave the recap in the conversation and stop.
 
 **Never write a file unprompted, and don't assume a location.** grillkit doesn't own a canonical plan-doc format or a `docs/plans` convention. Here you're persisting a decision recap where the user asks, in whatever shape fits.
+
+If grilling settled a domain term or a hard-to-reverse trade-off decision worth keeping, **domainkit** is the scribe for it — a `CONTEXT.md` glossary entry or a `docs/adr/` record. grillkit does the interrogating; it hands the settled result to domainkit rather than owning that format.
