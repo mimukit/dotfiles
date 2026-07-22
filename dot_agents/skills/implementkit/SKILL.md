@@ -41,7 +41,7 @@ Pick **straight-through** or **TDD** by this precedence, taking the first tier t
 
 ### 4. Build in the resolved mode
 
-**Straight-through** — implement the production code to satisfy the input. Write **no new tests**; run the existing suite as part of the gate (step 5). Here the build/typecheck is the real safety net, since new code may be uncovered.
+**Straight-through** — implement the production code to satisfy the input. Write **no new tests**; run the existing suite as part of the gate ([Run the done-gate](#5-run-the-done-gate)). Here the build/typecheck is the real safety net, since new code may be uncovered.
 
 **TDD** — strict **red → green → refactor**, per unit of behavior:
 1. **Red** — write one focused failing test for the next slice of behavior, **run it, and confirm it fails** (a test that passes before the code exists is testing nothing — fix it before continuing).

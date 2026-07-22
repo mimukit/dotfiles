@@ -67,7 +67,8 @@ Structure the file like this (the outer fence below is shown with four backticks
 _Generated <date> · covers <commit range or brief scope>_
 
 ## Summary
-One or two sentences: what the feature does and what "working" means.
+- What the feature does — one short sentence.
+- What "working" means — one short sentence.
 
 ## Preconditions
 - Environment / branch / build to test on
@@ -99,7 +100,10 @@ Priority legend: 🔴 Critical · 🟡 Normal · 🟢 Low
 <command to run>
 ```
 
-**Expected:** <observable result>
+**Expected**
+- <observable result>
+- <another observable result, if any>
+
 **Actual:** _(tester fills in)_
 
 - [ ] Pass
@@ -133,17 +137,19 @@ Rules for good cases:
 - **Concrete and reproducible** — real values and exact steps, not "test the login" but "enter `bad@example.com` / blank password, click Sign in".
 - **One behavior per case** — a failure should point at exactly one thing.
 - **Observable expected result** — what the tester sees or measures, not internal state they can't check.
+- **Expected results as bullets** — write **Expected** as one bullet per observable outcome, never a paragraph, so the tester ticks them off one at a time.
+- **Short lines, not walls of prose** — prefer short sentences and bullet sublists over paragraphs throughout the generated plan (steps, expected, not-covered).
 - **Honest about gaps** — list what the plan can't verify under *Not covered* rather than pretending coverage.
 - **Commands go in ```sh code blocks on their own line** — never inline a terminal command in prose or a table cell, so the tester can copy-paste it as-is. Group related commands that run together into a single block; keep unrelated ones in separate blocks.
 
 ### 4. Run the automated checks yourself
-Before handing off, actually run the agent-verifiable checks you split out in step 2 — terminal commands, endpoint hits, return-value assertions — and record each outcome in the plan's **Automated verification** section (✅ passed with what the output confirmed, ❌ failed with the actual output). This is the one part of the plan the agent completes, not the human. If there's no shell/filesystem, say so and leave the section for the human to fill.
+Before handing off, actually run the agent-verifiable checks you split out in [Derive the test dimensions](#2-derive-the-test-dimensions) — terminal commands, endpoint hits, return-value assertions — and record each outcome in the plan's **Automated verification** section (✅ passed with what the output confirmed, ❌ failed with the actual output). This is the one part of the plan the agent completes, not the human. If there's no shell/filesystem, say so and leave the section for the human to fill.
 
 ### 5. Hand off
 Tell the user the file path and give a one-line summary: how many manual cases (and how many 🔴 critical), plus the automated-verification result (e.g. "6 checks ran, all green"). Suggest they run the manual plan in a fresh checkout/build. Don't mark any *manual* case as passed yourself — those are the human's to execute; the agent only fills the Automated verification section.
 
 ## Notes
-- **Scope of shell use.** qakit runs the shell only to read the change and to run the project's own verification checks: `git diff`/`git log` to ground the plan, and the automated checks from step 4 (the project's test, lint, and build commands). Every command it runs is echoed in the plan's **Automated verification** section, so the user sees exactly what ran. It does not fetch remote code, touch credentials, or run anything destructive; if a verification step would modify state or need elevated access, describe it for the human instead of running it.
+- **Scope of shell use.** qakit runs the shell only to read the change and to run the project's own verification checks: `git diff`/`git log` to ground the plan, and the automated checks from [Run the automated checks yourself](#4-run-the-automated-checks-yourself) (the project's test, lint, and build commands). Every command it runs is echoed in the plan's **Automated verification** section, so the user sees exactly what ran. It does not fetch remote code, touch credentials, or run anything destructive; if a verification step would modify state or need elevated access, describe it for the human instead of running it.
 - **Manual only.** qakit's sole output is a manual QA plan for a human to execute — it never writes or runs unit/integration/E2E tests. Automated testing belongs to a separate testkit-style skill; if that's what the user wants, hand off to it rather than producing a plan here.
 - **No filesystem or shell?** You can't write the file or read a diff — instead ask the user to paste the change or describe the feature, then print the finished plan as a codeblock for them to save under `docs/tests/` themselves.
 - Keep the plan proportional to the change: a one-line fix needs a few cases, not thirty. Scale the plan to the risk and surface area of what changed.

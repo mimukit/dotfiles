@@ -30,7 +30,7 @@ git diff            # unstaged, for context
 ```
 
 - When the user has **delegated committing** (the typical coding-session "commit" / "commit my changes"), you are free to stage the files you need yourself — `git add` the paths for each logical group as you commit it. You don't have to ask first; grouping and staging is your job here.
-- Only pause to ask when intent is genuinely ambiguous — e.g. the tree holds half-finished work, secrets, or changes you suspect the user didn't mean to commit. Never `git add -A` blindly across unrelated concerns; stage per group instead (see step 4).
+- Only pause to ask when intent is genuinely ambiguous — e.g. the tree holds half-finished work, secrets, or changes you suspect the user didn't mean to commit. Never `git add -A` blindly across unrelated concerns; stage per group instead (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)).
 - If the user asked only for a *message* or a single specific commit, respect that and don't auto-split.
 - If **nothing has changed at all**, stop and say so.
 

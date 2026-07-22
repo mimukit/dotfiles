@@ -36,7 +36,7 @@ Use whatever web search/fetch tools the host exposes to read the **authoritative
 **No web access?** Say so plainly, then give a best-effort comparison from knowledge with an explicit staleness warning — and **never fabricate a citation**. A missing source is stated as missing, not invented.
 
 ### 4. Compare
-Lay the options against the constraints that matter (from step 1), not a generic feature grid. Each load-bearing claim in the comparison carries its source. Keep it to the axes that actually move the decision.
+Lay the options against the constraints that matter (from [Frame the decision](#1-frame-the-decision)), not a generic feature grid. Each load-bearing claim in the comparison carries its source. Keep it to the axes that actually move the decision.
 
 ### 5. Recommend
 Pick one. Give a one-line why, and state the condition under which you'd pick differently ("Drizzle — lighter runtime, no codegen; choose Prisma if you need its migration tooling and admin GUI"). A recommendation the reader can accept, reject, or redirect — not a shrug.

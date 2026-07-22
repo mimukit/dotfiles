@@ -72,7 +72,7 @@ Lean toward leaving prose alone when you see hard-to-fake specifics (a real addr
 
 ## Output
 
-Deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught in step 3, and a one-line **summary of changes**. When a writable filesystem is available and the source came from a file, write the rewrite back (or beside it) and report the path; otherwise print the rewrite in a fenced code block so it copies cleanly. If the user asked only for a review, skip the rewrite and report the located tells with line references instead.
+Deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught when you asked *what still reads as AI-generated*, and a one-line **summary of changes**. When a writable filesystem is available and the source came from a file, write the rewrite back (or beside it) and report the path; otherwise print the rewrite in a fenced code block so it copies cleanly. If the user asked only for a review, skip the rewrite and report the located tells with line references instead.
 
 ## Reference
 

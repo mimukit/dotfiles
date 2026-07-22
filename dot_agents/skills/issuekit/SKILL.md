@@ -245,7 +245,7 @@ On approval:
 gh issue close 42 --comment "Closed by #10 (merged)."
 ```
 
-Closing is a lifecycle transition too — strip any active status label (`in-review`, `in-progress`, …) in the same action so a closed issue never carries a stale status (see [step 4](#4-labels--advance-lifecycle-state-unblock-what-s-freed)). Never auto-close — always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess** — closing the wrong issue is worse than leaving one open.
+Closing is a lifecycle transition too — strip any active status label (`in-review`, `in-progress`, …) in the same action so a closed issue never carries a stale status (see [Labels — advance lifecycle state](#4-labels--advance-lifecycle-state-unblock-whats-freed)). Never auto-close — always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess** — closing the wrong issue is worse than leaving one open.
 
 ### 2. Repair — missing link on an existing open PR
 If an **open** PR should reference an issue but doesn't, add `Closes #N` to its body (editing the existing PR, not opening a new one):
@@ -275,6 +275,20 @@ As everywhere in sync, **preview each move and wait for the OK** — never auto-
 
 ### 5. Report
 Summarize what changed: issues closed, PR bodies repaired, checklists ticked, issues advanced or **unblocked** (`blocked` → `ready`) — each an action the user approved.
+
+Then close with the **actionable set** — a table of every open issue that is `in-progress` or `ready` *after* the sync, so the user sees at a glance what's being worked and what they can pick up next in a fresh worktree:
+
+```sh
+gh issue list --state open --label in-progress --json number,title
+gh issue list --state open --label ready --json number,title
+```
+
+| # | Title | Status |
+|---|-------|--------|
+| 43 | `feat(auth): oidc login end to end` | `in-progress` |
+| 44 | `feat(auth): sso account linking` | `ready` |
+
+List `in-progress` rows first, then `ready`. If both sets are empty, say so instead of printing an empty table.
 
 ---
 
