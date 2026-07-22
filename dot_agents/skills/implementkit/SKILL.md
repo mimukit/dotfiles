@@ -50,6 +50,8 @@ Pick **straight-through** or **TDD** by this precedence, taking the first tier t
 
 Repeat per slice until the input is fully implemented. Match the surrounding code's conventions, naming, and structure in either mode — reuse what exists rather than reinventing it.
 
+**Check as you go, not only at the end.** Keep the feedback loop tight while building: typecheck and run the **single** affected test file as each slice lands, so breakage surfaces where it's cheap to fix. Save the **full** suite and the build for the step-5 done-gate. TDD's red→green already runs one test at a time; this closes the same gap in straight-through mode, which otherwise gets no signal until the end.
+
 ### 5. Run the done-gate
 "Done" means the repo's checks are green, not just that code was written. Discover the commands from the repo itself (`package.json` scripts, `Makefile`, `pyproject.toml`, `justfile`, CI config) rather than guessing, and run:
 

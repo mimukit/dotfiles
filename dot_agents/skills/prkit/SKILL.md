@@ -1,7 +1,7 @@
 ---
 name: prkit
 description: >-
-  Draft and open a GitHub pull request from your branch — title, summary, and test plan written from the actual commits and diff, then created with the gh CLI. Use when the user asks to open a PR, says "create a pull request", "raise a PR", "submit this for review", or "gh pr create" — even if they don't spell out the title or body.
+  Draft and open a GitHub pull request from your branch — title, summary, and test plan written from the actual commits and diff, then created with the gh CLI, embedding verifykit proof artifacts inline when a bundle is present. Use when the user asks to open a PR, says "create a pull request", "raise a PR", "submit this for review", or "gh pr create" — even if they don't spell out the title or body.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -57,7 +57,10 @@ If the branch was rebased and the remote rejects a normal push, use `git push --
 - **Title**: one line, imperative, in the repo's commit style (match `git log` — often Conventional Commits like `feat(auth): add SSO login`). No trailing period.
 - **Body**: if `.github/pull_request_template.md` (or `PULL_REQUEST_TEMPLATE.md`) exists, read it and fill it in *exactly* — match its sections and checkboxes. Otherwise use: a one-paragraph **Summary** of what changed and why, a **Changes** bullet list, and a **Test plan** (how it was verified, or checkboxes for what to run). Reference the issue in the body (`Closes #123`) when there is one.
 
-### 5. Create or update the PR
+### 5. Embed proof artifacts (if present)
+Optional — only when a verifykit proof bundle exists. verifykit leaves a bundle at `docs/verify/<slug>/` (slug = the linked issue number, else the feature-slug) with a ready-to-embed `proof.md`. If one matching this branch or issue is present, splice its contents into the body under a **Proof** section — the images are already published to a hidden `refs/verify-assets/*` ref with SHA-pinned raw URLs that render inline, so there's no upload work here; just embed the fragment as-is. If no bundle exists, skip this entirely and open the PR exactly as before. If a bundle exists but its `proof.md` points at local paths (verifykit couldn't publish — e.g. a private repo), don't embed dead links: add a short note listing the local artifact paths for manual attachment instead.
+
+### 6. Create or update the PR
 First check for an existing PR on this branch so you update instead of duplicating:
 
 ```sh
@@ -74,7 +77,7 @@ gh pr create --base <base> --title "…" --body-file <bodyfile>
 
 Use a path in the system temp dir for the body file and remove it afterward.
 
-### 6. After creating
+### 7. After creating
 Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run, the common follow-ups: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or marking ready with `gh pr ready` if it was a draft.
 
 ## Notes
@@ -82,4 +85,5 @@ Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run,
 - **Never** merge, close, or force-push without an explicit ask. Creating or editing a PR is fine; `gh pr merge` is not, unless requested.
 - Uncommitted changes are not in a PR. If `git status` shows staged or unstaged work the user seems to want included, point it out and offer to commit first — don't silently leave it behind or commit it without asking.
 - If the branch is not ahead of the base (no commits), stop and say there's nothing to open a PR for.
+- **Proof embedding is optional and self-contained** — prkit only *reads* verifykit's `proof.md` and embeds it; it never runs the publish itself (that's verifykit's job, with its own bundled script). No verifykit bundle → no Proof section, and prkit works exactly as it always has.
 - No shell or `gh` available (e.g. a browser-based agent)? Then you can't push or call `gh`. Instead read the diff the user provides and print the finished PR **title** and **body** as codeblocks for them to paste into the GitHub "New pull request" form.
