@@ -13,7 +13,8 @@ windows:
         - topgrade:
             - clear
             - topgrade --disable containers --disable chezmoi --disable brew_formula --disable brew_cask --disable vim --yes
-        - commands_sync:
+        - misc:
             - clear
             - atuin sync
+            - skup
             - exit
