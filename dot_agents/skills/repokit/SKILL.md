@@ -151,7 +151,7 @@ gh label create ready --color 0E8A16 --description "specified and independent �
 gh label edit blocked --color D93F0B --description "has an unmet prerequisite (see 'Blocked by #N' in the body)"
 ```
 
-`gh label create --force` also upserts (create-or-overwrite) if you'd rather not branch on existence — but prefer the explicit create/edit split so the preview in step 2 stays honest about what's new vs changed. If a flag is rejected, check `gh label create --help`.
+`gh label create --force` also upserts (create-or-overwrite) if you'd rather not branch on existence — but prefer the explicit create/edit split so the preview in [Diff against the canonical set and preview](#2-diff-against-the-canonical-set-and-preview) stays honest about what's new vs changed. If a flag is rejected, check `gh label create --help`.
 
 ### 4. Report
 List what was created, updated, and left as-is, and confirm the repo now carries the full lifecycle set — issuekit's label references will now resolve.
@@ -162,5 +162,5 @@ List what was created, updated, and left as-is, and confirm the repo now carries
 
 - **Never** delete a repo's topics wholesale or its labels outside the canonical set without an explicit ask; the default is additive/reconciling, not destructive.
 - The `labels` map is a **shared contract with issuekit** — the same eight labels, colors, and meanings. Treat issuekit's lifecycle-labels table as the mirror image and keep them in lockstep.
-- Defer to what the repo already curates: an existing status-label scheme is handled in [labels step 1](#mode-labels), and a curated About/topics is reconciled per-field (never blind-overwritten) in `about`. Offer the canonical set as an addition, not a replacement.
+- Defer to what the repo already curates: an existing status-label scheme is handled in [Check for an existing status scheme first](#1-check-for-an-existing-status-scheme-first), and a curated About/topics is reconciled per-field (never blind-overwritten) in `about`. Offer the canonical set as an addition, not a replacement.
 - Prefer `gh`'s structured JSON (`--json`/`--jq`, the topics API) over scraping human-readable output — the JSON fields are a stable contract, the display text isn't.

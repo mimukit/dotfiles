@@ -52,11 +52,11 @@ Before pushing, make sure the branch is up to date with the base tip you just fe
 git rev-list --left-right --count origin/<base>...HEAD   # "<behind>\t<ahead>"; left > 0 means behind
 ```
 
-- **Behind by zero**: nothing to do — go to step 4.
-- **Behind**: the branch needs `origin/<base>` merged (or rebased) in. This rewrites/advances the branch, so **offer it and confirm before running** — never sync silently (mirrors the "never force-push without an ask" rule). Default to a merge (`git merge origin/<base>`) unless the repo's history is visibly linear/rebase-style or the user prefers rebasing (`git rebase origin/<base>`).
-- **Merge conflicts**: if the merge/rebase stops on a conflict, **stop and surface it** — list the conflicted files (`git diff --name-only --diff-filter=U`) and resolve them (or hand them back to the user), then complete the merge/rebase. Do not push, and do not open the PR, until the working tree is clean and the sync is finished. If the user declines the sync, say the PR may show conflicts and proceed only if they confirm.
+- **Behind by zero**: nothing to do — go to [Push the branch](#4-push-the-branch).
+- **Behind**: the branch needs `origin/<base>` rebased in — **always rebase** (`git rebase origin/<base>`), never merge the base into the branch; a merge commit muddies the PR's history and diff. Rebasing rewrites the branch, so **offer it and confirm before running** — never sync silently (mirrors the "never force-push without an ask" rule).
+- **Rebase conflicts**: if the rebase stops on a conflict, **stop and surface it** — list the conflicted files (`git diff --name-only --diff-filter=U`) and resolve them (or hand them back to the user), then complete the rebase (`git rebase --continue`). Do not push, and do not open the PR, until the working tree is clean and the sync is finished. If the user declines the sync, say the PR may show conflicts and proceed only if they confirm.
 
-After a successful sync, re-read the diff (`git diff origin/<base>...HEAD`) so the title and body reflect the merged result.
+After a successful rebase, re-read the diff (`git diff origin/<base>...HEAD`) so the title and body reflect the rebased result.
 
 ### 4. Push the branch
 The remote branch must exist before a PR can point at it:
@@ -65,7 +65,7 @@ The remote branch must exist before a PR can point at it:
 git push -u origin HEAD
 ```
 
-If the branch was rebased (step 3) and the remote rejects a normal push, use `git push --force-with-lease` (never bare `--force`), and only after confirming the rewrite was intended.
+If the branch was rebased ([Sync with the base branch](#3-sync-with-the-base-branch)) and the remote rejects a normal push, use `git push --force-with-lease` (never bare `--force`), and only after confirming the rewrite was intended.
 
 ### 5. Write the title and body
 - **Title**: one line, imperative, in the repo's commit style (match `git log` — often Conventional Commits like `feat(auth): add SSO login`). No trailing period.
