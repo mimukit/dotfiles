@@ -52,9 +52,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/prkit/SKILL.md",
-      "skillFolderHash": "0ef634d48f3f86301c8e73e33bd3d0086c4a6762",
+      "skillFolderHash": "df3804146ebe9d6be44695979f5f19b6bcb78974",
       "installedAt": "2026-07-12T07:54:50.331Z",
-      "updatedAt": "2026-07-22T09:38:26.213Z"
+      "updatedAt": "2026-07-22T09:52:35.335Z"
     },
     "qakit": {
       "source": "mimukit/skills",
