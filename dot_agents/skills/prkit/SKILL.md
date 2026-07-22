@@ -34,11 +34,13 @@ git branch --show-current
 Find the base branch and read what the branch actually changes — this is the raw material for the title and body:
 
 ```sh
-git remote show origin | sed -n 's/.*HEAD branch: //p'   # the base branch
+gh repo view --json defaultBranchRef --jq .defaultBranchRef.name   # the base branch (structured field, not scraped output)
 git log <base>..HEAD --oneline --no-decorate             # commits in this PR
 git diff <base>...HEAD --stat                            # files touched
 git diff <base>...HEAD                                   # the actual changes
 ```
+
+Read the base branch from `gh`'s structured JSON rather than parsing the display text of `git remote show origin` — the JSON field is a stable contract, the human-readable output isn't. If `gh` can't answer, fall back to `git symbolic-ref --short refs/remotes/origin/HEAD`.
 
 Use the commits, branch name (e.g. `fix/login-123`), and diff to determine the scope, the type of change, and any issue reference (`#123`, `fixes #123`). If a linked issue clearly matters and you can't find it, ask — don't invent one.
 
