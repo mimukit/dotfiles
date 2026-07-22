@@ -165,6 +165,8 @@ alias oc='opencode'
 alias pab='pnpm approve-builds'
 alias pwdc='pwd | pbcopy'
 alias python='python3'
+alias skmi="skills add mimukit/skills --global --skill '*' -a claude-code -a codex -a opencode -y"
+alias skup='skills update --global -y'
 alias so='subl .'
 alias tk='tmux kill-server'
 alias tl='tmux start-server; session=$(tmux list-sessions -F "#{session_name}" | fzf --prompt="⚡Tmux Session → "); [[ -n $session ]] && tmux -u new-session -A -s "$session"'
