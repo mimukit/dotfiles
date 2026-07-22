@@ -3,7 +3,7 @@ model_reasoning_effort = "medium"
 notify = ["/Users/mukit/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
 
 [marketplaces.openai-bundled]
-last_updated = "2026-07-17T08:07:00Z"
+last_updated = "2026-07-22T10:41:48Z"
 source_type = "local"
 source = "/Users/mukit/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
@@ -107,13 +107,13 @@ NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_n
 NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
 NODE_REPL_TRUSTED_CODE_PATHS = "/Users/mukit/.codex"
 CODEX_HOME = "/Users/mukit/.codex"
-NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "57ee77a283eb230c6c6d47353af13a25cec4c331b511868c8fbf7ccd3dd1b2f6,6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f,f6a4312a0a663361556224da122fe509c001f3641aaeee81b402813ccbf63121"
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
 NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
 NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
 NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.707.71524"
+BROWSER_USE_CODEX_APP_VERSION = "26.715.72028"
 CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
 
 [mcp_servers.computer-use]
@@ -149,15 +149,37 @@ global = "sublimeText"
 
 [hooks.state]
 
-[hooks.state."/Users/mukit/.codex/hooks.json:session_start:0:0"]
-trusted_hash = "sha256:541e4662347b7633131996866a5b925512808df56ba429421f5450e45bd168bd"
-enabled = true
-
 [hooks.state."/Users/mukit/.codex/hooks.json:stop:0:0"]
 trusted_hash = "sha256:4435562863cd55287dea23ecb79fafe9eed5360985b9c62737d6bffecc050d4e"
+
+[hooks.state."/Users/mukit/.codex/hooks.json:session_start:1:0"]
+trusted_hash = "sha256:d1da1ae0f9bb721fdd6dbe911717c3701a847e07d98fb55d0cc8501518c4ca74"
+
+[hooks.state."/Users/mukit/.codex/hooks.json:pre_tool_use:0:0"]
+trusted_hash = "sha256:f2cb47f47eaa1079fc8c171d2cb346c44f5646776acfe1148925c431f3dc1d1d"
+
+[hooks.state."/Users/mukit/.codex/hooks.json:permission_request:0:0"]
+trusted_hash = "sha256:77bf914acb3378491840d4c496a27cbc4910ac75731625d40566f8dfecea3534"
+
+[hooks.state."/Users/mukit/.codex/hooks.json:post_tool_use:0:0"]
+trusted_hash = "sha256:ccebca5c51bb867dd9e0fab700b308d999bbf3a64d1a69dd7636fe8d8230d534"
+
+[hooks.state."/Users/mukit/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:541e4662347b7633131996866a5b925512808df56ba429421f5450e45bd168bd"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:user_prompt_submit:0:0"]
 trusted_hash = "sha256:16c686cdab68d1aab14ce596fffeb8be50efd904a7cdf27fcecbc34bc6e4438b"
 
-[hooks.state."/Users/mukit/.codex/hooks.json:session_start:1:0"]
-trusted_hash = "sha256:d1da1ae0f9bb721fdd6dbe911717c3701a847e07d98fb55d0cc8501518c4ca74"
+[hooks.state."/Users/mukit/.codex/hooks.json:subagent_start:0:0"]
+trusted_hash = "sha256:5621f114e16a0119955268a53b196b8175d5004cac5403456c2038c2241f0e05"
+
+[hooks.state."/Users/mukit/.codex/hooks.json:subagent_stop:0:0"]
+trusted_hash = "sha256:b90e03e006ca4a7ee637c44e1c1bbcb7252b2801acca7d3f2eb31639190e7928"
+
+[hooks.state."/Users/mukit/.codex/hooks.json:stop:1:0"]
+trusted_hash = "sha256:4435562863cd55287dea23ecb79fafe9eed5360985b9c62737d6bffecc050d4e"
+
+[shell_environment_policy.set]
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f,f6a4312a0a663361556224da122fe509c001f3641aaeee81b402813ccbf63121"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/mukit/.codex"
