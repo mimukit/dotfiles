@@ -80,18 +80,22 @@ The land-event glue. Its steps are destructive and outward-facing, so it **previ
    gh issue edit <dep> --remove-label blocked --add-label ready
    ```
 
-4. **Remove the worktree** via orca-cli. `rm` takes the target through a **named `--worktree` selector**, not a positional — pass the issue selector, which `finish` already has in hand:
+4. **Resolve, then remove the worktree** via orca-cli. Don't remove by a single selector — resolve the target the *same two ways* `start`'s adopt check detects it (step 2), then `rm` by the selector that actually matched. The `issue:<n>` selector resolves only through the stored Orca→GitHub link, so it fails with `selector_not_found` on any worktree whose `linkedIssue` is `null` — a real case (see [Notes](#notes)). Match on either signal from `orca worktree list --json`: `linkedIssue == <n>` first, then a `displayName` matching `issue-<n>-…`.
 
    ```sh
-   orca worktree rm --worktree issue:<n> --json
+   # Resolve the worktree the same way `start` detects it: linked issue N first,
+   # then a name matching `issue-<n>-…`, from `orca worktree list --json`.
+   # Remove by the selector that actually matched — `issue:<n>` only works when the
+   # `--issue` link is present; `name:<displayName>` always works.
+   orca worktree rm --worktree name:issue-<n>-<slug> --json   # or issue:<n> when linked
    ```
 
-   (Other valid selectors: `name:<displayName>`, `branch:<branch>`, `path:<path>`, `id:<repo-id>::<path>`. A bare positional id is rejected as `Unknown command`.)
+   **Rule:** prefer `issue:<n>` when the link is present; on `selector_not_found`, fall back to `name:issue-<n>-…` resolved from the list. If nothing matches either signal, report "worktree already gone / off-convention" rather than erroring — teardown is idempotent, same spirit as `start`'s adopt-and-stop. (Other valid selectors: `name:<displayName>`, `branch:<branch>`, `path:<path>`, `id:<repo-id>::<path>`. A bare positional id is rejected as `Unknown command`.)
 
 Report what changed: issue closed, dependents unblocked, worktree removed.
 
 ## Notes
 
-- **Off-convention / legacy worktrees.** A worktree that predates orcakit — following neither the `issue-<n>-…` name nor the `--issue` link — won't be seen by adopt-detection, so `start` would spawn a second one beside it. Don't teach `start` to guess; migrate the old worktree once by hand (set `--issue <n>` on it, or recreate it to the naming convention) and note it as a manual step.
+- **Off-convention / legacy worktrees.** A worktree that predates orcakit — following neither the `issue-<n>-…` name nor the `--issue` link — won't be seen by adopt-detection, so `start` would spawn a second one beside it. Don't teach `start` to guess; migrate the old worktree once by hand (set `--issue <n>` on it, or recreate it to the naming convention) and note it as a manual step. The same gap bites `finish` more narrowly: a worktree that *does* follow the `issue-<n>-…` name but is missing its `--issue` link (`linkedIssue: null`) is invisible to the `issue:<n>` selector, so its `rm` fails with `selector_not_found` — `finish` must fall back to the name signal (step 4) to remove it.
 - **Non-goals.** orcakit does not implement the feature (that's a separate step inside the worktree), does not launch agents by default, does not poll-and-spawn or run fleet automation, and adds no tracker or worktree behavior of its own — it only sequences `gh` and `orca`.
 - **No shell / CLI available** (e.g. a browser-based agent)? You can't run `gh` or `orca`. Reason from what the user provides and **print the exact commands** — the guard check, the `orca worktree create …` line, and the label edits — as a codeblock for them to run.
