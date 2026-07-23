@@ -361,8 +361,6 @@ cask "whatsapp"
 cask "wireshark-app"
 # REST, GraphQL and gRPC client
 cask "yaak"
-# Multiplayer code editor
-cask "zed"
 # Mesh VPN client
 cask "zerotier-one"
 mas "Battery Monitor", id: 836505650
