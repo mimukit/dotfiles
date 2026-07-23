@@ -1,7 +1,7 @@
 ---
 name: qakit
 description: >-
-  Generate a step-by-step manual QA and test plan for a feature just implemented, grounded in the actual code changes, and save it to ./docs/qa for a human to run. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", or runs /qakit.
+  Generate a step-by-step manual QA and test plan for a feature just implemented, grounded in the actual code changes, and save it to docs/qa for a human to run. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", or runs /qakit.
 license: MIT
 allowed-tools: Read, Bash, Write
 metadata:
@@ -10,7 +10,7 @@ metadata:
 
 # qakit
 
-Turn a feature an AI agent just implemented into a **manual QA plan a human can actually run** — concrete steps, expected results, and pass/fail boxes, grounded in what the code actually changed rather than a generic checklist. The plan is written to `./docs/qa/` so a person can walk it top to bottom and sign off on the feature by hand.
+Turn a feature an AI agent just implemented into a **manual QA plan a human can actually run** — concrete steps, expected results, and pass/fail boxes, grounded in what the code actually changed rather than a generic checklist. The plan is written to `docs/qa/` so a person can walk it top to bottom and sign off on the feature by hand.
 
 This is **manual** QA — steps that genuinely need a human to perform and judge (click through a flow, read a screen, feel out the UX), not checks a machine can do on its own. The value is a disciplined, diff-grounded plan: what to test, in what order, with what setup, and how to know it passed — focused on the things that *can't* be verified without a human eye.
 
@@ -18,7 +18,7 @@ Anything an AI agent or script can confirm on its own — running a terminal com
 
 ## When this fires
 
-The user finishes building something and wants to verify it by hand: "write a QA plan", "manual test plan", "how do I test this feature", "give me a testing checklist", "/qakit", or a bare "QA this" after a coding session. qakit produces a plan a **human** runs — it never writes or runs test code. If the user wants *automated* tests (unit, integration, E2E), that's a separate concern for a testkit-style skill; say so and don't produce a manual plan for it.
+The user finishes building something and wants to verify it by hand: "write a QA plan", "manual test plan", "how do I test this feature", "give me a testing checklist", "/qakit", or a bare "QA this" after a coding session. qakit produces a plan a **human** runs — it never writes or runs test code. If the user wants *automated* tests (unit, integration, E2E), that's a separate concern for a test-suite skill; say so and don't produce a manual plan for it.
 
 ## Procedure
 
@@ -57,7 +57,7 @@ Don't pad — one clear case per behavior beats ten redundant ones. Scale the co
 **Split human-only from agent-verifiable.** As you generate cases, sort each one: does confirming it *require a human* (visual judgment, real interaction, UX feel), or can an agent/script confirm it by running a command and reading output? Keep only the human-only cases as numbered test cases in the plan. Run the agent-verifiable checks yourself and record their outcomes in the **Automated verification** section — never list a command-and-check-output step as a manual case for the human to run by hand.
 
 ### 3. Write the plan file
-Write to `./docs/qa/<feature-slug>-qa.md` (slug = short kebab-case name of the feature, e.g. `login-throttle-qa.md`). Create `./docs/qa/` if it doesn't exist. If a plan for this feature already exists, ask before overwriting.
+Write to `docs/qa/qa-<feature-slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case feature slug and the plan's ISO creation date (for example, `qa-login-throttle-2026-07-23.md`). Keep that date stable on later edits; record an updated date inside the document when useful. Create `docs/qa/` if it doesn't exist. Update an existing QA plan for the same artifact in place. For a genuine same-day collision between distinct plans, make the slug more specific; only as a last resort insert a sequence immediately before the date (`qa-login-throttle-02-2026-07-23.md`).
 
 Structure the file like this (the outer fence below is shown with four backticks only so the inner ```sh blocks display — the real file uses normal triple-backtick fences):
 
@@ -150,6 +150,5 @@ Tell the user the file path and give a one-line summary: how many manual cases (
 
 ## Notes
 - **Scope of shell use.** qakit runs the shell only to read the change and to run the project's own verification checks: `git diff`/`git log` to ground the plan, and the automated checks from [Run the automated checks yourself](#4-run-the-automated-checks-yourself) (the project's test, lint, and build commands). Every command it runs is echoed in the plan's **Automated verification** section, so the user sees exactly what ran. It does not fetch remote code, touch credentials, or run anything destructive; if a verification step would modify state or need elevated access, describe it for the human instead of running it.
-- **Manual only.** qakit's sole output is a manual QA plan for a human to execute — it never writes or runs unit/integration/E2E tests. Automated testing belongs to a separate testkit-style skill; if that's what the user wants, hand off to it rather than producing a plan here.
-- **No filesystem or shell?** You can't write the file or read a diff — instead ask the user to paste the change or describe the feature, then print the finished plan as a codeblock for them to save under `docs/tests/` themselves.
-- Keep the plan proportional to the change: a one-line fix needs a few cases, not thirty. Scale the plan to the risk and surface area of what changed.
+- **Manual only.** qakit's sole output is a manual QA plan for a human to execute — it never writes or runs unit/integration/E2E tests. Automated testing belongs to a separate test-suite skill; if that's what the user wants, name that plain next step rather than assuming a particular skill is installed.
+- **No filesystem or shell?** You can't write the file or read a diff — instead ask the user to paste the change or describe the feature, then print the finished plan as a codeblock with the canonical `docs/qa/qa-<feature-slug>-YYYY-MM-DD.md` path for them to save themselves.

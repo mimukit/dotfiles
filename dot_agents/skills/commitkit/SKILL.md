@@ -1,7 +1,7 @@
 ---
 name: commitkit
 description: >-
-  Create a git commit with a Conventional Commits message derived from the actual diff. Use when the user asks to commit changes, says "commit this", runs "/commit", or wants a well-formed commit message written for staged work — even if they don't spell out the format.
+  Create a git commit with a Conventional Commits message derived from the actual diff. Use when the user asks to commit changes, says "commit this", runs "/commitkit", or wants a well-formed commit message written for staged work — even if they don't spell out the format.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -14,7 +14,7 @@ Turn the current changes into one or more clean commits with [Conventional Commi
 
 ## When this fires
 
-The user asks to commit ("commit this", "make a commit", "/commit", "commit my changes"). If they only want a *message drafted* (not committed), do everything except the final `git commit`.
+The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). If they only want a *message drafted* (not committed), do everything except the final `git commit`.
 
 This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage the right files yourself, group the work into as many commits as it deserves, commit them, and report back a table of what you created — without stopping to ask at each step.
 
@@ -30,7 +30,7 @@ git diff            # unstaged, for context
 ```
 
 - When the user has **delegated committing** (the typical coding-session "commit" / "commit my changes"), you are free to stage the files you need yourself — `git add` the paths for each logical group as you commit it. You don't have to ask first; grouping and staging is your job here.
-- Only pause to ask when intent is genuinely ambiguous — e.g. the tree holds half-finished work, secrets, or changes you suspect the user didn't mean to commit. Never `git add -A` blindly across unrelated concerns; stage per group instead (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)).
+- Only pause to ask when intent is genuinely ambiguous — e.g. the tree holds half-finished work, secrets, changes you suspect the user didn't mean to commit, or a file is partially staged and staging its whole path would include deliberately unstaged hunks. Never `git add -A` blindly across unrelated concerns; stage per group instead (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)).
 - If the user asked only for a *message* or a single specific commit, respect that and don't auto-split.
 - If **nothing has changed at all**, stop and say so.
 
@@ -78,7 +78,7 @@ Before committing anything, map the changes to logical groups. Each **feature gr
 
 Group by *what the change accomplishes*, not by file type or directory. Keep a feature together with the tests and docs that belong to it rather than splitting them across commits. Don't over-fragment either — a single cohesive change is one commit even if it spans several files.
 
-Commit each group in turn: stage just that group's paths with `git add <paths>` (or `git add -p` for hunks that share a file with another group), then commit before staging the next. Order commits so dependencies land first (e.g. a shared helper before the feature that uses it).
+Order the groups so dependencies land first (e.g. a shared helper before the feature that uses it). When a file contains hunks from multiple groups, plan to stage it interactively rather than assigning the whole path to one group.
 
 ### 5. Commit each group
 For each group, stage its paths and commit:

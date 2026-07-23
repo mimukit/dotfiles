@@ -18,10 +18,9 @@ It is a **read + advise** tool. It never commits, pushes, closes an issue, edits
 
 You want to orient before acting: "what should I do next", "check project status", "where's this project at", "what's next", "project status", "orient me", "/statuskit", or a bare "what's the state of this" after stepping away.
 
-Two things it deliberately is **not**:
+One boundary matters:
 
-- **Not the tracker authority** — that's issuekit. statuskit reads issue *counts and state* to inform its recommendation and computes one cheap staleness signal, but it never itemizes tracker drift (stale/orphaned/zombie) or mutates the tracker. When the tracker needs work, it *routes* to issuekit. issuekit answers "is my tracker honest?"; statuskit answers "where's this project and what do I do next?"
-- **Not a doer** — it recommends and hands off. The kit it names does the work. statuskit stops at the dashboard + the crowned move.
+- **Not the tracker authority** — that's issuekit. statuskit reads issue *counts and state* to inform its recommendation and computes one cheap staleness signal. Detailed tracker health belongs to issuekit: issuekit answers "is my tracker honest?"; statuskit answers "where's this project and what do I do next?"
 
 ## The ranking principle: finish-first
 
@@ -41,7 +40,7 @@ Both appear in the dashboard as facts; neither becomes the #1 move.
 statuskit is **git-first**: git signals always drive it, and GitHub signals enrich it when available. Detect what's present and adapt, rather than bailing:
 
 - **Not a git repo** → say so; skip everything git-derived. If there's no repo yet, the move is "start with `plankit`."
-- **`gh` missing / unauthenticated / no remote** → drop to the **git-only ladder** below. This is a first-class mode, not an error — note the gap once ("issues/PRs unavailable — `gh auth login` for the fuller picture") and carry on.
+- **`gh` missing / unauthenticated / no remote** → drop to the **git-only ladder** below. This is a first-class mode, not an error — name the actual gap once (`gh` is not installed, run `gh auth login`, or add a GitHub remote) and carry on.
 - **No `docs/plans/`** → skip the plans panel.
 - **No shell at all** (e.g. a browser-based agent) → you can't run the survey; print the commands below for the user to run and reason from what they paste back.
 
@@ -54,12 +53,12 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 - **branch → issue mapping** — resolve the current branch to a tracked issue by reading an open PR's `Closes #N` (the reliable signal); fall back to a branch-name heuristic (`#N` / `issue-N` / a slug matching an issue title). When it stays unmappable, treat a dirty non-`main` branch as *continue*, not *commit*.
 
 **GitHub (only when `gh` is usable):**
-- issues — `gh issue list --state open --json number,title,labels,updatedAt`, bucketed by lifecycle label (`in-progress` / `ready` / `blocked` / `in-review`). Counts and the actionable set only — no drift detection.
+- issues — `gh issue list --state open --json number,title,labels,updatedAt`, bucketed by lifecycle label (`in-progress` / `ready` / `blocked` / `in-review`) plus an **unlabeled/other-status** bucket for repos without that vocabulary. Counts and the actionable set only — no drift detection. Treat recent unlabeled issues as candidates for classification or planning, not as invisible work.
 - open PRs — `gh pr list --json number,title,statusCheckRollup,reviewDecision,isDraft,updatedAt`, classified into: *your red / change-requested PR* (actionable), *approved + green* (surface-only), *awaiting others* (surface-only). Cap the list on large repos to stay fast; if a JSON field is rejected, check `gh pr list --help`.
 - **stale-tracker signal** — one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why** — that's issuekit's job.
 
 **plans (filesystem, available even without `gh`):**
-- list `docs/plans/plan-*.md` (or wherever the repo keeps plans — an `rfcs/`, `specs/`, or documented location takes precedence); when `gh` is present, cross-check titles against the issue list to flag plans never turned into issues.
+- list canonical `docs/plans/plan-<slug>-YYYY-MM-DD.md` files (or wherever the repo keeps plans — an `rfcs/`, `specs/`, or documented location takes precedence); when `gh` is present, cross-check titles against the issue list to flag plans never turned into issues.
 
 ### 3. Rank — crown one finish-first move
 
@@ -76,16 +75,19 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 5 | an unfiled plan doc | `implementkit` / `plankit` |
 | 6 | clean on `main`, nothing pending | start something (newest plan) / `plankit` |
 
-**Full ladder** (`gh` available) — git-only rungs still apply; the GitHub rungs interleave by finish-first value. *(Surfaced, never crowned: an approved+green PR; a PR awaiting others.)*
+**Full ladder** (`gh` available) — every git-only state has an explicit home below. *(Surfaced, never crowned: an approved+green PR; a PR awaiting others.)*
 
 | # | State | Move → |
 |---|-------|--------|
 | 1 | your PR is red or change-requested | fix CI / address review — `implementkit` / `prkit` |
 | 2 | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume / `implementkit` |
-| 3 | orphaned work — uncommitted on `main`/untracked branch, or unpushed | `commitkit` / push |
-| 4 | stale-tracker signal fired | reconcile — `issuekit sync` |
-| 5 | a `ready` issue to start (most-recently-updated) | `implementkit` / `orcakit` |
-| 6 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
+| 3 | orphaned work — uncommitted on `main`/untracked branch, or unpushed commits | `commitkit` / push |
+| 4 | a stash | restore it to finish the work, or drop it if obsolete |
+| 5 | an unmerged local feature branch | finish it or clean it up |
+| 6 | stale-tracker signal fired | reconcile — `issuekit sync` |
+| 7 | a `ready` issue to start (most-recently-updated) | `implementkit` / `orcakit` |
+| 8 | an unlabeled/other-status issue needing classification | classify it — `issuekit triage` |
+| 9 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
 
 When the owning kit isn't installed, name the **plain action** instead ("commit your changes" rather than "run commitkit") — statuskit routes, it doesn't require the ecosystem.
 

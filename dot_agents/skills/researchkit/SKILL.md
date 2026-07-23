@@ -44,7 +44,7 @@ Pick one. Give a one-line why, and state the condition under which you'd pick di
 ### 6. Hand off
 Print the recommendation, then offer the next steps without starting either:
 
-- **Save it?** — offer to write the artifact to `docs/research/research-<slug>.md` (follow any existing research/notes/RFC location the repo already uses). Default is inline-only; write the file only if the user wants a durable record.
+- **Save it?** — offer to write the artifact to `docs/research/research-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case subject slug and the artifact's ISO creation date (for example, `research-auth-providers-2026-07-23.md`). Keep that date stable on later edits and update the same artifact in place. For a genuine same-day collision between distinct reports, make the slug more specific; only as a last resort insert a sequence immediately before the date (`research-auth-providers-02-2026-07-23.md`). Follow any established research/notes/RFC location or naming scheme the repository already uses. Default is inline-only; write the file only if the user wants a durable record.
 - **Plan it?** — if the user works with plankit, offer to turn the chosen direction into a plan. Leftover uncertainties become the "open questions" that plankit and grillkit pick up. This nudge is optional — don't assume plankit is installed.
 
 ## Artifact format

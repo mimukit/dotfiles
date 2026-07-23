@@ -13,7 +13,7 @@ metadata:
 Configure a GitHub repository's metadata through the [`gh` CLI](https://cli.github.com), in two explicit **modes**:
 
 - **`about`** — infer a one-line *About* description and a focused set of topics from the repo's own contents (README, manifest, code), show them against whatever is already set, and apply what you approve.
-- **`labels`** — provision the issue-workflow **lifecycle labels** (the set [issuekit](https://www.skills.sh) uses to track work), creating what's missing and reconciling what drifted.
+- **`labels`** — provision the issue-workflow **lifecycle labels** (the set issuekit uses to track work), creating what's missing and reconciling what drifted.
 
 Two jobs, one skill, because both answer "make this repo's GitHub metadata right" — the outward-facing blurb people read, and the label vocabulary the issue workflow runs on.
 
@@ -99,16 +99,16 @@ gh repo edit --description "the approved one-liner"
 gh repo edit --add-topic new-one --add-topic another --remove-topic dropped-one
 ```
 
-To *replace the whole topic set* in one call instead of add/remove reconciliation, the topics API is cleaner: `gh api --method PUT repos/{owner}/{repo}/topics -f 'names[]=a' -f 'names[]=b'`. Either is fine — pick whichever expresses the change more simply. If a `gh repo edit` flag is rejected, check `gh repo edit --help`.
+To *replace the whole topic set* in one call instead of add/remove reconciliation, the topics API is cleaner: `gh api --method PUT repos/{owner}/{repo}/topics -f 'names[]=a' -f 'names[]=b'`. Either is fine — pick whichever expresses the change more simply.
 
 ---
 
 ## Mode: `labels`
 
-Provision the issue-workflow **lifecycle labels** so [issuekit](https://www.skills.sh) (and any workflow that reads them) has the vocabulary it expects. repokit *creates and reconciles* these labels; issuekit only *uses* them. This mode **stands alone** — the lifecycle labels are useful for any issue workflow, so it never checks whether issuekit is installed before provisioning them.
+Provision the issue-workflow **lifecycle labels** so issuekit (and any workflow that reads them) has the vocabulary it expects. repokit *creates and reconciles* these labels; issuekit only *uses* them. This mode **stands alone** — the lifecycle labels are useful for any issue workflow, so it never checks whether issuekit is installed before provisioning them.
 
 ### The canonical set
-Provision exactly this map. **Keep it identical to issuekit's lifecycle-labels table** — the two skills mirror one label vocabulary; if you change one, change the other so they never drift.
+Provision exactly this map. The `description` column here is canonical; issuekit mirrors the same names, colors, and meanings in execution-oriented wording.
 
 | name | color | description |
 |------|-------|-------------|
@@ -151,7 +151,7 @@ gh label create ready --color 0E8A16 --description "specified and independent �
 gh label edit blocked --color D93F0B --description "has an unmet prerequisite (see 'Blocked by #N' in the body)"
 ```
 
-`gh label create --force` also upserts (create-or-overwrite) if you'd rather not branch on existence — but prefer the explicit create/edit split so the preview in [Diff against the canonical set and preview](#2-diff-against-the-canonical-set-and-preview) stays honest about what's new vs changed. If a flag is rejected, check `gh label create --help`.
+`gh label create --force` also upserts (create-or-overwrite) if you'd rather not branch on existence — but prefer the explicit create/edit split so the preview in [Diff against the canonical set and preview](#2-diff-against-the-canonical-set-and-preview) stays honest about what's new vs changed.
 
 ### 4. Report
 List what was created, updated, and left as-is, and confirm the repo now carries the full lifecycle set — issuekit's label references will now resolve.
@@ -161,6 +161,6 @@ List what was created, updated, and left as-is, and confirm the repo now carries
 ## Notes
 
 - **Never** delete a repo's topics wholesale or its labels outside the canonical set without an explicit ask; the default is additive/reconciling, not destructive.
-- The `labels` map is a **shared contract with issuekit** — the same eight labels, colors, and meanings. Treat issuekit's lifecycle-labels table as the mirror image and keep them in lockstep.
+- The `labels` map is a **shared contract with issuekit** — the same eight names, colors, and meanings, with repokit's descriptions canonical.
 - Defer to what the repo already curates: an existing status-label scheme is handled in [Check for an existing status scheme first](#1-check-for-an-existing-status-scheme-first), and a curated About/topics is reconciled per-field (never blind-overwritten) in `about`. Offer the canonical set as an addition, not a replacement.
 - Prefer `gh`'s structured JSON (`--json`/`--jq`, the topics API) over scraping human-readable output — the JSON fields are a stable contract, the display text isn't.

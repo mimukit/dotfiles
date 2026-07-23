@@ -12,7 +12,7 @@ metadata:
 
 Scribe of the project's **domain model**. domainkit keeps two living artifacts current as work happens: **`CONTEXT.md`**, a glossary of the project's ubiquitous language, and **`docs/adr/`**, the log of architectural decisions and why they were made. Its loop is narrow on purpose — **detect the moment, offer to record it, write on consent** — so the vocabulary and the reasoning behind hard choices stay pinned down without anyone remembering to do it.
 
-It runs as a **byproduct of design work**, not a thing you invoke by hand. While a decision is being grilled, a plan drafted, or code written, a term crystallizes or a decision lands — that's when domainkit fires, proposes the entry, and writes it once you say yes.
+It runs primarily as a **byproduct of design work**, though explicit invocation is supported. While a decision is being grilled, a plan drafted, or code written, a term crystallizes or a decision lands — that's when domainkit fires, proposes the entry, and writes it once you say yes.
 
 ## When this fires
 
@@ -20,7 +20,7 @@ A **domain term** needs pinning down — it's vague, overloaded, or two words ar
 
 Two things it deliberately is **not**:
 
-- **Not the interrogator.** Challenging a term, inventing edge-case scenarios, stress-testing whether a decision holds — that's grillkit's job. domainkit records the *settled* understanding; if a term or decision is still genuinely unresolved, hand back to grillkit rather than writing down a guess.
+- **Not the interrogator.** Challenging a term, inventing edge-case scenarios, stress-testing whether a decision holds — that's an interrogation step. domainkit records the *settled* understanding; if a term or decision is still genuinely unresolved, use grillkit when installed or ask the user to settle it directly rather than writing down a guess.
 - **Not a status tracker.** There is no `status.md` and no "current state" file. Project status is ambient — issues track what's planned, git and session history track what happened, a handoff compacts state on demand. domainkit persists only what those *can't* recover: the vocabulary and the reasoning behind irreversible choices.
 
 ## Procedure
@@ -31,17 +31,17 @@ Every write is **consent-gated** — detect, offer, then write only on a yes. A 
 A term is being used loosely or inconsistently, or a settled decision clears the three-part ADR bar. In flow, this surfaces mid-grill, mid-plan, or mid-implementation — you don't wait to be called.
 
 ### 2. Locate the existing artifacts
-Read `CONTEXT.md` if it exists (or `CONTEXT-MAP.md` → the right context file for a multi-context project). For an ADR, `Glob docs/adr/*.md` and take the highest existing number.
+Read the repo-root `CONTEXT.md` if it exists (or `CONTEXT-MAP.md` → the right context file for a multi-context project). If neither exists, create `CONTEXT.md` at the repo root when the first glossary term is accepted. For an ADR, scan `docs/adr/adr-*.md` and take the highest existing decision number.
 
 ### 3. Offer
 Show the proposed glossary entry or ADR and ask before writing. Keep the proposal tight enough to accept or redirect at a glance.
 
 ### 4. Write on consent
 - **Glossary** — add or adjust the term in place. Keep `CONTEXT.md` a *pure glossary*: what terms mean, nothing else. Be opinionated — when several words compete, pick one canonical term and list the rest under `_Avoid_`.
-- **ADR** — create `docs/adr/NNNN-slug.md` at the next number. Minimal by default; add optional sections only when they carry real value. ADRs are **immutable** — never rewrite a shipped one; reverse a decision by writing a new ADR that supersedes it.
+- **ADR** — create `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md` at the next number, using a short lowercase kebab-case slug and the decision's ISO creation date (for example, `adr-0007-use-postgres-2026-07-23.md`). Minimal by default; add optional sections only when they carry real value. ADR content is **immutable** once shipped; the `Status` field is the one mutable exception, so a later ADR may mark the old record `deprecated` or `superseded by ADR-NNNN`.
 
 ### 5. Defer when unsettled
-If the term or decision isn't actually resolved, don't manufacture certainty — hand back to grillkit to settle it first, then record the result.
+If the term or decision isn't actually resolved, don't manufacture certainty — use grillkit to settle it first when installed, or ask the user to settle it directly, then record the result.
 
 ## CONTEXT.md — the glossary format
 
@@ -68,7 +68,7 @@ _Avoid: <synonym to reject>, <another>_
 
 ## ADR — the decision record format
 
-ADRs live in `docs/adr/`, numbered sequentially with zero-padding: `0001-slug.md`, `0002-slug.md`, … To number a new one, scan `docs/adr/` for the highest existing number and increment. Create the directory only when the first ADR is needed.
+ADRs live in `docs/adr/` and use `adr-NNNN-<slug>-YYYY-MM-DD.md`, numbered sequentially with zero-padding: `adr-0001-use-postgres-2026-07-23.md`, `adr-0002-adopt-event-log-2026-07-24.md`, … The number is the authoritative decision order and the ISO suffix is the creation date; never rename an ADR merely because its status changes later. To number a new one, scan `docs/adr/` for the highest existing decision number and increment. Create the directory only when the first ADR is needed. Parallel branches may claim the same number; when that happens, renumber the later ADR during merge and update any references to it.
 
 ```markdown
 # NNNN — <Title>
