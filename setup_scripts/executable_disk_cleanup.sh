@@ -39,10 +39,10 @@ usage() {
     cat <<EOF
 Usage: $SCRIPT_NAME [options]
 
-Scan rebuildable caches, print an itemized estimate, and ask before cleaning.
+Scan rebuildable caches, print a compact estimate, and ask before cleaning.
 
 Options:
-  --dry-run       Report candidates without deleting anything or prompting
+  --dry-run       Preview candidates, then offer to apply when interactive
   --yes           Clean without the confirmation prompt
   --no-projects   Skip project dependencies and generated build output
   --verbose       List every candidate and cleanup operation
@@ -546,7 +546,9 @@ is_rebuildable_project_path() {
 }
 
 report_container_storage() {
-    local orb_data size status
+    local orb_data size status docker_summary containers images volumes
+    local count shown inventory_spec inventory_label inventory_file
+    local item_name item_id item_meta
     orb_data="$HOME_DIR/Library/Group Containers/HUAQ24HBR6.dev.orbstack/data"
     if [ -d "$orb_data" ]; then
         size=$(path_kb "$orb_data")
@@ -564,9 +566,71 @@ report_container_storage() {
             "$DIM" "$RESET"
     fi
 
-    if [ -S "$HOME_DIR/.orbstack/run/docker.sock" ] && command -v docker >/dev/null 2>&1; then
-        printf '\n  %bDocker usage%b\n' "$BOLD" "$RESET"
-        docker system df 2>/dev/null || warning "  Docker usage unavailable."
+    if { [ -S "$HOME_DIR/.orbstack/run/docker.sock" ] ||
+        { [ "${CACHE_CLEANUP_TEST_MODE:-0}" = "1" ] &&
+            [ "${CACHE_CLEANUP_TEST_DOCKER_AVAILABLE:-0}" = "1" ]; }; } &&
+        command -v docker >/dev/null 2>&1; then
+        docker_summary="$WORK_DIR/docker-system-df.txt"
+        containers="$WORK_DIR/docker-stopped-containers.tsv"
+        images="$WORK_DIR/docker-dangling-images.tsv"
+        volumes="$WORK_DIR/docker-unused-volumes.tsv"
+
+        docker system df > "$docker_summary" 2>/dev/null || : > "$docker_summary"
+        docker container ls -a \
+            --filter status=created --filter status=exited --filter status=dead \
+            --format '{{.Names}}\t{{.ID}}\t{{.Size}}' \
+            > "$containers" 2>/dev/null || : > "$containers"
+        docker image ls --filter dangling=true \
+            --format '{{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.Size}}' \
+            > "$images" 2>/dev/null || : > "$images"
+        docker volume ls --filter dangling=true \
+            --format '{{.Name}}\tvolume\t{{.Driver}}' \
+            > "$volumes" 2>/dev/null || : > "$volumes"
+
+        printf '\n  %bDocker disk usage%b\n' "$BOLD" "$RESET"
+        if [ -s "$docker_summary" ]; then
+            sed 's/^/    /' "$docker_summary"
+        else
+            warning "    Docker usage unavailable."
+        fi
+
+        printf '\n  %bUnused Docker resources%b\n' "$BOLD" "$RESET"
+        for inventory_spec in \
+            "Stopped containers:$containers" \
+            "Dangling images:$images" \
+            "Unused volumes:$volumes"; do
+            inventory_label=${inventory_spec%%:*}
+            inventory_file=${inventory_spec#*:}
+            count=$(awk 'END { print NR + 0 }' "$inventory_file")
+            label_value "$inventory_label" "$count"
+            shown=0
+            while IFS="$(printf '\t')" read -r item_name item_id item_meta; do
+                [ -n "$item_name" ] || continue
+                shown=$((shown + 1))
+                [ "$shown" -le 5 ] || continue
+                printf '    %b•%b %-28s %s %b%s%b\n' \
+                    "$BLUE" "$RESET" "$(display_path "$item_name" 28)" \
+                    "$item_id" "$DIM" "$item_meta" "$RESET"
+            done < "$inventory_file"
+            if [ "$count" -gt 5 ]; then
+                printf '    %b+ %d more%b\n' "$DIM" "$((count - 5))" "$RESET"
+            fi
+        done
+
+        printf '\n  %bSuggested commands · not run by this script%b\n' "$BOLD$YELLOW" "$RESET"
+        printf '    %bdocker container prune%b    # stopped containers\n' "$CYAN" "$RESET"
+        printf '    %bdocker image prune%b        # dangling images\n' "$CYAN" "$RESET"
+        printf '    %bdocker volume prune -a%b    # all unused local volumes\n' "$CYAN" "$RESET"
+        printf '    %bdocker builder prune%b      # reclaimable build cache\n' "$CYAN" "$RESET"
+        printf '    %borbctl list%b               # inspect OrbStack Linux machines\n' "$CYAN" "$RESET"
+        printf '    %borbctl delete MACHINE_NAME%b # remove a confirmed-unused machine\n' \
+            "$CYAN" "$RESET"
+    elif [ -d "$orb_data" ]; then
+        printf '\n  %bUnused Docker resources%b\n' "$BOLD" "$RESET"
+        printf '  %bUnavailable while the OrbStack Docker engine is stopped.%b\n' \
+            "$DIM" "$RESET"
+        printf '  %bStart OrbStack and rerun this report; it will not be started automatically.%b\n' \
+            "$DIM" "$RESET"
     fi
 }
 
@@ -752,7 +816,7 @@ action_is_running() {
 }
 
 run_native_action() {
-    local action path status
+    local action path status removed_before
     action=$1
     path=$2
 
@@ -763,8 +827,10 @@ run_native_action() {
     verbose "Running native cleaner: $action"
 
     if [ "${CACHE_CLEANUP_TEST_MODE:-0}" = "1" ]; then
+        removed_before=$REMOVED
         safe_delete "$path"
         status=$?
+        REMOVED=$removed_before
         printf '%s\n' "$action" >> "$COMPLETED_ACTIONS"
         return "$status"
     fi
@@ -897,8 +963,25 @@ fi
 
 if [ "$DRY_RUN" = true ]; then
     printf '\n'
-    success "✓ Dry run complete — nothing was removed."
-    exit 0
+    success "✓ Preview complete — nothing has been removed."
+    if [ -t 0 ]; then
+        printf '\n%bApply this cleanup now?%b [y/N] ' "$BOLD$YELLOW" "$RESET"
+        IFS= read -r reply
+        case "$reply" in
+            y|Y|yes|YES|Yes)
+                ASSUME_YES=true
+                success "Applying the previewed cleanup."
+                ;;
+            *)
+                info "Nothing was removed."
+                exit 0
+                ;;
+        esac
+    else
+        printf '  To apply these findings, run: %b%s --yes%b\n' \
+            "$CYAN" "$0" "$RESET"
+        exit 0
+    fi
 fi
 
 if [ "$ASSUME_YES" != true ]; then
