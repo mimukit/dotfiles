@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Reclaim rebuildable macOS application, CLI, and project caches.
-# Chezmoi installs this file as ~/setup_scripts/cache_cleanup.sh.
+# Chezmoi installs this file as ~/setup_scripts/disk_cleanup.sh.
 
 set -u
 
@@ -10,6 +10,7 @@ DRY_RUN=false
 ASSUME_YES=false
 INCLUDE_PROJECTS=true
 VERBOSE=false
+COLOR_MODE=auto
 FAILURES=0
 SKIPPED=0
 REMOVED=0
@@ -44,7 +45,9 @@ Options:
   --dry-run       Report candidates without deleting anything or prompting
   --yes           Clean without the confirmation prompt
   --no-projects   Skip project dependencies and generated build output
-  --verbose       Print each cleanup operation
+  --verbose       List every candidate and cleanup operation
+  --color         Always use color, even when output is redirected
+  --no-color      Never use color
   -h, --help      Show this help
 
 Project roots default to:
@@ -52,6 +55,7 @@ Project roots default to:
 
 Override them with the colon-separated CACHE_CLEANUP_PROJECT_ROOTS variable.
 OrbStack and Docker data is always report-only and is never pruned.
+Automatic color is disabled when NO_COLOR is set.
 EOF
 }
 
@@ -61,6 +65,8 @@ while [ "$#" -gt 0 ]; do
         --yes) ASSUME_YES=true ;;
         --no-projects) INCLUDE_PROJECTS=false ;;
         --verbose) VERBOSE=true ;;
+        --color) COLOR_MODE=always ;;
+        --no-color) COLOR_MODE=never ;;
         -h|--help)
             usage
             exit 0
@@ -73,6 +79,47 @@ while [ "$#" -gt 0 ]; do
     esac
     shift
 done
+
+RESET=""
+BOLD=""
+DIM=""
+RED=""
+GREEN=""
+YELLOW=""
+BLUE=""
+MAGENTA=""
+CYAN=""
+
+setup_colors() {
+    local use_color escape
+    use_color=false
+
+    case "$COLOR_MODE" in
+        always) use_color=true ;;
+        never) use_color=false ;;
+        auto)
+            if [ -t 1 ] && [ "${TERM:-dumb}" != "dumb" ] &&
+                [ -z "${NO_COLOR+x}" ]; then
+                use_color=true
+            fi
+            ;;
+    esac
+
+    if [ "$use_color" = true ]; then
+        escape=$(printf '\033')
+        RESET="${escape}[0m"
+        BOLD="${escape}[1m"
+        DIM="${escape}[2m"
+        RED="${escape}[31m"
+        GREEN="${escape}[32m"
+        YELLOW="${escape}[33m"
+        BLUE="${escape}[34m"
+        MAGENTA="${escape}[35m"
+        CYAN="${escape}[36m"
+    fi
+}
+
+setup_colors
 
 TMP_BASE=${TMPDIR:-/tmp}
 WORK_DIR=$(mktemp -d "$TMP_BASE/cache-cleanup.XXXXXX") || exit 1
@@ -96,9 +143,29 @@ info() {
     printf '%s\n' "$*"
 }
 
+section() {
+    printf '\n%b%s%b\n' "$BOLD$CYAN" "$*" "$RESET"
+}
+
+success() {
+    printf '%b%s%b\n' "$GREEN" "$*" "$RESET"
+}
+
+warning() {
+    printf '%b%s%b\n' "$YELLOW" "$*" "$RESET"
+}
+
+error() {
+    printf '%b%s%b\n' "$RED" "$*" "$RESET" >&2
+}
+
+label_value() {
+    printf '  %b%-24s%b %s\n' "$DIM" "$1" "$RESET" "$2"
+}
+
 verbose() {
     if [ "$VERBOSE" = true ]; then
-        printf '  %s\n' "$*"
+        printf '  %b•%b %s\n' "$BLUE" "$RESET" "$*"
     fi
 }
 
@@ -108,6 +175,49 @@ human_kb() {
         else if (kb >= 1024) printf "%.1f MiB", kb / 1024;
         else printf "%d KiB", kb;
     }'
+}
+
+display_path() {
+    local path max_length left right
+    path=$1
+    max_length=${2:-64}
+
+    case "$path" in
+        "$HOME_DIR") path="~" ;;
+        "$HOME_DIR"/*) path="~${path#"$HOME_DIR"}" ;;
+    esac
+
+    if [ "${#path}" -le "$max_length" ]; then
+        printf '%s\n' "$path"
+        return
+    fi
+
+    left=$((max_length / 2 - 2))
+    right=$((max_length - left - 3))
+    printf '%s…%s\n' "${path:0:left}" "${path:${#path}-right}"
+}
+
+output_width() {
+    local width
+    width=${COLUMNS:-}
+    case "$width" in
+        ""|*[!0-9]*) width=100 ;;
+    esac
+    [ "$width" -ge 72 ] || width=72
+    [ "$width" -le 140 ] || width=140
+    printf '%s\n' "$width"
+}
+
+compact_group() {
+    case "$1" in
+        "CLI/package managers") printf '%s\n' "CLI & packages" ;;
+        "Application caches") printf '%s\n' "App caches" ;;
+        "Application profile caches") printf '%s\n' "App profiles" ;;
+        "Downloaded runtimes") printf '%s\n' "Runtimes" ;;
+        "Project dependencies") printf '%s\n' "Project dependencies" ;;
+        "Project build output") printf '%s\n' "Build output" ;;
+        *) printf '%s\n' "$1" ;;
+    esac
 }
 
 path_kb() {
@@ -378,7 +488,7 @@ scan_projects() {
     for root in $roots; do
         case "$root/" in
             "$HOME_DIR"/*) scan_project_root "$root" ;;
-            *) info "Warning: skipping project root outside home: $root" ;;
+            *) warning "Warning: skipping project root outside home: $root" ;;
         esac
     done
     IFS=$old_ifs
@@ -440,70 +550,110 @@ report_container_storage() {
     orb_data="$HOME_DIR/Library/Group Containers/HUAQ24HBR6.dev.orbstack/data"
     if [ -d "$orb_data" ]; then
         size=$(path_kb "$orb_data")
-        info ""
-        info "Report-only container storage:"
-        info "  OrbStack data: $(human_kb "$size")"
+        section "Container storage · report only"
+        label_value "OrbStack data" "$(human_kb "$size")"
         if [ "${CACHE_CLEANUP_TEST_MODE:-0}" != "1" ] &&
             command -v orbctl >/dev/null 2>&1; then
             status=$(orbctl status 2>/dev/null) || :
             [ -n "$status" ] || status="unavailable"
-            info "  OrbStack status: $status"
+            label_value "OrbStack status" "$status"
         elif [ "${CACHE_CLEANUP_TEST_MODE:-0}" = "1" ]; then
-            info "  OrbStack status: skipped in test mode"
+            label_value "OrbStack status" "skipped in test mode"
         fi
-        info "  No containers, images, machines, or volumes will be removed."
+        printf '  %bNo containers, images, machines, or volumes will be removed.%b\n' \
+            "$DIM" "$RESET"
     fi
 
     if [ -S "$HOME_DIR/.orbstack/run/docker.sock" ] && command -v docker >/dev/null 2>&1; then
-        info ""
-        info "Docker usage (report only):"
-        docker system df 2>/dev/null || info "  Docker usage unavailable."
+        printf '\n  %bDocker usage%b\n' "$BOLD" "$RESET"
+        docker system df 2>/dev/null || warning "  Docker usage unavailable."
     fi
 }
 
 print_candidates() {
-    local total_kb current_group group kb action path description process_hint hidden_count
+    local total_kb total_count group_count group_kb group action path description
+    local process_hint rank shown remaining width path_width displayed_path current_group
     total_kb=0
-    current_group=""
+    total_count=0
 
     if [ ! -s "$CANDIDATES" ]; then
-        info "No eligible rebuildable caches were found."
+        success "No eligible rebuildable caches were found."
         return 1
     fi
 
-    info ""
-    info "Cleanup candidates:"
-    if [ "$VERBOSE" = true ]; then
-        sort -t "$(printf '\t')" -k1,1 -k2,2nr "$CANDIDATES" > "$WORK_DIR/display.tsv"
-    else
-        awk -F '\t' '$2 >= 1024' "$CANDIDATES" |
-            sort -t "$(printf '\t')" -k1,1 -k2,2nr > "$WORK_DIR/display.tsv"
-    fi
-
-    while IFS="$(printf '\t')" read -r group kb action path description process_hint; do
-        [ -n "$group" ] || continue
-        if [ "$group" != "$current_group" ]; then
-            printf '\n%s:\n' "$group"
-            current_group=$group
-        fi
-        printf '  %9s  %s\n' "$(human_kb "$kb")" "$path"
-        if [ "$VERBOSE" = true ]; then
-            printf '             %s\n' "$description"
-        fi
-    done < "$WORK_DIR/display.tsv"
-
-    if [ "$VERBOSE" != true ]; then
-        hidden_count=$(awk -F '\t' '$2 < 1024 { count++ } END { print count + 0 }' "$CANDIDATES")
-        if [ "$hidden_count" -gt 0 ]; then
-            info ""
-            info "  Plus $hidden_count cache entries smaller than 1 MiB; use --verbose to list them."
-        fi
-    fi
-
     total_kb=$(awk -F '\t' '{ sum += $2 } END { print sum + 0 }' "$CANDIDATES")
-    info ""
-    info "Estimated candidate size: $(human_kb "$total_kb")"
-    info "Actual reclaimed space may differ because of hard links, compression, and command-level pruning."
+    total_count=$(awk 'END { print NR + 0 }' "$CANDIDATES")
+
+    section "Cleanup plan"
+    printf '  %b%-30s %8s %11s%b\n' "$DIM" "CATEGORY" "ENTRIES" "SIZE" "$RESET"
+    printf '  %b%-30s %8s %11s%b\n' "$DIM" "──────────────────────────────" \
+        "────────" "───────────" "$RESET"
+
+    awk -F '\t' '{
+        count[$1]++
+        size[$1] += $2
+    }
+    END {
+        for (group in count) {
+            printf "%s\t%d\t%d\n", group, count[group], size[group]
+        }
+    }' "$CANDIDATES" |
+        sort -t "$(printf '\t')" -k3,3nr > "$WORK_DIR/groups.tsv"
+
+    while IFS="$(printf '\t')" read -r group group_count group_kb; do
+        printf '  %b%-30s%b %8d %11s\n' "$BLUE" "$group" "$RESET" \
+            "$group_count" "$(human_kb "$group_kb")"
+    done < "$WORK_DIR/groups.tsv"
+
+    printf '  %b%-30s %8s %11s%b\n' "$BOLD" "TOTAL" "$total_count" \
+        "$(human_kb "$total_kb")" "$RESET"
+
+    if [ "$VERBOSE" = true ]; then
+        section "All candidates"
+        sort -t "$(printf '\t')" -k1,1 -k2,2nr "$CANDIDATES" > "$WORK_DIR/display.tsv"
+
+        current_group=""
+        while IFS="$(printf '\t')" read -r group kb action path description process_hint; do
+            [ -n "$group" ] || continue
+            if [ "$group" != "$current_group" ]; then
+                printf '\n  %b%s%b\n' "$BOLD$MAGENTA" "$group" "$RESET"
+                current_group=$group
+            fi
+            printf '    %b%9s%b  %s\n' "$GREEN" "$(human_kb "$kb")" "$RESET" \
+                "$(display_path "$path" 82)"
+            printf '               %b%s%b\n' "$DIM" "$description" "$RESET"
+        done < "$WORK_DIR/display.tsv"
+    else
+        section "Largest candidates"
+        sort -t "$(printf '\t')" -k2,2nr "$CANDIDATES" |
+            head -n 10 > "$WORK_DIR/display.tsv"
+
+        width=$(output_width)
+        path_width=$((width - 44))
+        [ "$path_width" -ge 28 ] || path_width=28
+        rank=0
+        shown=0
+        while IFS="$(printf '\t')" read -r group kb action path description process_hint; do
+            [ -n "$group" ] || continue
+            rank=$((rank + 1))
+            shown=$((shown + 1))
+            displayed_path=$(display_path "$path" "$path_width")
+            printf '  %b%2d%b  %b%9s%b  %-22s  %s\n' \
+                "$DIM" "$rank" "$RESET" "$GREEN" "$(human_kb "$kb")" "$RESET" \
+                "$(compact_group "$group")" "$displayed_path"
+        done < "$WORK_DIR/display.tsv"
+
+        remaining=$((total_count - shown))
+        if [ "$remaining" -gt 0 ]; then
+            printf '\n  %b+ %d more candidates. Use --verbose to list every path.%b\n' \
+                "$DIM" "$remaining" "$RESET"
+        fi
+    fi
+
+    printf '\n  %bEstimated reclaimable space:%b %b%s%b\n' \
+        "$BOLD" "$RESET" "$BOLD$GREEN" "$(human_kb "$total_kb")" "$RESET"
+    printf '  %bActual results can differ due to hard links, compression, and native pruning.%b\n' \
+        "$DIM" "$RESET"
     return 0
 }
 
@@ -679,12 +829,12 @@ safe_delete() {
 
     [ -e "$path" ] || return 0
     if ! is_safe_delete_path "$path"; then
-        info "  Refused unsafe path: $path"
+        error "  Refused unsafe path: $path"
         FAILURES=$((FAILURES + 1))
         return 1
     fi
     if path_is_open "$path"; then
-        info "  Skipped in-use path: $path"
+        warning "  Skipped in-use path: $path"
         SKIPPED=$((SKIPPED + 1))
         return 0
     fi
@@ -695,7 +845,7 @@ safe_delete() {
         return 0
     fi
 
-    info "  Failed to remove: $path"
+    error "  Failed to remove: $path"
     FAILURES=$((FAILURES + 1))
     return 1
 }
@@ -707,7 +857,7 @@ apply_candidates() {
         [ -e "$path" ] || continue
 
         if [ -n "$process_hint" ] && process_is_running "$process_hint"; then
-            info "  Skipped while active: $path"
+            warning "  Skipped while active: $path"
             SKIPPED=$((SKIPPED + 1))
             continue
         fi
@@ -716,10 +866,10 @@ apply_candidates() {
             safe_delete "$path" || true
         else
             if action_is_running "$action"; then
-                info "  Skipped $action: a related command is running."
+                warning "  Skipped $action: a related command is running."
                 SKIPPED=$((SKIPPED + 1))
             elif ! run_native_action "$action" "$path"; then
-                info "  Native cleaner failed; removing its cache path directly: $action"
+                warning "  Native cleaner failed; removing its cache path directly: $action"
                 safe_delete "$path" || true
             else
                 REMOVED=$((REMOVED + 1))
@@ -728,7 +878,8 @@ apply_candidates() {
     done < "$CANDIDATES"
 }
 
-info "Scanning installed application and CLI caches..."
+printf '%bDisk Cleanup%b\n' "$BOLD$CYAN" "$RESET"
+printf '%bScanning rebuildable application, CLI, and project caches…%b\n' "$DIM" "$RESET"
 BEFORE_FREE=$(free_kb)
 
 scan_cli_caches
@@ -745,25 +896,24 @@ if ! print_candidates; then
 fi
 
 if [ "$DRY_RUN" = true ]; then
-    info ""
-    info "Dry run complete; nothing was removed."
+    printf '\n'
+    success "✓ Dry run complete — nothing was removed."
     exit 0
 fi
 
 if [ "$ASSUME_YES" != true ]; then
-    printf '\nRemove the listed rebuildable caches? [y/N] '
+    printf '\n%bRemove the listed rebuildable caches?%b [y/N] ' "$BOLD$YELLOW" "$RESET"
     IFS= read -r reply
     case "$reply" in
         y|Y|yes|YES|Yes) ;;
         *)
-            info "Cleanup cancelled; nothing was removed."
+            warning "Cleanup cancelled; nothing was removed."
             exit 0
             ;;
     esac
 fi
 
-info ""
-info "Cleaning..."
+section "Cleaning"
 if command -v lsof >/dev/null 2>&1; then
     lsof -Fn 2>/dev/null | sed -n 's/^n//p' > "$OPEN_FILES" || :
 fi
@@ -773,13 +923,15 @@ AFTER_FREE=$(free_kb)
 RECLAIMED=$((AFTER_FREE - BEFORE_FREE))
 [ "$RECLAIMED" -ge 0 ] || RECLAIMED=0
 
-info ""
-info "Cleanup summary:"
-info "  Reclaimed filesystem space: $(human_kb "$RECLAIMED")"
-info "  Completed cleanup entries: $REMOVED"
-info "  Skipped active/in-use entries: $SKIPPED"
-info "  Failures: $FAILURES"
+section "Cleanup result"
+label_value "Reclaimed space" "$(human_kb "$RECLAIMED")"
+label_value "Completed entries" "$REMOVED"
+label_value "Skipped active/in-use" "$SKIPPED"
+label_value "Failures" "$FAILURES"
 
 if [ "$FAILURES" -gt 0 ]; then
+    error "Cleanup finished with errors."
     exit 1
 fi
+
+success "✓ Cleanup complete."
