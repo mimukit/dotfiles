@@ -84,6 +84,15 @@ trust_level = "trusted"
 [projects."/Users/mukit/.local/share/chezmoi"]
 trust_level = "trusted"
 
+[projects."/Users/mukit/Desktop/ai-skill-test"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Github/mimukit/skills"]
+trust_level = "trusted"
+
+[projects."/Users/mukit/Github/mimukit/saasaloy"]
+trust_level = "trusted"
+
 [tui]
 status_line = ["model-with-reasoning", "project-name", "git-branch", "run-state", "context-used", "five-hour-limit", "weekly-limit", "used-tokens", "fast-mode", "task-progress"]
 status_line_use_colors = true
