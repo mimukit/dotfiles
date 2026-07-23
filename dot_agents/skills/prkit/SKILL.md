@@ -3,7 +3,7 @@ name: prkit
 description: >-
   Draft and open a GitHub pull request from your branch — title, summary, and test plan written from the actual commits and diff, then created with the gh CLI, embedding verifykit proof artifacts inline when a bundle is present. Use when the user asks to open a PR, says "create a pull request", "raise a PR", "submit this for review", or "gh pr create" — even if they don't spell out the title or body.
 license: MIT
-allowed-tools: Bash, Read
+allowed-tools: Bash, Read, Write
 metadata:
   internal: false
 ---
@@ -28,6 +28,7 @@ git branch --show-current
 ```
 
 - If `gh` is missing or unauthenticated, say so and point to `https://cli.github.com` / `gh auth login` — don't try to work around it.
+- If `git branch --show-current` is empty, stop: detached HEAD needs a branch before a PR can be opened. Offer to create or switch to one.
 - If the current branch is the default branch (`main`/`master`), stop: a PR needs a feature branch. Offer to create one (`git switch -c <name>`) before continuing.
 
 ### 2. Gather context
@@ -41,7 +42,7 @@ git diff origin/<base>...HEAD --stat                     # files touched
 git diff origin/<base>...HEAD                            # the actual changes
 ```
 
-Read the base branch from `gh`'s structured JSON rather than parsing the display text of `git remote show origin` — the JSON field is a stable contract, the human-readable output isn't. If `gh` can't answer, fall back to `git symbolic-ref --short refs/remotes/origin/HEAD`. Diff against `origin/<base>` (the just-fetched remote tip), not a local `<base>` that may be behind — otherwise the title, body, and file list are computed against commits that are no longer the merge target.
+Read the base branch from `gh`'s structured JSON rather than parsing the display text of `git remote show origin` — the JSON field is a stable contract, the human-readable output isn't. Re-check the current branch against this authoritative base and stop if they match, including repos whose default is `develop` or `trunk`. If `gh` can't answer, fall back to `git symbolic-ref --short refs/remotes/origin/HEAD`; if `origin/HEAD` is unset, repair it with `git remote set-head origin --auto` and retry. Diff against `origin/<base>` (the just-fetched remote tip), not a local `<base>` that may be behind — otherwise the title, body, and file list are computed against commits that are no longer the merge target.
 
 Use the commits, branch name (e.g. `fix/login-123`), and diff to determine the scope, the type of change, and any issue reference (`#123`, `fixes #123`). If a linked issue clearly matters and you can't find it, ask — don't invent one.
 
@@ -72,7 +73,7 @@ If the branch was rebased ([Sync with the base branch](#3-sync-with-the-base-bra
 - **Body**: if `.github/pull_request_template.md` (or `PULL_REQUEST_TEMPLATE.md`) exists, read it and fill it in *exactly* — match its sections and checkboxes. Otherwise use: a one-paragraph **Summary** of what changed and why, a **Changes** bullet list, and a **Test plan** (how it was verified, or checkboxes for what to run). Reference the issue in the body (`Closes #123`) when there is one.
 
 ### 6. Embed proof artifacts (if present)
-Optional — only when a verifykit proof bundle exists. verifykit leaves a bundle at `docs/verify/<slug>/` (slug = the linked issue number, else the feature-slug) with a ready-to-embed `proof.md`. If one matching this branch or issue is present, splice its contents into the body under a **Proof** section — the images are already published to a hidden `refs/verify-assets/*` ref with SHA-pinned raw URLs that render inline, so there's no upload work here; just embed the fragment as-is. If no bundle exists, skip this entirely and open the PR exactly as before. If a bundle exists but its `proof.md` points at local paths (verifykit couldn't publish — e.g. a private repo), don't embed dead links: add a short note listing the local artifact paths for manual attachment instead.
+Optional — only when a verifykit proof bundle exists. verifykit leaves a dated bundle at `docs/verify/verify-<slug>-YYYY-MM-DD/` (slug = the linked issue number, else the feature slug) with a ready-to-embed `proof.md`. If more than one matches, use the newest creation date; if multiple bundles share that date, ask which run to use. Splice the selected proof into the body under a **Proof** section — the images are already published to a hidden `refs/verify-assets/*` ref with SHA-pinned raw URLs that render inline, so there's no upload work here; just embed the fragment as-is. If no bundle exists, skip this entirely and open the PR exactly as before. If a bundle exists but its `proof.md` points at local paths (verifykit couldn't publish — e.g. a private repo), don't embed dead links: add a short note listing the local artifact paths for manual attachment instead.
 
 ### 7. Create or update the PR
 First check for an existing PR on this branch so you update instead of duplicating:
@@ -81,8 +82,8 @@ First check for an existing PR on this branch so you update instead of duplicati
 gh pr view --json url,state 2>/dev/null
 ```
 
-- **If one exists**: update it — `gh pr edit --title "…" --body-file <file>` — rather than opening a second.
-- **If not**: write the body to a temp file and create from it. Passing multi-line markdown with checkboxes through `--body` is flaky; `--body-file` is reliable.
+- **If the command returns a PR with `state` equal to `OPEN`**: update it — `gh pr edit --title "…" --body-file <file>` — rather than opening a second.
+- **If no PR exists, or the returned PR is merged/closed**: write the body to a temp file and create a new one. Passing multi-line markdown with checkboxes through `--body` is flaky; `--body-file` is reliable.
 
 ```sh
 gh pr create --base <base> --title "…" --body-file <bodyfile>
@@ -91,7 +92,19 @@ gh pr create --base <base> --title "…" --body-file <bodyfile>
 
 Use a path in the system temp dir for the body file and remove it afterward.
 
-### 8. After creating
+### 8. Advance the linked issue
+Opening the PR is the moment the linked issue moves from being worked to awaiting review, so flip its lifecycle label `in-progress` → `in-review` (the same transition issuekit's `sync` mode performs when a PR opens). Only when the PR references an issue — the `#123` / `Closes #123` found in [Gather context](#2-gather-context); skip this step entirely if there is none.
+
+- **Prefer issuekit when it's installed** — invoke it to reconcile the label so the tracker logic lives in one place. Otherwise fall back to the equivalent `gh` call yourself:
+
+```sh
+gh issue edit <n> --remove-label in-progress --add-label in-review
+```
+
+- **Preview the mutation and get an OK before it runs** — relabeling an issue is an outward-facing change, so name the issue and the flip and wait for confirmation; never relabel silently.
+- If the issue doesn't currently carry `in-progress` (e.g. it was `ready` or already `in-review`), just add `in-review` and say what you found rather than forcing the removal. If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap.
+
+### 9. After creating
 Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run, the common follow-ups: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or marking ready with `gh pr ready` if it was a draft.
 
 ## Notes
@@ -100,4 +113,5 @@ Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run,
 - Uncommitted changes are not in a PR. If `git status` shows staged or unstaged work the user seems to want included, point it out and offer to commit first — don't silently leave it behind or commit it without asking.
 - If the branch is not ahead of the base (no commits), stop and say there's nothing to open a PR for.
 - **Proof embedding is optional and self-contained** — prkit only *reads* verifykit's `proof.md` and embeds it; it never runs the publish itself (that's verifykit's job, with its own bundled script). No verifykit bundle → no Proof section, and prkit works exactly as it always has.
+- **Advancing the linked issue is optional and previewed** — the `in-progress → in-review` flip only happens when the PR references an issue, prefers issuekit when installed but falls back to a plain `gh issue edit`, and never runs without an OK. No linked issue → prkit opens the PR exactly as before.
 - No shell or `gh` available (e.g. a browser-based agent)? Then you can't push or call `gh`. Instead read the diff the user provides and print the finished PR **title** and **body** as codeblocks for them to paste into the GitHub "New pull request" form.

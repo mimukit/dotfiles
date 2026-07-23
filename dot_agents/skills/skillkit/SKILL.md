@@ -3,14 +3,14 @@ name: skillkit
 description: >-
   Create a new AI agent skill from scratch — kit-convention naming, drafting, live testing, and publishing included. Use when the user wants to author, scaffold, or draft a new skill, runs "/skillkit", or says something like "help me make a skill for X". Interviews for intent, proposes on-brand kit names, drafts a conventions-compliant SKILL.md.
 license: MIT
-allowed-tools: Read, Edit, Write, Bash
+allowed-tools: Read, Edit, Write, Bash, AskUserQuestion, WebSearch, WebFetch
 metadata:
   internal: false
 ---
 
 # skillkit
 
-Authoring skill for a personal skill collection. It turns a rough idea ("I want a skill that does X") into a lean, conventions-compliant `skills/<name>/SKILL.md`, then hands the user a live-test loop to try it for real. Every skill is authored from scratch — never forked — and follows the conventions inlined below; skillkit exists so you don't re-derive those rules each time.
+Authoring skill for a personal skill collection. It turns a rough idea ("I want a skill that does X") into a lean, conventions-compliant `SKILL.md` in the host collection's skill layout, then hands the user a live-test loop to try it for real. Every skill is authored from scratch — never forked — and follows the conventions inlined below; skillkit exists so you don't re-derive those rules each time.
 
 ## Invocation
 
@@ -30,10 +30,10 @@ Ask whether this is an **internal** repo-only skill or a **public** publishable 
 Ask: is this **original**, or **your version of an upstream skill**? Either way it's authored from scratch here; the answer just informs how much you lean on the upstream for structure ideas ([Gather intent](#1-gather-intent)).
 
 ### 4. Propose names
-Suggest **3–5 `kit` names** and recommend one. Rules: one lowercase word, the **functional term leads** so it stays searchable (people search `commit`, not `kit`), `kit` appended, shorten an awkward root rather than force a clumsy join (`humanize` → `humankit`, not `humanizekit`), and avoid collisions with well-known tools (`speckit`, `shipkit`, anything already popular). Let the user pick. The chosen name **must** equal the directory name.
+Follow the host collection's naming convention when it has one. Otherwise suggest **3–5 `kit` names** and recommend one: one lowercase word, the **functional term leads** so it stays searchable (people search `commit`, not `kit`), `kit` appended, and shorten an awkward root rather than force a clumsy join (`humanize` → `humankit`, not `humanizekit`). Avoid collisions with well-known tools (`speckit`, `shipkit`, anything already popular): when network access exists, search the candidate on the web and in the skills.sh directory; when offline, state that the popularity check was skipped. Let the user pick. The chosen name **must** equal the directory name.
 
 ### 5. Draft
-Create `skills/<name>/SKILL.md` from the [Frontmatter template](#frontmatter-template) below, applying the **Quality bar**, and stamp `metadata.internal` from [Visibility](#2-visibility-internal-or-public). Keep it lean — prefer one file.
+Create the skill in the host collection's documented layout from the [Frontmatter template](#frontmatter-template) below, applying the **Quality bar**, and stamp `metadata.internal` from [Visibility](#2-visibility-internal-or-public). In a collection repo this is commonly `skills/<name>/SKILL.md`; standalone, use the agent's discovered skills directory such as `.claude/skills/<name>/SKILL.md`. Keep it lean — prefer one file.
 - If **public**, apply the **Portability** checklist below as a hard gate — the skill must stand alone once installed.
 
 ### 6. Review loop
@@ -42,7 +42,7 @@ Show the draft. Take edits and iterate until the user explicitly approves. Don't
 ### 7. Live test
 Don't install the skill yourself — hand the user the commands to drive the live trial. If the collection provides dev-link tooling (check its README or Makefile for a link/unlink target), tell them to inject the skill with that; otherwise have them symlink or copy `skills/<name>` into their agent's skills directory (e.g. `~/.claude/skills/<name>`). Then test in a **fresh session** — the skill list loads at startup, so a running session won't see the new skill. No scratch test-plan file; testing here is done live and directly. Suggest they exercise it against reality:
 - fire it with a few varied, realistic phrasings that *should* trigger it, plus a near-miss or two that should *not* (guards against overtriggering);
-- confirm the real run behaves — asks intent before drafting, applies the visibility rules, proposes 3–5 kit names, and stops at the commit hand-off.
+- confirm the real run follows the drafted procedure end to end and produces the artifact or outcome the skill promises.
 
 When done testing, they remove the dev link the same way it was added (the collection's unlink command, or deleting the symlink/copy).
 
@@ -70,6 +70,9 @@ metadata:
 ### Prose formatting
 **No hard wrapping.** Write each paragraph and list item as one continuous line; let the editor and renderer soft-wrap. Fixed-width line breaks mid-sentence buy nothing — the agent reads the text regardless of newlines, and every Markdown renderer soft-wraps anyway. Keep line structure only where it is meaningful: code fences, tables, and YAML frontmatter (a folded `description: >-` scalar is fine).
 
+### Documentation artifact naming
+When a skill creates a durable Markdown artifact under `docs/`, follow the host collection's convention when it has one. Otherwise use `<type>-<slug>-YYYY-MM-DD.md`: a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end (for example, `docs/plans/plan-sso-login-2026-07-23.md`). Keep that creation date stable when the file is edited. Update the same artifact in place; for a genuine same-day collision, make the slug more specific and only then insert a sequence immediately before the date (`research-auth-providers-02-2026-07-23.md`). ADRs retain their sequence as `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`. Multi-file artifacts put the convention on their bundle directory, such as `docs/verify/verify-<slug>-YYYY-MM-DD/`, while structural child names remain fixed. Inline the applicable rule in every public skill that creates such an artifact so the installed skill remains self-contained.
+
 ### Cross-referencing steps
 **Never reference a step by its number** (a bare "see step N" citation). A bare number binds to a step's *position*, so inserting or reordering steps silently makes it point at the wrong one. Reference the step's *identity* instead: for a step with a heading, link to it by name with a GitHub anchor (`[Gather intent](#1-gather-intent)` — GitHub builds the anchor from the full heading text: lowercase, punctuation dropped, spaces → hyphens); for a list item with no heading, name the action in prose rather than citing its ordinal.
 
@@ -85,6 +88,7 @@ Apply these while drafting; they are the difference between a skill that trigger
 - **One meaning, one place** — no duplication. For internal skills, point to the host repo's conventions doc instead of restating it; for public skills, inline what they need (see Portability).
 - **Prune no-ops** — test every line for relevance; delete weak sentences rather than trimming them. Explain the *why* behind a rule when it isn't obvious.
 - **No hard-wrapping** — per [Prose formatting](#prose-formatting).
+- **Durable docs artifacts** — when the skill writes Markdown under `docs/`, apply [Documentation artifact naming](#documentation-artifact-naming) and inline the applicable convention in a public skill.
 - **kit naming + frontmatter** — obey the naming rules in [Propose names](#4-propose-names) and the [Frontmatter template](#frontmatter-template) exactly; `name` must match the directory; declare `metadata.internal`.
 
 ## Portability (public skills only)

@@ -1,9 +1,9 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle with three modes — create issues from a plan-*.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, reconciled, or reviewed with the gh CLI.
+  Own the GitHub issue lifecycle with three modes — create issues from a plan-<slug>-YYYY-MM-DD.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, reconciled, or reviewed with the gh CLI.
 license: MIT
-allowed-tools: Bash, Read, Edit
+allowed-tools: Bash, Read, Edit, Write
 metadata:
   internal: false
 ---
@@ -45,7 +45,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 
 ## Title convention (every issue this skill creates)
 
-Issue titles follow the same shape as [commitkit](https://www.conventionalcommits.org)'s commit subjects, so the tracker and the git log read as one workflow. **Format:**
+Issue titles follow the same shape as commitkit's commit subjects and the [Conventional Commits specification](https://www.conventionalcommits.org), so the tracker and the git log read as one workflow. **Format:**
 
 ```
 type(scope): short imperative summary
@@ -81,7 +81,7 @@ If the repo has its own issue-title style (visible in `gh issue list` or an `.gi
 
 issuekit tracks where an issue sits in the workflow with a small, **flat** set of status labels. It **uses** these labels — it never creates them. Provisioning labels is the job of a companion skill, **repokit**. When a label this skill needs is absent from the repo, **stop and tell the user how to add it** (run `repokit`, or the exact `gh label create` line) rather than creating it yourself or skipping silently.
 
-The canonical map — exactly one **status** label is active at a time, moving left to right through the workflow; the three side-exits apply whenever they fit. This table is the **shared contract with [repokit](https://www.skills.sh)**, the skill that provisions these labels — repokit mirrors this exact set (names, colors, meanings); if you change one table, change the other so they never drift:
+The canonical map — exactly one **status** label is active at a time, moving left to right through the workflow; the three side-exits apply whenever they fit. This table is the **shared contract with repokit**, the skill that provisions these labels. Maintainers must keep the two tables aligned on names, colors, and meanings:
 
 | label | color | means | typically set by |
 |-------|-------|-------|------------------|
@@ -114,7 +114,7 @@ Apply a label only once it exists (`gh issue edit <n> --add-label <label>`) and 
 Turn work into issues. Two inputs — a plan file (the main path) or a plain description (start fresh).
 
 ### 1. Find the input
-- **Plan path:** a `plan-*.md`. Resolve it by precedence: an explicit path in the prompt → the newest `docs/plans/plan-*.md` → ask which plan.
+- **Plan path:** a `plan-<slug>-YYYY-MM-DD.md`. Resolve it by precedence: an explicit path in the prompt → the newest canonical plan under `docs/plans/` (creation date is the filename suffix) → ask which plan.
 - **Ad-hoc path:** a plain description with no plan. This is the "start fresh, just file it" case → one well-formed issue.
 
 ### 2. Decompose a plan into a proposed breakdown
@@ -137,7 +137,7 @@ Four principles govern the breakdown — apply them **before** you present anyth
 
 This turns one un-sliceable change into a fan of mostly-parallel issues with honest `Blocked by #N` edges, and reuses the existing `ready`/`blocked` machinery — no new labels. If the batches can't each stay green on their own, add one final integrate-and-verify issue blocked by them all.
 
-**Milestones are opt-in.** Do **not** create GitHub milestones by default — map a plan's phases onto issues and checklists instead. Only when the user **explicitly asks** for milestones (or points at a repo that already uses them) should you create one (`gh api repos/{owner}/{repo}/milestones`, then `gh issue create --milestone <title>`) and attach issues to it. Absent that ask, never introduce a milestone the user would then have to maintain.
+**Milestones are opt-in.** Do **not** create GitHub milestones by default — map a plan's phases onto issues and checklists instead. Only when the user **explicitly asks** for milestones (or points at a repo that already uses them) should you create one (`gh api --method POST repos/{owner}/{repo}/milestones -f title="<title>"`, then `gh issue create --milestone <title>`) and attach issues to it. Absent that ask, never introduce a milestone the user would then have to maintain.
 
 Present the proposal as a **preview table** and stop for approval — do **not** create anything yet:
 
@@ -157,6 +157,8 @@ For an **ad-hoc** description, skip the table: draft one issue (title + body) an
 ```sh
 gh issue list --state all --limit 200 --json number,title,state
 ```
+
+On trackers with more than 200 issues, raise the limit or use `gh search issues --repo {owner}/{repo} --match title "<candidate title>"` so older duplicates are not silently missed.
 
 Then write each issue with a title in the [`type(scope): summary` convention](#title-convention-every-issue-this-skill-creates) and a body that carries the relevant slice of the plan — context, acceptance criteria, and any decisions. Create parents before children so child bodies can reference them.
 
@@ -203,7 +205,7 @@ gh issue edit 44 --add-label blocked   # body carries: Blocked by #43
 Preview the label set alongside the issues and get an OK before applying — a mutation like any other.
 
 ### 6. Write the issue numbers back into the plan
-Once issues exist, annotate the source `plan-*.md` so it stays the source of truth — add the ref next to each task it maps to:
+Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth — add the ref next to each task it maps to without changing its creation-date suffix:
 
 ```markdown
 ### Phase 2 — auth (#41)

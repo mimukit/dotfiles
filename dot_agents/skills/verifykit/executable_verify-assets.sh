@@ -26,7 +26,7 @@ ns="refs/verify-assets"
 # owner/repo from the origin remote, whether SSH or HTTPS
 repo_slug() {
   git remote get-url origin \
-    | sed -E 's#^git@[^:]+:##; s#^https?://[^/]+/##; s#\.git$##'
+    | sed -E 's#^git@[^:]+:##; s#^ssh://[^/]+/##; s#^https?://[^/]+/##; s#\.git$##'
 }
 
 cmd_check() {
@@ -38,7 +38,10 @@ cmd_publish() {
   local slug="$1"; shift
   local ref="$ns/$slug"
   local idx; idx="$(mktemp -u)"        # -u: a name only; git creates a fresh index
+  trap "rm -f '$idx'" EXIT
   export GIT_INDEX_FILE="$idx"
+
+  git fetch -q origin "$ref:$ref" 2>/dev/null || true
 
   local f base blob
   for f in "$@"; do

@@ -50,7 +50,7 @@ Scan for these. They matter in **clusters**, not in isolation — one em dash or
 
 ## The em-dash rule
 
-The finished rewrite contains **no em dashes (—) and no en dashes (–)**. This is the single most reliable AI tell, so treat it as a hard constraint, not a preference. Replace each one, in rough order of preference: a period, a comma, a colon, parentheses, or a restructured sentence. Catch spaced em dashes (` — `) and double hyphens (` -- `) used the same way. Before delivering, search the draft for `—` and `–`; any hit means it isn't done.
+The finished rewrite contains **no em dashes (—)** and uses **no en dashes (–) as sentence punctuation**. Replace those marks, in rough order of preference, with a period, comma, colon, parentheses, or a restructured sentence. Preserve legitimate numeric/date/page ranges by using a hyphen or writing "to" (`1914-1918`, `pp. 10 to 12`). Catch spaced em dashes (` — `) and double hyphens (` -- `) used the same way. Before delivering, search the draft for `—` and `–`; any remaining en dash must be a legitimate range, and any em dash means the rewrite is not done.
 
 ## What not to flag
 

@@ -40,7 +40,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo
 
 orcakit **never creates a worktree for an issue that isn't labeled `ready`.** This one guard is the whole point: because an issue only moves `blocked → ready` when its prerequisite lands (via issuekit `sync`), refusing to start anything not-`ready` enforces the dependency graph for free — Orca can never get ahead of the tracker. Everything else is mechanical.
 
-The lifecycle labels orcakit reads and writes — `ready`, `in-progress` — are provisioned by repokit, not created here. If either is absent from the repo, stop and point the user at repokit (or the `gh label create` line) rather than creating it.
+The lifecycle labels orcakit reads and writes — `ready`, `in-progress`, `in-review`, and `blocked` — are provisioned by repokit, not created here. If a required label is absent, stop and point the user at repokit or give the exact fallback command, for example `gh label create ready --color 0E8A16 --description "specified and independent — safe to take into its own worktree now"` and `gh label create in-progress --color 1D76DB --description "actively being worked in a worktree"`.
 
 ## Action: `start <n>`
 
@@ -75,7 +75,11 @@ The land-event glue. Its steps are destructive and outward-facing, so it **previ
 
    ```sh
    gh issue close <n> --comment "Closed by #<pr> (merged)."
-   gh issue edit <n> --remove-label in-review   # closed state is the signal; strip any stale status label
+   gh issue edit <n> --remove-label in-review --remove-label in-progress
+   # if a task-list parent contains "- [ ] #<n>", read its body, replace that
+   # marker with "- [x] #<n>", and write the updated body back:
+   gh issue view <parent> --json body -q .body
+   gh issue edit <parent> --body-file <updated-body>
    # for each dependent whose body says "Blocked by #<n>":
    gh issue edit <dep> --remove-label blocked --add-label ready
    ```

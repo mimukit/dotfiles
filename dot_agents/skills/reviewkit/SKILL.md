@@ -27,14 +27,14 @@ It is distinct from a generic correctness linter: reviewkit leads with **convent
 Ground the review in an actual diff — reviewing from memory is worthless. Detect the target from git state, then state your pick and let the user override:
 
 - **Uncommitted changes present** (`git status --porcelain` is non-empty) → review the working tree: `git diff HEAD` (include staged with `git diff --staged`). This is the default after a fresh coding session.
-- **Clean tree, branch ahead of its base** → review the branch diff. Find the base (usually `main` or `master`; confirm with `git remote show origin` or fall back to whichever exists), then `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
+- **Clean tree, branch ahead of its base** → review the branch diff. Find the base from `git symbolic-ref --short refs/remotes/origin/HEAD` first; if that local ref is unavailable and network access exists, confirm with `git remote show origin`, then fall back to whichever of `main` or `master` exists. Run `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
 - **If the invocation names a target** ("review the branch", "review my staged changes") → honor it directly, skip detection.
 
 Say which target you chose and why in one line, then proceed. If neither applies (clean tree, no branch ahead), ask what to review rather than guessing.
 
 **Validate before reviewing.** Confirm the target resolves (`git rev-parse <ref>` for a named base) and the diff is actually non-empty. If the ref doesn't resolve or the diff is empty, stop and say so — reviewing a bad or empty range produces fabricated findings, not a review.
 
-Read the diff in full before judging anything. Note the change's *stated intent* — from the commit messages, the branch name, the plan or issue it references, or the user's own words — because half the review is asking "did it do what was asked, all of it, and *only* that?" Capture that intent concretely: it's the spec both the completeness pass (§5) and the scope-creep check (§3) measure against.
+Read the diff in full before judging anything. Note the change's *stated intent* — from the commit messages, the branch name, the plan or issue it references, or the user's own words — because half the review is asking "did it do what was asked, all of it, and *only* that?" Capture that intent concretely: it's the spec both [Requirement-completeness](#4-pass-3--requirement-completeness) and the scope-creep check in [Agent-slop signatures](#3-pass-2--agent-slop-signatures) measure against.
 
 **Ground rules for every pass** — apply these throughout, they are what separate a real review from noise:
 
@@ -68,7 +68,7 @@ Named smells that show up here: *Speculative Generality* (abstraction for needs 
 
 ### 4. Pass 3 — Requirement-completeness
 
-Agents under-deliver as often as they over-deliver: they stub a branch, skip an edge of the ask, or solve the easy 80% and leave the rest silently unfinished. Measure the change against the intent you captured in §1 — the plan, issue, or user's words — and report the gaps:
+Agents under-deliver as often as they over-deliver: they stub a branch, skip an edge of the ask, or solve the easy 80% and leave the rest silently unfinished. Measure the change against the intent captured in [Pick the review target](#1-pick-the-review-target) — the plan, issue, or user's words — and report the gaps:
 
 - **Missing requirements** — something the ask called for that the diff doesn't do at all.
 - **Partial implementation** — a requirement handled for the happy path only, one case of several, or the interface without the behavior.
@@ -95,17 +95,17 @@ Print the review inline, findings ranked by severity so the reader triages at a 
 - 🟡 **Should-fix** — a genuine problem worth addressing, not release-blocking.
 - 🟢 **Nit** — polish, style, minor slop; take it or leave it.
 
-For each finding give, in this order: the location as `file:line` (clickable), which pass caught it (convention / slop / completeness / correctness), **a quote of the offending hunk and what it violates** (the convention doc line, the stated requirement, the real API, or the failing input — per the evidence ground rule in §1), what's wrong in one sentence, and the concrete fix. Lead with a one-line verdict — ready, ready-with-fixes, or needs-work — then the findings, most severe first. If a pass found nothing, say so; a clean pass is a real result. **Never invent findings to look thorough** — if you can't quote the evidence, it's not a finding. An empty report on a clean diff is the honest outcome.
+For each finding give, in this order: the location as `file:line` (clickable), which pass caught it (convention / slop / completeness / correctness), **a quote of the offending hunk and what it violates** (the convention doc line, the stated requirement, the real API, or the failing input — per the evidence ground rules in [Pick the review target](#1-pick-the-review-target)), what's wrong in one sentence, and the concrete fix. Lead with a one-line verdict — ready, ready-with-fixes, or needs-work — then the findings, most severe first. If a pass found nothing, say so; a clean pass is a real result. **Never invent findings to look thorough** — if you can't quote the evidence, it's not a finding. An empty report on a clean diff is the honest outcome.
 
 Do not edit source or apply fixes. If the user wants the fixes made, hand off: they run an implement-style skill, or fix by hand and re-run reviewkit.
 
 ### 7. Optional — save the report
 
-After showing the review, offer to save it (don't save unprompted). If the user wants a durable copy — e.g. to paste into a PR description — write it to `./docs/reviews/<branch-or-feature-slug>-review.md`, creating `./docs/reviews/` if needed. Keep the saved file identical to what you printed, with a one-line header noting the date and the reviewed range. If there's no filesystem, skip this step and leave the inline report as the deliverable.
+After showing the review, offer to save it (don't save unprompted). If the user wants a durable copy — e.g. to paste into a PR description — write it to `docs/reviews/review-<branch-or-feature-slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case slug and the review's ISO creation date (for example, `review-auth-refactor-2026-07-23.md`). Keep that date stable if the same report is edited. For a genuine same-day collision between distinct reviews, make the slug more specific; only as a last resort insert a sequence immediately before the date (`review-auth-refactor-02-2026-07-23.md`). Create `docs/reviews/` if needed. Keep the saved file identical to what you printed, with a one-line header noting the date and the reviewed range. If there's no filesystem, skip this step and leave the inline report as the deliverable.
 
 ## Notes
 
 - **Read-only by contract.** reviewkit runs git and read/search commands to understand the change, and at most the repo's own test command to check correctness. It never edits source, never commits, never pushes. Its only write is the optional report file in [Optional — save the report](#7-optional--save-the-report), and only when the user asks for it.
 - **Scale to the diff.** A one-line fix gets a quick pass-through and a one-line verdict; a large feature branch gets the full treatment. Don't pad a small change with ceremony.
-- **Not a substitute for tests or CI.** It's a judgment pass on top of them, tuned for how agent-written code fails. Report what the automated gates already cover as covered; spend the review on what they miss — this is the same reason the passes skip tooling-enforced rules (§1).
+- **Not a substitute for tests or CI.** It's a judgment pass on top of them, tuned for how agent-written code fails. Report what the automated gates already cover as covered; spend the review on what they miss — this is the same reason the [review-target ground rules](#1-pick-the-review-target) skip tooling-enforced rules.
 - **No shell or git?** Ask the user to paste the diff *and* the original ask, then run the four passes on what they provide and print the report as a codeblock for them to save themselves.

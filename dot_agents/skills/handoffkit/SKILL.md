@@ -11,7 +11,7 @@ metadata:
 
 # handoffkit
 
-Turn everything learned in this conversation into a single **handoff document** a fresh agent — with none of this context — can read and continue from. The point is transfer, not archival: capture the *state and reasoning* that only lives in this session, and **point** at the artifacts that already exist (specs, PRs, commits, diffs, issues) rather than copying them. By default it's printed straight to the terminal as a copy-pastable block — nothing touches the workspace unless you ask for a file.
+Turn everything learned in this conversation into a single **handoff document** a fresh agent — with none of this context — can read and continue from. The point is transfer, not archival: capture the *state and reasoning* that only lives in this session, and **point** at the artifacts that already exist (specs, PRs, commits, diffs, issues) rather than copying them. By default, save it as a Markdown file under `docs/handoffs/`; print it as a copy-pastable block only when the user explicitly asks for inline or terminal output, or when no writable filesystem is available.
 
 ## When this fires
 
@@ -63,10 +63,12 @@ Capabilities the next session should reach for — e.g. a commit skill to land t
 2. **Separate carry-over from reference.** For each thing worth mentioning, decide: does it live only in this chat (carry it) or is it already an artifact (link it)?
 3. **Draft the document** in the shape above, slanted toward the focus argument if one was given. Keep it tight — a new agent should be able to read it in a minute and act.
 4. **Redact** any secrets or PII before output.
-5. **Output it** (see below), then give a one-line summary of what the next session should do first.
+5. **Save or print it** according to the output rules below, then give a one-line summary of what the next session should do first.
 
 ## Output
 
-**Default — print to the terminal.** Emit the finished handoff as a single copy-pastable Markdown codeblock. Do not write a file. This is what happens unless the user explicitly asks to save one.
+**Default — save a Markdown file.** Write the finished handoff into `docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `handoff-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case subject slug and the handoff's ISO creation date at the end (for example, `handoff-auth-migration-2026-07-13.md`). Keep that date stable if the same handoff is edited, and update the existing file in place. If a genuinely distinct handoff would collide on the same day, make the slug more specific; only as a last resort insert the next available sequence immediately before the date (`handoff-auth-migration-02-2026-07-13.md`). Tell the user the exact path.
 
-**On explicit request — save a file.** Only when the user asks for a handoff *file* (e.g. "save the handoff", "write it to a doc"), write it into `./docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `handoff-<date>-<slug>.md` — an ISO date prefix (e.g. `handoff-2026-07-13-auth-migration.md`) so handoffs sort chronologically and don't clobber. Then tell the user the exact path.
+**On explicit request — print inline.** When the user explicitly asks for terminal, inline, chat-only, or copy-pastable output, emit the finished handoff as a single Markdown codeblock and do not write a file.
+
+**No writable filesystem — degrade gracefully.** If the environment cannot write files, emit the finished handoff as a single Markdown codeblock and say that no file was created.
