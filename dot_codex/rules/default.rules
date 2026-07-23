@@ -1,2 +1,8 @@
 prefix_rule(pattern=["git", "add"], decision="allow")
 prefix_rule(pattern=["git", "commit"], decision="allow")
+prefix_rule(pattern=["git", "diff", "--staged", "--stat"], decision="allow")
+prefix_rule(pattern=["git", "push"], decision="allow")
+prefix_rule(pattern=["orca", "open"], decision="allow")
+prefix_rule(pattern=["orca", "worktree", "list"], decision="allow")
+prefix_rule(pattern=["git", "fetch"], decision="allow")
+prefix_rule(pattern=["orca", "worktree", "rm", "--worktree", "issue:23", "--force", "--json"], decision="allow")
