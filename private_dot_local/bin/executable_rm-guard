@@ -1,0 +1,382 @@
+#!/usr/bin/env bash
+# rm-guard — tool-neutral delete guard (chezmoi: dot_local/bin/executable_rm-guard).
+#
+# Classifies a shell delete command as allow / ask / deny under the "Balanced"
+# policy, so agent tools (Claude Code, Codex, Antigravity, …) can auto-approve
+# safe deletes, prompt on risky ones, and block catastrophic ones. Written in
+# bash (3.2-safe) with jq for JSON; fails SAFE — anything it can't parse that
+# looks like a delete becomes "ask", never a silent "allow".
+#
+# Adapters
+#   Agent hook (default): pipe the PreToolUse JSON payload on stdin. Extracts
+#     .tool_input.command (+ .cwd) and prints a permission decision as JSON:
+#       {"hookSpecificOutput":{"hookEventName":"PreToolUse",
+#        "permissionDecision":"allow|ask|deny","permissionDecisionReason":"…"}}
+#     Non-delete commands print nothing (exit 0) so they fall through to the
+#     tool's normal permission flow. Wire a tool to it with, e.g.:
+#       S="$HOME/.local/bin/rm-guard"; [ -r "$S" ] && exec bash "$S"
+#   Generic CLI:  rm-guard --command "rm -rf /tmp/x" [--cwd DIR]
+#     Prints "<DECISION>\t<reason>" and exits 0=allow, 1=ask, 2=deny.
+#
+# Policy (Balanced)
+#   ALLOW  temp dirs (/tmp, /var/tmp, /var/folders, $TMPDIR); git-TRACKED files
+#          inside a repo (recoverable); trash; git rm of tracked files; rmdir
+#          inside a repo.
+#   ASK    untracked files in a repo, any rm -rf of a directory, globbed/unknown
+#          targets, ".." traversal, sudo, xargs-fed rm, git clean, and anything
+#          outside a repo and outside temp.
+#   DENY   /, $HOME root, system roots, and globs anchored at those roots.
+
+HOMEN=${HOME%/}
+[ -z "$HOMEN" ] && HOMEN="/__no_home__"
+TMPDIRN=${TMPDIR%/}
+SYSTEM_ROOTS="/ /Users /System /Library /etc /usr /bin /sbin /var /opt /private /Applications /Volumes /cores /dev /net /home /root /boot /proc /sys"
+TEMP_PREFIXES="/tmp/ /private/tmp/ /var/tmp/ /private/var/folders/ /var/folders/"
+
+# --- path helpers ----------------------------------------------------------
+
+lightnorm() {
+  # Collapse // and /./, strip trailing slash. Does NOT resolve ".." (callers
+  # refuse to auto-allow any target containing "..").
+  local p="$1"
+  p=$(printf '%s' "$p" | sed -e 's://*:/:g' -e 's:/\./:/:g' -e 's:/\.$::')
+  case "$p" in
+    /) ;;
+    */) p=${p%/} ;;
+  esac
+  [ -z "$p" ] && p=/
+  printf '%s' "$p"
+}
+
+is_deny() {
+  local p="$1"
+  [ "$p" = "/" ] && return 0
+  [ "$p" = "$HOMEN" ] && return 0
+  case " $SYSTEM_ROOTS " in *" $p "*) return 0 ;; esac
+  return 1
+}
+
+is_temp() {
+  local p="$1" pre prenoslash
+  for pre in $TEMP_PREFIXES; do
+    prenoslash=${pre%/}
+    [ "$p" = "$prenoslash" ] && return 0
+    case "$p" in "$pre"*) return 0 ;; esac
+  done
+  if [ -n "$TMPDIRN" ]; then
+    [ "$p" = "$TMPDIRN" ] && return 0
+    case "$p" in "$TMPDIRN"/*) return 0 ;; esac
+  fi
+  return 1
+}
+
+in_git() {
+  local d="$1"
+  [ -d "$d" ] || d=${d%/*}
+  [ -n "$d" ] || d=/
+  git -C "$d" rev-parse --is-inside-work-tree >/dev/null 2>&1 </dev/null
+}
+
+is_tracked() {
+  local p="$1" d b
+  d=${p%/*}; b=${p##*/}
+  [ -n "$d" ] || d=/
+  [ -d "$d" ] || return 1
+  git -C "$d" ls-files --error-unmatch -- "$b" >/dev/null 2>&1 </dev/null
+}
+
+# --- decision accumulator --------------------------------------------------
+
+# record <decision> <reason> <sudo>  — sudo bumps allow -> ask.
+record() {
+  local dec="$1" reason="$2" sudo="$3" rank
+  if [ "$sudo" = "1" ] && [ "$dec" = "allow" ]; then
+    dec="ask"; reason="sudo delete — elevated privileges, confirm manually"
+  fi
+  case "$dec" in allow) rank=0 ;; ask) rank=1 ;; deny) rank=2 ;; *) rank=1 ;; esac
+  if [ "$rank" -gt "$WORST_RANK" ]; then
+    WORST_RANK=$rank; G_DECISION=$dec; G_REASON=$reason
+  fi
+}
+
+# decide_target <target> <verb> <recursive> <cwd> -> sets D_DEC, D_REASON
+decide_target() {
+  local target="$1" verb="$2" recursive="$3" cwd="$4"
+  local stripped has_dotdot globby t p cpath base
+  D_DEC=""; D_REASON=""
+
+  case "$target" in
+    /|/\*|/.\*|'~'|'~/'|'$HOME'|'${HOME}'|'$HOME/')
+      D_DEC=deny; D_REASON="refuses to delete home or root: $target"; return ;;
+  esac
+  stripped=${target%/}
+  case "$stripped" in
+    '~'|'$HOME'|'${HOME}')
+      D_DEC=deny; D_REASON="refuses to delete home or root: $target"; return ;;
+  esac
+  case "$target" in
+    *'$'*|*'`'*)
+      D_DEC=ask; D_REASON="unresolved variable in delete target: $target"; return ;;
+  esac
+
+  case "$target" in *..*) has_dotdot=1 ;; *) has_dotdot=0 ;; esac
+  case "$target" in *'*'*|*'?'*|*'['*) globby=1 ;; *) globby=0 ;; esac
+
+  t=$target
+  case "$t" in
+    '~') t=$HOME ;;
+    '~/'*) t=$HOME/${t#\~/} ;;
+  esac
+  case "$t" in /*) ;; *) t=$cwd/$t ;; esac
+  p=$(lightnorm "$t")
+
+  cpath=$p
+  if [ "$globby" = "1" ]; then
+    base=${p##*/}
+    case "$base" in
+      *'*'*|*'?'*|*'['*) cpath=${p%/*}; [ -z "$cpath" ] && cpath=/ ;;
+    esac
+  fi
+
+  if is_deny "$p" || is_deny "$cpath"; then
+    D_DEC=deny; D_REASON="refuses to delete a protected location: $p"; return
+  fi
+  if [ "$globby" = "1" ]; then
+    if [ "$cpath" = "/" ] || [ "$cpath" = "$HOMEN" ] || is_deny "$cpath"; then
+      D_DEC=deny; D_REASON="refuses a glob delete at a protected location: $p"; return
+    fi
+  fi
+
+  if [ "$has_dotdot" = "0" ] && is_temp "$cpath"; then
+    D_DEC=allow; D_REASON=""; return
+  fi
+
+  case "$verb" in
+    trash)
+      if [ "$has_dotdot" = "1" ]; then
+        D_DEC=ask; D_REASON="delete with .. traversal: $target"
+      else
+        D_DEC=allow; D_REASON=""
+      fi
+      return ;;
+    git-rm)
+      if in_git "$cpath"; then D_DEC=allow; D_REASON=""
+      else D_DEC=ask; D_REASON="git rm outside a work tree: $p"; fi
+      return ;;
+    rmdir)
+      if [ "$has_dotdot" = "0" ] && in_git "$cpath"; then D_DEC=allow; D_REASON=""
+      else D_DEC=ask; D_REASON="rmdir outside a repo/temp: $p"; fi
+      return ;;
+  esac
+
+  if [ "$has_dotdot" = "1" ]; then
+    D_DEC=ask; D_REASON="delete with .. traversal: $target"; return
+  fi
+  if [ "$recursive" = "1" ]; then
+    D_DEC=ask; D_REASON="recursive delete of a directory: $p"; return
+  fi
+  if [ "$globby" = "1" ]; then
+    D_DEC=ask; D_REASON="glob delete of an unknown set of files: $p"; return
+  fi
+  if in_git "$p"; then
+    if is_tracked "$p"; then D_DEC=allow; D_REASON=""
+    else D_DEC=ask; D_REASON="untracked file inside a repo (git can't restore): $p"; fi
+    return
+  fi
+  D_DEC=ask; D_REASON="delete outside a git repo and temp dirs: $p"
+}
+
+# classify_verb <verb> <recmode> <sudo> <xargs> <cwd> <arg...>
+#   recmode: 1 = always recursive (find); else parse -r/-R from flags.
+classify_verb() {
+  local verb="$1" recmode="$2" sudo="$3" xargs="$4" cwd="$5"
+  shift 5
+  local recursive=0 optdone=0 t
+  [ "$recmode" = "1" ] && recursive=1
+  local -a targets=()
+  for t in "$@"; do
+    if [ "$optdone" = "0" ] && [ "$t" = "--" ]; then optdone=1; continue; fi
+    if [ "$optdone" = "0" ] && [ "$t" != "-" ]; then
+      case "$t" in
+        -*)
+          if [ "$verb" = "rm" ] || [ "$verb" = "git-rm" ]; then
+            case "$t" in
+              --recursive) recursive=1 ;;
+              --*) : ;;
+              -*) case "$t" in *[rR]*) recursive=1 ;; esac ;;
+            esac
+          fi
+          continue ;;
+      esac
+    fi
+    targets+=( "$t" )
+  done
+
+  if [ "$xargs" = "1" ]; then
+    record "ask" "$verb fed by xargs — targets not known ahead of time" "$sudo"
+    return
+  fi
+  if [ ${#targets[@]} -eq 0 ]; then
+    [ "$verb" = "git-rm" ] && return
+    record "ask" "$verb with no clear target" "$sudo"
+    return
+  fi
+  for t in "${targets[@]}"; do
+    decide_target "$t" "$verb" "$recursive" "$cwd"
+    record "$D_DEC" "$D_REASON" "$sudo"
+  done
+}
+
+# handle_statement <statement-line> <cwd>
+handle_statement() {
+  local line="$1" cwd="$2"
+  local -a w=()
+  read -ra w <<< "$line"
+  [ ${#w[@]} -eq 0 ] && return
+  local i=0 sudo=0 xargs=0 tok b
+  while [ "$i" -lt "${#w[@]}" ]; do
+    tok="${w[$i]}"; b="${tok##*/}"
+    case "$b" in
+      sudo)
+        sudo=1; i=$((i+1))
+        while [ "$i" -lt "${#w[@]}" ]; do
+          case "${w[$i]}" in
+            -u|--user|-g|--group) i=$((i+2)) ;;
+            -*) i=$((i+1)) ;;
+            *) break ;;
+          esac
+        done ;;
+      xargs)
+        xargs=1; i=$((i+1))
+        while [ "$i" -lt "${#w[@]}" ]; do
+          case "${w[$i]}" in
+            -I|-n|-P|-L|-s) i=$((i+2)) ;;
+            -*) i=$((i+1)) ;;
+            *) break ;;
+          esac
+        done ;;
+      command|builtin|time|nice|ionice|env|exec|stdbuf|then|do) i=$((i+1)) ;;
+      *) break ;;
+    esac
+  done
+  [ "$i" -ge "${#w[@]}" ] && return
+
+  local base="${w[$i]##*/}"
+  local -a args=()
+  [ $((i+1)) -lt "${#w[@]}" ] && args=( "${w[@]:$((i+1))}" )
+
+  case "$base" in
+    bash|sh|zsh|dash|ksh)
+      local j nested
+      for (( j=0; j<${#args[@]}; j++ )); do
+        if [ "${args[$j]}" = "-c" ] && [ $((j+1)) -lt ${#args[@]} ]; then
+          nested="${args[*]:$((j+1))}"
+          nested="${nested%\"}"; nested="${nested#\"}"
+          nested="${nested%\'}"; nested="${nested#\'}"
+          classify_command "$nested" "$cwd"
+          return
+        fi
+      done ;;
+  esac
+
+  case "$base" in
+    git)
+      local sub=""
+      [ ${#args[@]} -gt 0 ] && sub="${args[0]##*/}"
+      if [ "$sub" = "rm" ]; then
+        classify_verb "git-rm" 0 "$sudo" "$xargs" "$cwd" "${args[@]:1}"
+      elif [ "$sub" = "clean" ]; then
+        record "ask" "git clean removes untracked files (not recoverable)" "$sudo"
+      fi ;;
+    rm|rmdir|unlink|trash)
+      classify_verb "$base" 0 "$sudo" "$xargs" "$cwd" "${args[@]}" ;;
+    find)
+      local a hasdel=0 ex=0 rmx=0
+      for a in "${args[@]}"; do
+        [ "$a" = "-delete" ] && hasdel=1
+        [ "$a" = "-exec" ] && ex=1
+        [ "${a##*/}" = "rm" ] && rmx=1
+      done
+      [ "$ex" = "1" ] && [ "$rmx" = "1" ] && hasdel=1
+      [ "$hasdel" = "0" ] && return
+      local -a paths=()
+      for a in "${args[@]}"; do
+        case "$a" in -*|'('|')'|'!') break ;; *) paths+=( "$a" ) ;; esac
+      done
+      [ ${#paths[@]} -eq 0 ] && paths=( "." )
+      classify_verb "find" 1 "$sudo" "$xargs" "$cwd" "${paths[@]}" ;;
+  esac
+}
+
+# classify_command <cmd> <cwd> — splits into simple statements, re-entrant.
+classify_command() {
+  local cmd="$1" cwd="$2" split line
+  RG_DEPTH=$((RG_DEPTH+1))
+  if [ "$RG_DEPTH" -gt 4 ]; then RG_DEPTH=$((RG_DEPTH-1)); return; fi
+  split=$(printf '%s' "$cmd" | tr ';&|<>()' '\n')
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    case "$line" in *[![:space:]]*) handle_statement "$line" "$cwd" ;; esac
+  done <<EOF
+$split
+EOF
+  RG_DEPTH=$((RG_DEPTH-1))
+}
+
+guard_classify() {
+  WORST_RANK=-1; G_DECISION=""; G_REASON=""; RG_DEPTH=0
+  classify_command "$1" "$2"
+}
+
+emit_json() {
+  local dec="$1" reason="$2" esc
+  esc=$(printf '%s' "$reason" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"%s","permissionDecisionReason":"%s"}}\n' "$dec" "$esc"
+}
+
+# --- main ------------------------------------------------------------------
+
+main() {
+  local mode=json cmd="" cwd="$PWD" input
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --command) cmd="$2"; mode=plain; shift 2 ;;
+      --command=*) cmd="${1#--command=}"; mode=plain; shift ;;
+      --cwd) cwd="$2"; shift 2 ;;
+      --cwd=*) cwd="${1#--cwd=}"; shift ;;
+      *) shift ;;
+    esac
+  done
+
+  if [ "$mode" = "plain" ]; then
+    guard_classify "$cmd" "$cwd"
+    local dec="${G_DECISION:-allow}"
+    printf '%s\t%s\n' "$dec" "$G_REASON"
+    case "$dec" in allow) exit 0 ;; ask) exit 1 ;; deny) exit 2 ;; esac
+    exit 0
+  fi
+
+  input=$(cat)
+  if ! printf '%s' "$input" | grep -Eq '(^|[^[:alnum:]_])(rm|rmdir|unlink|trash)([^[:alnum:]_]|$)|-delete([^[:alnum:]_]|$)|git[[:space:]]+clean'; then
+    exit 0
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    emit_json ask "rm-guard: jq unavailable to parse payload; confirm this delete manually."
+    exit 0
+  fi
+  cmd=$(printf '%s' "$input" | jq -r '(.tool_input.command // .command // .tool_input.cmd // "")' 2>/dev/null)
+  cwd=$(printf '%s' "$input" | jq -r '(.cwd // .tool_input.cwd // "")' 2>/dev/null)
+  [ -z "$cwd" ] && cwd="$PWD"
+  [ -z "$cmd" ] && exit 0
+
+  guard_classify "$cmd" "$cwd"
+  [ -z "$G_DECISION" ] && exit 0   # not a delete -> defer to normal permission flow
+  if [ "$G_DECISION" = "allow" ]; then
+    emit_json allow "safe delete (temp dir or git-tracked file — recoverable)"
+  else
+    emit_json "$G_DECISION" "${G_REASON:-confirm this delete manually}"
+  fi
+  exit 0
+}
+
+main "$@"

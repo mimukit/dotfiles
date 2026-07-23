@@ -56,6 +56,16 @@
         "hooks": [
           {
             "type": "command",
+            "command": "S=\"$HOME/.local/bin/rm-guard\"; if [ -r \"$S\" ]; then exec bash \"$S\"; fi; CMD=$(cat); if printf '%s' \"$CMD\" | grep -Eq '(^|[^[:alnum:]_])rm([^[:alnum:]_]|$)'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"rm-guard script missing; blocking rm for safety\"}}'; fi; exit 0",
+            "timeout": 10,
+            "statusMessage": "Checking rm target safety"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "if [ -f '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/codex-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/codex-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
             "timeout": 10
           }
