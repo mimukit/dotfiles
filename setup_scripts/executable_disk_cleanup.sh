@@ -6,7 +6,6 @@
 set -u
 
 SCRIPT_NAME=${0##*/}
-DRY_RUN=false
 ASSUME_YES=false
 INCLUDE_PROJECTS=true
 VERBOSE=false
@@ -42,7 +41,6 @@ Usage: $SCRIPT_NAME [options]
 Scan rebuildable caches, print a compact estimate, and ask before cleaning.
 
 Options:
-  --dry-run       Preview candidates, then offer to apply when interactive
   --yes           Clean without the confirmation prompt
   --no-projects   Skip project dependencies and generated build output
   --verbose       List every candidate and cleanup operation
@@ -61,7 +59,6 @@ EOF
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
-        --dry-run) DRY_RUN=true ;;
         --yes) ASSUME_YES=true ;;
         --no-projects) INCLUDE_PROJECTS=false ;;
         --verbose) VERBOSE=true ;;
@@ -617,14 +614,8 @@ report_container_storage() {
             fi
         done
 
-        printf '\n  %bSuggested commands · not run by this script%b\n' "$BOLD$YELLOW" "$RESET"
-        printf '    %bdocker container prune%b    # stopped containers\n' "$CYAN" "$RESET"
-        printf '    %bdocker image prune%b        # dangling images\n' "$CYAN" "$RESET"
-        printf '    %bdocker volume prune -a%b    # all unused local volumes\n' "$CYAN" "$RESET"
-        printf '    %bdocker builder prune%b      # reclaimable build cache\n' "$CYAN" "$RESET"
-        printf '    %borbctl list%b               # inspect OrbStack Linux machines\n' "$CYAN" "$RESET"
-        printf '    %borbctl delete MACHINE_NAME%b # remove a confirmed-unused machine\n' \
-            "$CYAN" "$RESET"
+        printf '\n  %bReview these findings and remove confirmed-unused resources in the OrbStack UI.%b\n' \
+            "$DIM" "$RESET"
     elif [ -d "$orb_data" ]; then
         printf '\n  %bUnused Docker resources%b\n' "$BOLD" "$RESET"
         printf '  %bUnavailable while the OrbStack Docker engine is stopped.%b\n' \
@@ -959,29 +950,6 @@ fi
 report_container_storage
 if ! print_candidates; then
     exit 0
-fi
-
-if [ "$DRY_RUN" = true ]; then
-    printf '\n'
-    success "✓ Preview complete — nothing has been removed."
-    if [ -t 0 ]; then
-        printf '\n%bApply this cleanup now?%b [y/N] ' "$BOLD$YELLOW" "$RESET"
-        IFS= read -r reply
-        case "$reply" in
-            y|Y|yes|YES|Yes)
-                ASSUME_YES=true
-                success "Applying the previewed cleanup."
-                ;;
-            *)
-                info "Nothing was removed."
-                exit 0
-                ;;
-        esac
-    else
-        printf '  To apply these findings, run: %b%s --yes%b\n' \
-            "$CYAN" "$0" "$RESET"
-        exit 0
-    fi
 fi
 
 if [ "$ASSUME_YES" != true ]; then
