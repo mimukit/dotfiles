@@ -12,11 +12,11 @@ metadata:
 
 The **away-from-keyboard** orchestrator. Hand it a groomed `ready` issue and it drives the middle of the dev workflow — the part that needs no human judgment once the issue is well-specified — from an isolated worktree to an open pull request: implement, commit, review, fix, write a manual QA plan, open the PR, and flip the issue to `in-review`. The human gates stay where judgment lives: planning and grilling happen *before* (the `ready` label is the entry contract), review and merge happen *after*.
 
-afkkit adds **no** worktree, tracker, or PR behavior of its own. It **sequences** companion kits — orcakit, implementkit, commitkit, reviewkit, qakit, prkit — and owns exactly one thing they don't: the **escalation policy** that decides, at every step, whether to keep going or stop cleanly and leave the issue for a human. It is the autonomous sibling of statuskit: statuskit tells a human what to do next; afkkit does the next several things itself and stops at the boundary where a human is genuinely required.
+afkkit adds **no** worktree, tracker, or PR behavior of its own. It **sequences** companion kits — implementkit, commitkit, reviewkit, qakit, prkit — plus a manual, human-run orcakit step at the very front, and owns exactly one thing they don't: the **escalation policy** that decides, at every step, whether to keep going or stop cleanly and leave the issue for a human. It is the autonomous sibling of statuskit: statuskit tells a human what to do next; afkkit does the next several things itself and stops at the boundary where a human is genuinely required.
 
 ## The contract
 
-- **Input:** an issue labeled `ready`. That label is the whole safety property — an issue only earns `ready` from a human grill session (see the lifecycle below), so afkkit never works anything that hasn't already had human judgment applied. It refuses anything not `ready`, exactly as orcakit does.
+- **Input:** an issue whose worktree the human has already created manually. A human runs `orcakit start <n>` themselves — which refuses anything not labeled `ready`, flips `ready → in-progress`, and creates the worktree off fresh `origin/main` — then switches into that worktree and launches (or resumes) the afkkit conductor session from inside it. That manual step is the whole safety property: an issue only reaches orcakit's guard after a human grill session (see the lifecycle below), so afkkit never works anything that hasn't already had human judgment applied. afkkit itself never invokes orcakit — it only verifies the precondition (see [Confirm the worktree](#1-confirm-the-worktree)).
 - **Output on success:** an open PR whose body carries the implementation's documented assumptions, any unresolved review nits, and a pointer to a committed QA plan — and the issue moved to `in-review`.
 - **Output on a blocked run:** **no PR.** The worktree and its commits stay intact, a comment on the issue names the precise stuck-state, the issue is labeled for whoever must pick it up, and — in a batch — the next issue starts. afkkit never publishes half-broken work.
 
@@ -41,7 +41,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner     # inside a repo on GitHu
 ```
 
 - If `gh` is missing or unauthenticated, stop and point to `https://cli.github.com` / `gh auth login` — don't work around it.
-- **Companion-kit check.** afkkit is glue: it needs orcakit, implementkit, commitkit, reviewkit, qakit, and prkit to do the actual work. Check which are installed. If a kit a step needs is absent, **stop and name it** rather than improvising its job badly — an orchestrator missing its steps degrades by refusing clearly, not by half-doing the work. (Each step below also names the plain `gh`/`orca` fallback where the action is trivial enough to run directly.)
+- **Companion-kit check.** afkkit is glue: it needs implementkit, commitkit, reviewkit, qakit, and prkit to do the actual work. Check which are installed. If a kit a step needs is absent, **stop and name it** rather than improvising its job badly — an orchestrator missing its steps degrades by refusing clearly, not by half-doing the work. (Each step below also names the plain `gh` fallback where the action is trivial enough to run directly.) orcakit is a prerequisite the human runs manually before invoking afkkit (see [Confirm the worktree](#1-confirm-the-worktree)) — afkkit never dispatches it itself, so it's outside this check.
 - **Conductor model.** The review step inherits the model of the session you launch afkkit in (see [Model routing](#model-routing)). If that session is on a mid-tier model, warn once: review quality is only as good as the conductor's model, so afkkit is best launched on a top-tier model (fable/opus).
 - **No shell / CLI available** (e.g. a browser-based agent)? You can't run `gh`, `orca`, or spawn subagents. Say so and stop — afkkit is an execution orchestrator; there's nothing to reason out in prose. Point the user at running the individual kits interactively instead.
 
@@ -49,7 +49,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner     # inside a repo on GitHu
 
 afkkit runs as a **conductor session**: the session you invoke it in sequences the pipeline, and each heavy step runs as a **subagent** dispatched to work inside the issue's worktree. This keeps the conductor's context small (the bulk of the tokens live in the subagents) and lets each step run on the model that fits it.
 
-- **Dispatch a subagent per step** with the Task tool (agent type `general-purpose`), passing it three things: the **worktree path** orcakit created, the **companion skill to invoke** for that step, and the **model** from the table below. The subagent's first action is to work inside that worktree path (operate on its absolute paths, or `cd` into it) — the conductor's own working directory is the main checkout, not the worktree.
+- **Dispatch a subagent per step** with the Task tool (agent type `general-purpose`), passing it three things: the **worktree path** (created manually by the human via `orcakit start <n>` before this run began), the **companion skill to invoke** for that step, and the **model** from the table below. The subagent's first action is to work inside that worktree path (operate on its absolute paths, or `cd` into it) — the conductor's own working directory is that same worktree, not the main checkout (see [Confirm the worktree](#1-confirm-the-worktree)).
 - **Each subagent returns a small structured result** the conductor acts on: pass/fail, and the step's payload (the gate's assumptions list, the review's blocker/nit findings, the QA doc path). The conductor holds the thread; the subagents hold the work.
 - **The conductor never edits code or runs the build itself** — it dispatches, reads the result, and decides the next move (continue, loop, or escalate). That decision — the escalation policy — is the one thing afkkit owns.
 - **No subagent capability?** Degrade to running the steps inline in sequence in the conductor session. You lose per-step model routing (everything runs on the conductor's model) but the pipeline and escalation policy are unchanged. Say you're running inline.
@@ -74,11 +74,22 @@ Default per-step models, chosen so cheap mechanical work runs cheap and judgment
 
 Run these in order for each issue. Any step that can't proceed hands to [the escalation contract](#the-escalation-contract) and the issue stops there — cleanly, with no PR.
 
-### 1. Start the worktree
+### 1. Confirm the worktree
 
-Invoke **orcakit** `start <n>`. Its `ready`-label guard is the entry gate — it refuses any issue not labeled `ready`, which is exactly afkkit's safety property, so afkkit adds no guard of its own. orcakit creates the worktree off fresh `origin/main`, links it to the issue, and flips the label `ready → in-progress`. If a worktree for this issue already exists (the re-run path — an issue that was escalated to `needs-planning`, grilled by a human back to `ready`, and re-run), orcakit adopts it rather than recreating; afkkit continues in the adopted worktree.
+afkkit does not create or switch worktrees — that's a manual step the human does *before* invoking afkkit, by running **orcakit** `start <n>` themselves. orcakit's `ready`-label guard is the entry gate: it refuses any issue not labeled `ready`, creates the worktree off fresh `origin/main`, links it to the issue, and flips the label `ready → in-progress`. The human then switches into that worktree and launches (or resumes) the afkkit conductor session from inside it.
 
-If orcakit isn't installed, the trivial fallback is `orca worktree create --name issue-<n>-<slug> --base-branch origin/main --issue <n> --no-parent` then `gh issue edit <n> --remove-label ready --add-label in-progress` — but prefer the kit, which owns the naming and adopt logic.
+afkkit's own job here is to verify that precondition actually holds, not to take it on faith:
+
+```sh
+git branch --show-current                              # must not be main/master
+git rev-parse --show-toplevel                           # must be the worktree path, not the main checkout
+gh issue view <n> --json labels -q '.labels[].name'      # must include in-progress, not ready
+```
+
+- If the current branch is `main`/`master`, or the working directory is the primary checkout rather than a distinct worktree, **don't just error — stop and ask the human to confirm**: state plainly that this looks like the main branch/checkout rather than an issue worktree, and ask them to verify they've run `orcakit start <n>` and switched into the resulting worktree before afkkit continues. Don't guess or proceed on an assumption either way.
+- If the issue is still labeled `ready` (orcakit hasn't run yet), stop and tell the human to run `orcakit start <n>` manually, switch into the resulting worktree, and re-invoke afkkit from there. This is a hard preflight stop, not a pipeline escalation — nothing has happened yet, so there's no comment or label churn.
+
+If a worktree for this issue already exists (the re-run path — an issue that was escalated to `needs-planning`, grilled by a human back to `ready`, and re-run), the human re-runs `orcakit start <n>` themselves to adopt it rather than recreating, then switches in as before.
 
 ### 2. Spec gate
 
@@ -144,11 +155,7 @@ The one policy afkkit owns. Whenever a step can't proceed, **escalate** rather t
 
 ## Batch mode: `all`
 
-`afkkit all` walks every open issue labeled `ready`, **sequentially**, running the full pipeline on each:
-
-```sh
-gh issue list --state open --label ready --json number,title,updatedAt
-```
+Because [Confirm the worktree](#1-confirm-the-worktree) is a manual human step, `afkkit all` requires the worktrees to already exist: run `orcakit start <n>` yourself for every `ready` issue you want in this batch *before* invoking `afkkit all` — each run flips that issue's label `ready → in-progress` and creates its worktree off fresh `origin/main`. afkkit then discovers the pre-staged worktrees (e.g. via `orca worktree list` or `git worktree list`, matched to their linked issue) and walks them **sequentially**, running [Confirm the worktree](#1-confirm-the-worktree) and the rest of the pipeline on each without ever invoking orcakit itself.
 
 Sequential, not parallel: v1 keeps merge-conflict and resource behavior predictable, and a returning human faces one PR at a time rather than a pile of concurrent branches off `origin/main`. Process oldest-first (or by the order the user names). Each issue is independent — an escalation is logged and the walk continues to the next.
 
@@ -161,12 +168,12 @@ afkkit is deliberately narrow — the middle of the workflow, nothing else:
 - **No planning or grilling.** It never invents product decisions; a thin spec goes back to the human queue as `needs-planning`. plankit and grillkit stay interactive and out of the unattended path.
 - **No PR-feedback loop, no merge, no teardown.** The span ends at PR open. Responding to a human's review comments is a designed-for *later phase*, not v1. Merging is a human gate. orcakit `finish` (close the issue, remove the worktree) runs *after* merge — also out of span.
 - **No parallel batches, no browser verification, no notifications** in v1 — issues run sequentially, verification is qakit's manual plan (not verifykit's browser capture), and GitHub plus the session summary are the only signal.
-- **No new worktree, tracker, or PR logic.** orcakit owns the worktree lifecycle, issuekit the tracker vocabulary, prkit the PR. afkkit only sequences them and owns the escalation policy.
+- **No new worktree, tracker, or PR logic, and no worktree creation of its own.** orcakit owns the worktree lifecycle and is run manually by the human before afkkit starts (see [Confirm the worktree](#1-confirm-the-worktree)); issuekit owns the tracker vocabulary, prkit the PR. afkkit only sequences the rest and owns the escalation policy.
 - **No config file.** Model routing is the table above plus a spoken inline override.
 
 ## Notes
 
-- **The `ready` label is the safety property.** afkkit works only what a human already grilled into `ready`. It cannot get ahead of human judgment because it refuses to start anything else — the same guard orcakit enforces at the worktree boundary.
+- **The `ready` label is the safety property.** afkkit works only what a human already grilled into `ready` — enforced by orcakit's guard when the human manually runs `orcakit start <n>`, not by afkkit itself. afkkit only verifies that guard already fired (see [Confirm the worktree](#1-confirm-the-worktree)); it cannot get ahead of human judgment because it refuses to start on anything else.
 - **Escalation is a success, not a failure.** Stopping cleanly at a wall — no PR, work preserved, issue labeled by cause — is afkkit doing its job. The failure mode it exists to prevent is pushing a half-broken or wrongly-assumed change all the way to a PR.
-- **Idempotent per issue.** Re-running afkkit on an issue whose worktree already exists adopts it (via orcakit) and continues — the intended path for an issue that was escalated to `needs-planning`, grilled back to `ready`, and re-run.
+- **Idempotent per issue.** Re-running afkkit on an issue whose worktree already exists picks up from it and continues, after the human re-runs `orcakit start <n>` themselves to adopt (rather than recreate) that worktree — the intended path for an issue that was escalated to `needs-planning`, grilled back to `ready`, and re-run.
 - **Follow the repo over these defaults.** If a repo has its own review depth, QA location, or PR template, the companion kits already honor those; afkkit doesn't override them.
