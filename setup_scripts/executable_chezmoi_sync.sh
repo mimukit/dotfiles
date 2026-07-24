@@ -68,6 +68,7 @@ RE_ADD_PATHS=(
 ADD_PATHS=(
   "$HOME/.agents/"
   "$HOME/.claude/skills/"
+  "$HOME/.claude/hooks/"
   "$HOME/.codex/automations/"
 )
 # ---------------------------------------------------------------------------
