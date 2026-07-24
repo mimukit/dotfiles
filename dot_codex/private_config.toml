@@ -167,6 +167,9 @@ trusted_hash = "sha256:d1da1ae0f9bb721fdd6dbe911717c3701a847e07d98fb55d0cc850151
 [hooks.state."/Users/mukit/.codex/hooks.json:pre_tool_use:0:0"]
 trusted_hash = "sha256:f2cb47f47eaa1079fc8c171d2cb346c44f5646776acfe1148925c431f3dc1d1d"
 
+[hooks.state."/Users/mukit/.codex/hooks.json:pre_tool_use:1:0"]
+trusted_hash = "sha256:f2cb47f47eaa1079fc8c171d2cb346c44f5646776acfe1148925c431f3dc1d1d"
+
 [hooks.state."/Users/mukit/.codex/hooks.json:permission_request:0:0"]
 trusted_hash = "sha256:77bf914acb3378491840d4c496a27cbc4910ac75731625d40566f8dfecea3534"
 
