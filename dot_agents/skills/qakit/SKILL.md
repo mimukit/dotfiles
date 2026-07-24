@@ -118,10 +118,13 @@ Priority legend: 🔴 Critical · 🟡 Normal · 🟢 Low
 ## Automated verification (by AI agent)
 _Checks the agent ran itself — no action needed from the tester; listed here for context and sign-off._
 
-Commands run (grouped where related):
+Commands run (one per block; chain with `&&` when they must run together):
 
 ```sh
 <command 1>
+```
+
+```sh
 <command 2>
 ```
 
@@ -140,7 +143,7 @@ Rules for good cases:
 - **Expected results as bullets** — write **Expected** as one bullet per observable outcome, never a paragraph, so the tester ticks them off one at a time.
 - **Short lines, not walls of prose** — prefer short sentences and bullet sublists over paragraphs throughout the generated plan (steps, expected, not-covered).
 - **Honest about gaps** — list what the plan can't verify under *Not covered* rather than pretending coverage.
-- **Commands go in ```sh code blocks on their own line** — never inline a terminal command in prose or a table cell, so the tester can copy-paste it as-is. Group related commands that run together into a single block; keep unrelated ones in separate blocks.
+- **Every command gets its own ```sh code block** — never inline a terminal command in prose or a table cell, and never stack multiple commands in one block, so the tester can copy each one with a single click of the previewer's copy button. When commands must run together, chain them with `&&` on one line inside a single block so one copy-paste runs the whole sequence.
 
 ### 4. Run the automated checks yourself
 Before handing off, actually run the agent-verifiable checks you split out in [Derive the test dimensions](#2-derive-the-test-dimensions) — terminal commands, endpoint hits, return-value assertions — and record each outcome in the plan's **Automated verification** section (✅ passed with what the output confirmed, ❌ failed with the actual output). This is the one part of the plan the agent completes, not the human. If there's no shell/filesystem, say so and leave the section for the human to fill.

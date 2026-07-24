@@ -86,6 +86,7 @@ The canonical map — exactly one **status** label is active at a time, moving l
 | label | color | means | typically set by |
 |-------|-------|-------|------------------|
 | `triage` | `FBCA04` | filed, not yet assessed or broken down | create (ad-hoc), triage |
+| `needs-planning` | `E99695` | not yet specified enough to work — a human plan/grill session is still owed | issuekit create / afkkit gate |
 | `ready` | `0E8A16` | specified and **independent** — safe to take into its own git worktree now | issuekit create |
 | `blocked` | `D93F0B` | has an unmet prerequisite; the blocker is named in the body as `Blocked by #N` | issuekit create / sync |
 | `in-progress` | `1D76DB` | actively being worked in a worktree | the implement step / a human |
@@ -97,6 +98,8 @@ The canonical map — exactly one **status** label is active at a time, moving l
 A **closed** issue needs no `done` label — the closed state is the signal.
 
 **`ready` vs `blocked` is the parallel-work pair.** issuekit sizes and sequences issues so each can be picked up in its own worktree with no ordering constraint — those get `ready`. The exception, an issue that genuinely can't start until another lands, gets `blocked` plus a `Blocked by #N` line in its body: the label says *that* it's blocked, the body says *by what*. `gh issue list --label ready` is then the exact set the user can fan out in parallel right now.
+
+**`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended** — an agent (or an orchestrator like afkkit) can take it straight to a PR without a human. `needs-planning` means a human plan/grill session is still owed before the issue is workable at all. An issue earns `ready` only once its decisions are settled by a grill — see [the grill gate at creation](#5-label-lifecycle-state-and-record-dependencies). `gh issue list --label needs-planning` is then the exact set that still needs the human, the mirror of the `ready` fan-out set.
 
 **Type lives in the title, not a label.** Issues already carry `feat(scope):` / `fix(scope):` per the [title convention](#title-convention-every-issue-this-skill-creates), so this map has no `type:` labels — only lifecycle status.
 
@@ -195,11 +198,19 @@ If that call fails — sub-issues disabled, older GitHub Enterprise, or insuffic
 ```
 
 ### 5. Label lifecycle state and record dependencies
-Apply the [lifecycle labels](#lifecycle-labels-every-mode) so the fresh issues advertise their state: every independent issue gets `ready`, every dependent one gets `blocked` plus a `Blocked by #N` line written into its body naming the prerequisite. Confirm each label exists first (`gh label list`) — if one is missing, stop and point the user at **repokit** or the `gh label create` line rather than creating it yourself.
+Apply the [lifecycle labels](#lifecycle-labels-every-mode) so the fresh issues advertise their state. The **grill gate** decides which vocabulary applies — because `ready` is a promise the work can run *unattended*, it's earned only when the decisions are already settled:
+
+- **Grilled source** — the input plan file carries a `Grilled: YYYY-MM-DD` stamp (grillkit writes it when it hardens a plan), *or* the user explicitly says the work is grilled/ready. The decisions are settled, so the normal pair applies: every independent issue gets `ready`, every dependent one gets `blocked` plus a `Blocked by #N` line in its body naming the prerequisite.
+- **Ungrilled source** — an ad-hoc description, or a plan with no grill stamp. The decisions aren't settled, so **every issue gets `needs-planning`** — it still needs a human plan/grill session before anything unattended should touch it. Record any `Blocked by #N` dependency in the body anyway; it takes effect once the issue is grilled into `ready`. This is what keeps afkkit (and any unattended worker) from picking up work a human hasn't grilled yet.
+
+Confirm each label exists first (`gh label list`) — if one is missing, stop and point the user at **repokit** or the `gh label create` line rather than creating it yourself.
 
 ```sh
+# grilled plan → ready / blocked
 gh issue edit 43 --add-label ready
-gh issue edit 44 --add-label blocked   # body carries: Blocked by #43
+gh issue edit 44 --add-label blocked          # body carries: Blocked by #43
+# ungrilled source → needs-planning (until a human grills it)
+gh issue edit 45 --add-label needs-planning
 ```
 
 Preview the label set alongside the issues and get an OK before applying — a mutation like any other.
@@ -315,7 +326,8 @@ Produce a **status report** — a table — surfacing:
 - **Zombie label** — a **closed** issue still carrying a status label (`in-review`, `in-progress`, …) → strip it; the closed state is the signal.
 - **Stale block** — an issue labeled `blocked` whose `Blocked by #N` target is already closed → it should be `ready` (hand the relabel to `sync`).
 - **Dangling / circular dependency** — a `Blocked by #N` pointing at a missing issue, or two issues blocking each other.
-- **Unmarked** — an open issue carrying no [lifecycle label](#lifecycle-labels-every-mode) at all → offer to classify it (`triage` / `ready` / `blocked`).
+- **Unmarked** — an open issue carrying no [lifecycle label](#lifecycle-labels-every-mode) at all → offer to classify it (`triage` / `needs-planning` / `ready` / `blocked`).
+- **Ungrilled `ready`** — an issue labeled `ready` whose decisions clearly aren't settled (open questions in the body, no acceptance criteria) → it was promoted too early; offer to move it back to `needs-planning` so unattended workers skip it until a human grills it.
 - **Missing labels** — relative to the [lifecycle map](#lifecycle-labels-every-mode) (or the repo's own scheme, if it predates it); when the map's labels aren't provisioned, say so and point at **repokit** rather than creating them.
 - **Status cross-checks** — issues whose linked PR merged but that are still open (hand off to `sync` for the actual close).
 
