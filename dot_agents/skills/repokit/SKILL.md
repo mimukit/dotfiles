@@ -113,6 +113,7 @@ Provision exactly this map. The `description` column here is canonical; issuekit
 | name | color | description |
 |------|-------|-------------|
 | `triage` | `FBCA04` | filed, not yet assessed or broken down |
+| `needs-planning` | `E99695` | needs a human plan/grill session before it is workable |
 | `ready` | `0E8A16` | specified and independent — safe to take into its own worktree now |
 | `blocked` | `D93F0B` | has an unmet prerequisite (see 'Blocked by #N' in the body) |
 | `in-progress` | `1D76DB` | actively being worked in a worktree |
@@ -161,6 +162,6 @@ List what was created, updated, and left as-is, and confirm the repo now carries
 ## Notes
 
 - **Never** delete a repo's topics wholesale or its labels outside the canonical set without an explicit ask; the default is additive/reconciling, not destructive.
-- The `labels` map is a **shared contract with issuekit** — the same eight names, colors, and meanings, with repokit's descriptions canonical.
+- The `labels` map is a **shared contract with issuekit** — the same nine names, colors, and meanings, with repokit's descriptions canonical.
 - Defer to what the repo already curates: an existing status-label scheme is handled in [Check for an existing status scheme first](#1-check-for-an-existing-status-scheme-first), and a curated About/topics is reconciled per-field (never blind-overwritten) in `about`. Offer the canonical set as an addition, not a replacement.
 - Prefer `gh`'s structured JSON (`--json`/`--jq`, the topics API) over scraping human-readable output — the JSON fields are a stable contract, the display text isn't.

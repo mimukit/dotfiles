@@ -27,12 +27,9 @@ Keep going until the open decisions are resolved and the user confirms you share
 
 ## What to do with the result
 
-grillkit's job is the shared understanding, not a particular file — so end with the recap and let the user decide where it goes. After recapping, **ask** what to do with the settled decisions:
+grillkit's job is the shared understanding, not a particular file — but where that understanding lands depends on how the session started:
 
-- **Update an existing file in place** — e.g. fold the hardened decisions back into the plan document you grilled (the workflow path when the input was a `plan-<slug>-YYYY-MM-DD.md`). Rewrite that same file; don't spawn a parallel copy or change its creation-date suffix.
-- **Write a standalone note** — drop the decisions into a new file in the current directory, wherever the user wants it.
-- **Nothing** — leave the recap in the conversation and stop.
-
-**Never write a file unprompted, and don't assume a location.** grillkit doesn't own a canonical plan-doc format or a `docs/plans` convention. Here you're persisting a decision recap where the user asks, in whatever shape fits.
+- **Started from a plan file** — when the input was an existing plan document (e.g. a `plan-<slug>-YYYY-MM-DD.md`), **fold the settled decisions back into that same file by default**, without asking. The user handed you a plan to harden; returning it hardened is the expected outcome. Rewrite that same file in place — don't spawn a parallel copy or change its creation-date suffix — and tell the user you updated it. Only skip or redirect the write if the user explicitly asked for something else (a standalone note, no file, a different location). **Stamp the hardened plan** with a `Grilled: YYYY-MM-DD` line near the top (today's date; update it on a re-grill). The stamp is a durable, machine-readable signal that this plan has survived a grill — downstream tooling reads it as provenance: issuekit, for one, only labels a plan's issues `ready` (safe for unattended work) when the source carries this stamp, and files ungrilled plans as `needs-planning` instead. No filesystem? Print the stamp line with the recap for the user to add themselves.
+- **Started from anything else** — a rough idea, a design in someone's head, an architecture, a PR — there's no file to return to, so end with the recap and **ask** where the decisions should go: update some existing file in place, write a standalone note in the current directory, or nothing at all. Don't write a file unprompted and don't assume a location; grillkit doesn't own a canonical plan-doc format or a `docs/plans` convention.
 
 If grilling settled a domain term or a hard-to-reverse trade-off decision worth keeping, **domainkit** is the scribe when installed; otherwise note the settled decision for the user to record as a glossary entry or ADR. grillkit does the interrogating rather than owning that format.
