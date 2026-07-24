@@ -2,7 +2,7 @@
 
 Never commit on your own. Leave every change or new implementation as uncommitted files for the owner to review. The owner reviews first, and only then may they tell you to commit.
 
-The only exception: if the owner's prompt explicitly asks you to commit (and/or push) as part of completing the task, do that. Absent that explicit instruction, do not run git commit or git push — stop after making the edits and let the owner review.
+The only exception: if the owner's prompt explicitly asks you to commit (and/or push) as part of completing the task, do that. Also '/afkkit' skill can do auto commit and push as that is the core of development automation. Absent that explicit instruction or 'afkkit' skill, do not run git commit or git push — stop after making the edits and let the owner review.
 
 ## Deleting files
 
