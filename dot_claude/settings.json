@@ -72,6 +72,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/mukit/.claude/hooks/cleanup-worktree-ports.sh' 2>/dev/null || true",
+            "timeout": 15,
+            "statusMessage": "Cleaning up worktree dev/test ports"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
