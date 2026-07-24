@@ -37,7 +37,6 @@
       "Bash(bash /Users/mukit/.claude/statusline.sh)"
     ],
     "deny": [
-      "Bash(curl:*)",
       "Read(./.env)",
       "Read(./.env.*)",
       "Bash(gh issue delete*)"
@@ -194,6 +193,6 @@
     "type": "command",
     "command": "~/.claude/statusline.sh"
   },
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "theme": "dark"
 }
