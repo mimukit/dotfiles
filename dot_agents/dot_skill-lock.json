@@ -69,18 +69,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/issuekit/SKILL.md",
-      "skillFolderHash": "efee54460167ece63a4e0181e50959ab2d1fafb9",
+      "skillFolderHash": "f585d23a1469201274e10dff1749d1d6a7db6cd3",
       "installedAt": "2026-07-21T14:04:01.631Z",
-      "updatedAt": "2026-07-24T15:41:33.537Z"
+      "updatedAt": "2026-07-24T16:14:36.691Z"
     },
     "repokit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/repokit/SKILL.md",
-      "skillFolderHash": "bf66b39090c03361d80b2dab7a1a1dd615eb8bfa",
+      "skillFolderHash": "5ce8ea149da4f8eda52a578783a32fd53b4d2656",
       "installedAt": "2026-07-21T14:04:01.632Z",
-      "updatedAt": "2026-07-24T15:41:33.539Z"
+      "updatedAt": "2026-07-24T16:14:39.837Z"
     },
     "implementkit": {
       "source": "mimukit/skills",
