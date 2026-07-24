@@ -19,12 +19,13 @@
 #     Prints "<DECISION>\t<reason>" and exits 0=allow, 1=ask, 2=deny.
 #
 # Policy (Balanced)
-#   ALLOW  temp dirs (/tmp, /var/tmp, /var/folders, $TMPDIR); git-TRACKED files
-#          inside a repo (recoverable); trash; git rm of tracked files; rmdir
-#          inside a repo.
+#   ALLOW  temp dirs (/tmp, /var/tmp, /var/folders, $TMPDIR — covers mktemp,
+#          which writes under these by default); ~/orca/workspaces; git-TRACKED
+#          files inside a repo (recoverable); trash; git rm of tracked files;
+#          rmdir inside a repo.
 #   ASK    untracked files in a repo, any rm -rf of a directory, globbed/unknown
 #          targets, ".." traversal, sudo, xargs-fed rm, git clean, and anything
-#          outside a repo and outside temp.
+#          outside a repo and outside temp/orca workspaces.
 #   DENY   /, $HOME root, system roots, and globs anchored at those roots.
 
 HOMEN=${HOME%/}
@@ -32,6 +33,7 @@ HOMEN=${HOME%/}
 TMPDIRN=${TMPDIR%/}
 SYSTEM_ROOTS="/ /Users /System /Library /etc /usr /bin /sbin /var /opt /private /Applications /Volumes /cores /dev /net /home /root /boot /proc /sys"
 TEMP_PREFIXES="/tmp/ /private/tmp/ /var/tmp/ /private/var/folders/ /var/folders/"
+ORCA_WORKSPACES="$HOMEN/orca/workspaces"
 
 # --- path helpers ----------------------------------------------------------
 
@@ -67,6 +69,13 @@ is_temp() {
     [ "$p" = "$TMPDIRN" ] && return 0
     case "$p" in "$TMPDIRN"/*) return 0 ;; esac
   fi
+  return 1
+}
+
+is_orca_workspace() {
+  local p="$1"
+  [ "$p" = "$ORCA_WORKSPACES" ] && return 0
+  case "$p" in "$ORCA_WORKSPACES"/*) return 0 ;; esac
   return 1
 }
 
@@ -147,7 +156,7 @@ decide_target() {
     fi
   fi
 
-  if [ "$has_dotdot" = "0" ] && is_temp "$cpath"; then
+  if [ "$has_dotdot" = "0" ] && { is_temp "$cpath" || is_orca_workspace "$cpath"; }; then
     D_DEC=allow; D_REASON=""; return
   fi
 
@@ -372,7 +381,7 @@ main() {
   guard_classify "$cmd" "$cwd"
   [ -z "$G_DECISION" ] && exit 0   # not a delete -> defer to normal permission flow
   if [ "$G_DECISION" = "allow" ]; then
-    emit_json allow "safe delete (temp dir or git-tracked file — recoverable)"
+    emit_json allow "safe delete (temp dir, orca workspace, or git-tracked file — recoverable)"
   else
     emit_json "$G_DECISION" "${G_REASON:-confirm this delete manually}"
   fi
