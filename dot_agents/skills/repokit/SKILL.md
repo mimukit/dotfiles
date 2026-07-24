@@ -113,7 +113,7 @@ Provision exactly this map. The `description` column here is canonical; issuekit
 | name | color | description |
 |------|-------|-------------|
 | `triage` | `FBCA04` | filed, not yet assessed or broken down |
-| `needs-planning` | `E99695` | needs a human plan/grill session before it is workable |
+| `needs-planning` | `F1C40F` | needs a human plan/grill session before it is workable |
 | `ready` | `0E8A16` | specified and independent — safe to take into its own worktree now |
 | `blocked` | `D93F0B` | has an unmet prerequisite (see 'Blocked by #N' in the body) |
 | `in-progress` | `1D76DB` | actively being worked in a worktree |

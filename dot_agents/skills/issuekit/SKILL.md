@@ -86,7 +86,7 @@ The canonical map — exactly one **status** label is active at a time, moving l
 | label | color | means | typically set by |
 |-------|-------|-------|------------------|
 | `triage` | `FBCA04` | filed, not yet assessed or broken down | create (ad-hoc), triage |
-| `needs-planning` | `E99695` | not yet specified enough to work — a human plan/grill session is still owed | issuekit create / afkkit gate |
+| `needs-planning` | `F1C40F` | not yet specified enough to work — a human plan/grill session is still owed | issuekit create / afkkit gate |
 | `ready` | `0E8A16` | specified and **independent** — safe to take into its own git worktree now | issuekit create |
 | `blocked` | `D93F0B` | has an unmet prerequisite; the blocker is named in the body as `Blocked by #N` | issuekit create / sync |
 | `in-progress` | `1D76DB` | actively being worked in a worktree | the implement step / a human |
