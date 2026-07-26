@@ -43,7 +43,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "sonnet",
+  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -55,37 +55,9 @@
         ]
       }
     ],
-    "Stop": [
+    "PermissionRequest": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if [ -z \"$ORCA_PANE_KEY\" ] && [ -z \"$ORCA_AGENT_HOOK_PORT\" ] && [ -z \"$HERDR_ENV\" ] && [ -z \"$SUPERSET_HOME_DIR\" ]; then terminal-notifier -title 'Claude Code' -message 'Task completed'; fi"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if [ -f '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh '/Users/mukit/.claude/hooks/cleanup-worktree-ports.sh' 2>/dev/null || true",
-            "timeout": 15,
-            "statusMessage": "Cleaning up worktree dev/test ports"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
@@ -119,29 +91,6 @@
         ]
       }
     ],
-    "PermissionRequest": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if [ -f '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "StopFailure": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if [ -f '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -156,6 +105,58 @@
       },
       {
         "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/mukit/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -z \"$ORCA_PANE_KEY\" ] && [ -z \"$ORCA_AGENT_HOOK_PORT\" ] && [ -z \"$HERDR_ENV\" ] && [ -z \"$SUPERSET_HOME_DIR\" ]; then terminal-notifier -title 'Claude Code' -message 'Task completed'; fi"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/mukit/.claude/hooks/cleanup-worktree-ports.sh' 2>/dev/null || true",
+            "timeout": 15,
+            "statusMessage": "Cleaning up worktree dev/test ports"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
         "hooks": [
           {
             "type": "command",
@@ -188,6 +189,17 @@
       }
     ],
     "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; else cat >/dev/null 2>&1 || :; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
       {
         "hooks": [
           {
