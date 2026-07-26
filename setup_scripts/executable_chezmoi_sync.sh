@@ -50,6 +50,7 @@ RE_ADD_PATHS=(
   "$HOME/.zshrc"
   "$HOME/.ssh/config"
   "$HOME/.claude/settings.json"
+  "$HOME/.claude/CLAUDE.md"
   "$HOME/.claude/statusline.sh"
   "$HOME/.config/nvim"
   "$HOME/.config/brew/Brewfile"
