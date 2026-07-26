@@ -4,6 +4,12 @@ Never commit on your own. Leave every change or new implementation as uncommitte
 
 The only exception: if the owner's prompt explicitly asks you to commit (and/or push) as part of completing the task, do that. Also '/afkkit' skill can do auto commit and push as that is the core of development automation. Absent that explicit instruction or 'afkkit' skill, do not run git commit or git push — stop after making the edits and let the owner review.
 
+## Cleaning up background processes
+
+Before ending a turn, stop any dev server, test watcher, or other background process you started during that turn (e.g. via Bash `run_in_background`, `wrangler dev`, `pnpm dev`/`turbo run dev`, `vite`, `node --inspect`) — use TaskStop or kill it directly. Don't leave it running "in case it's useful later" unless the user explicitly asked you to keep it up (e.g. for their own manual testing in the browser).
+
+A global Stop hook (`~/.claude/hooks/cleanup-worktree-ports.sh`) is a backstop that force-kills anything still listening on a port whose cwd is under an Orca worktree (`~/orca/workspaces/*`) once you stop — but treat that as a safety net, not a substitute for cleaning up yourself.
+
 ## Deleting files
 
 You may delete files and directories when it is clearly safe. A shared guard
