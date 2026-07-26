@@ -42,7 +42,6 @@ gh repo view --json nameWithOwner -q .nameWithOwner     # inside a repo on GitHu
 
 - If `gh` is missing or unauthenticated, stop and point to `https://cli.github.com` / `gh auth login` — don't work around it.
 - **Companion-kit check.** afkkit is glue: it needs implementkit, commitkit, reviewkit, qakit, and prkit to do the actual work. Check which are installed. If a kit a step needs is absent, **stop and name it** rather than improvising its job badly — an orchestrator missing its steps degrades by refusing clearly, not by half-doing the work. (Each step below also names the plain `gh` fallback where the action is trivial enough to run directly.) orcakit is a prerequisite the human runs manually before invoking afkkit (see [Confirm the worktree](#1-confirm-the-worktree)) — afkkit never dispatches it itself, so it's outside this check.
-- **Conductor model.** The review step inherits the model of the session you launch afkkit in (see [Model routing](#model-routing)). If that session is on a mid-tier model, warn once: review quality is only as good as the conductor's model, so afkkit is best launched on a top-tier model (fable/opus).
 - **No shell / CLI available** (e.g. a browser-based agent)? You can't run `gh`, `orca`, or spawn subagents. Say so and stop — afkkit is an execution orchestrator; there's nothing to reason out in prose. Point the user at running the individual kits interactively instead.
 
 ## How the conductor runs each step
@@ -56,17 +55,22 @@ afkkit runs as a **conductor session**: the session you invoke it in sequences t
 
 ## Model routing
 
-Default per-step models, chosen so cheap mechanical work runs cheap and judgment work runs strong:
+Default per-step models. Two things drive each assignment: **what a mistake costs** — a missed decision at the spec gate poisons every step after it, while a clumsy commit message is cosmetic — and **how often the step runs**, since commit fires up to four times per issue and the PR exactly once. Savings come from the frequent, low-stakes steps; capability is bought where a single wrong call sinks the run.
 
-| Step | Model | Why |
-|------|-------|-----|
-| Spec gate | sonnet | A fast classification, not deep reasoning. |
-| Implement | sonnet | The bulk of the work; a mid model implements a settled spec well. |
-| Commit | sonnet | Mechanical — group the diff, write the message. |
-| Review | **conductor's model** | The quality gate; inherits the strong model you launched the session on (fable/opus). |
-| Fix | sonnet | Applying review findings against a concrete list. |
-| QA plan | sonnet | Grounded generation from the diff. |
-| PR | sonnet | Title/body from the commits and diff. |
+| Step | Model | Runs | Why |
+|------|-------|------|-----|
+| Spec gate | `opus` | 1× | Gates the whole run — a missed decision-gap poisons every step after it. Runs once, so buying capability here is nearly free. |
+| Implement | `opus` | 1× | The bulk of the work; implementkit's own test + build gate is the safety net underneath it. |
+| Commit | `haiku` | ≤4× | Mechanical — group the diff, write the message. Highest frequency, lowest stakes: a weak message is cosmetic and rewritable. |
+| Review — round 1 | `fable` | 1× | The quality gate, on the strongest model, over the full branch diff. |
+| Review — rounds 2–3 | `fable` | ≤2× | Same model, delta-scoped to the fix commits (see [Fix loop](#6-fix-loop)). |
+| Fix | `opus` | ≤2× | Applying review findings against a concrete list. |
+| QA plan | `opus` | 1× | Grounded generation from the diff. |
+| PR | `opus` | 1× | Title and body from the real commits, plus the three payloads handed in. |
+
+Write the **alias** (`opus`, `fable`, `haiku`), never a pinned model ID — an alias follows its tier as the tier moves, a pinned ID rots.
+
+**Effort is not a dispatch parameter.** Reasoning effort can only be set in an agent definition's frontmatter, not passed when the conductor spawns a subagent, and it defaults to `high`. So the cheap steps state their deliberation budget **in the subagent's prompt** instead — "this is a mechanical step: read the diff, produce the output, don't go exploring the codebase." That is an instruction the subagent follows, not a setting the harness enforces. Treat it as a nudge; when you need a real cost floor, drop a tier rather than asking harder.
 
 **Inline override.** The user can override any step's model at invocation in plain language — "afkkit 42, implement on opus", "afkkit all, review on fable". Honor the override for the named step(s); everything else keeps the table. There is no config file — the table plus the spoken override is the whole routing surface.
 
@@ -93,7 +97,7 @@ If a worktree for this issue already exists (the re-run path — an issue that w
 
 ### 2. Spec gate
 
-Dispatch a subagent (sonnet) to read the issue body and the relevant code in the worktree, and classify any gaps between what the issue specifies and what building it requires. The classification is the whole point:
+Dispatch a subagent (worktree) to read the issue body and the relevant code, and classify any gaps between what the issue specifies and what building it requires. The classification is the whole point:
 
 - **Missing decisions** — product choices or trade-offs a human would have to make (which behavior is correct, which of two designs, an unstated requirement). These are exactly what a grill session settles. → **Escalate as a planning gap:** stop before writing any code, this is the cheapest possible failure point. Comment the exact open questions on the issue (phrased as the grill-questions a human should answer), and flip the label `in-progress → needs-planning` so the issue lands in the human's planning queue. Move to the next issue.
 - **Missing mechanics only** — file names, minor edge cases, naming, small ambiguities a competent implementer fills uncontroversially. → **Proceed.** The subagent returns an **assumptions list** — every mechanical choice it's making — which the conductor carries forward to the PR body so the reviewer sees exactly what was assumed.
@@ -102,7 +106,7 @@ A `ready` issue *should* clear this gate — grilling is what earns `ready`. The
 
 ### 3. Implement
 
-Dispatch a subagent (sonnet, working in the worktree) to invoke **implementkit** against the issue spec. implementkit resolves its own straight-through-vs-TDD mode and enforces the repo's own test + build gate before it reports done — afkkit doesn't second-guess that. Two failure shapes route differently:
+Dispatch a subagent (worktree) to invoke **implementkit** against the issue spec. implementkit resolves its own straight-through-vs-TDD mode and enforces the repo's own test + build gate before it reports done — afkkit doesn't second-guess that. Two failure shapes route differently:
 
 - implementkit **bounces the spec as too thin** — it hit a genuine *decision* gap the [spec gate](#2-spec-gate) missed. Treat it as a planning gap: escalate to `needs-planning` with the specific gap commented.
 - implementkit **can't get the gate green** after its own bounded fixes — an *execution* failure, not a spec problem. Escalate keeping `in-progress`, with the failing gate output commented.
@@ -111,29 +115,29 @@ Otherwise, implementkit leaves green, unstaged changes in the worktree and afkki
 
 ### 4. Commit
 
-Dispatch a subagent (sonnet, worktree) to invoke **commitkit**, which groups the unstaged changes and writes Conventional-Commits messages from the diff. This banks the initial implementation before review. If commitkit isn't installed, the fallback is a single `git add -A && git commit` with a conventional subject derived from the issue title.
+Dispatch a subagent (worktree) to invoke **commitkit**, which groups the unstaged changes and writes Conventional-Commits messages from the diff. This banks the initial implementation before review. If commitkit isn't installed, the fallback is a single `git add -A && git commit` with a conventional subject derived from the issue title.
 
 ### 5. Review
 
-Dispatch a subagent (**conductor's model**, worktree) to invoke **reviewkit** against the branch diff. reviewkit returns severity-ranked findings across its passes. The conductor splits them into **blockers** (correctness, completeness, security — must fix) and **nits** (polish, style — fix once, don't gate on). This split drives the fix loop.
+Dispatch a subagent (worktree) to invoke **reviewkit** against the branch diff. reviewkit returns severity-ranked findings across its passes. The conductor splits them into **blockers** (correctness, completeness, security — must fix) and **nits** (polish, style — fix once, don't gate on). This split drives the fix loop.
 
 ### 6. Fix loop
 
 Bounded at **two fix rounds**. Per round:
 
-1. Dispatch a subagent (sonnet, worktree) to invoke **implementkit** in fix mode against the concrete blocker list from [Review](#5-review).
-2. Commit the fixes (**commitkit**, sonnet).
-3. Re-review (**reviewkit**, conductor's model) — but only re-run a full review while **blockers** remain; nits are fixed once in the first round and never trigger another round.
+1. Dispatch a subagent (worktree) to invoke **implementkit** in fix mode against the concrete blocker list from [Review](#5-review).
+2. Commit the fixes (**commitkit**).
+3. Re-review (**reviewkit**) — **delta-scoped**: point it at the fix commits and the surviving blocker list, not the whole branch diff again. Round 1 already covered the untouched code, and re-reading all of it on the strongest model is the most expensive thing this pipeline can do. Only re-review while **blockers** remain; nits are fixed once in the first round and never trigger another round.
 
 Stop the loop when no blockers survive. If blockers still survive after the second round, or a fix round can't get the gate green, **escalate keeping `in-progress`** — comment the surviving blockers (or the red gate) and move on. No PR opens with known blockers in it. Nits that were never worth a round are carried to the PR body as "known follow-ups".
 
 ### 7. QA plan
 
-Dispatch a subagent (sonnet, worktree) to invoke **qakit**, which writes a manual QA plan grounded in the diff to `docs/qa/qa-<slug>-YYYY-MM-DD.md` and runs any agent-verifiable checks itself. Then commit that doc (**commitkit**) so it travels with the branch. The PR body will point at it.
+Dispatch a subagent (worktree) to invoke **qakit**, which writes a manual QA plan grounded in the diff to `docs/qa/qa-<slug>-YYYY-MM-DD.md` and runs any agent-verifiable checks itself. Then commit that doc (**commitkit**) so it travels with the branch. The PR body will point at it.
 
 ### 8. Open the PR
 
-Dispatch a subagent (sonnet, worktree) to invoke **prkit**, handing it three things to fold into the PR body: the **assumptions list** from the [spec gate](#2-spec-gate), the **unresolved nits** carried from the fix loop, and the **QA-plan path**. prkit writes the title and body from the real commits and diff, pushes the branch, opens the PR, and — its existing behavior — advances the linked issue `in-progress → in-review`. afkkit relies on prkit for that label flip rather than duplicating it; only if prkit is absent does the conductor fall back to `gh issue edit <n> --remove-label in-progress --add-label in-review` after opening the PR by hand.
+Dispatch a subagent (worktree) to invoke **prkit**, handing it three things to fold into the PR body: the **assumptions list** from the [spec gate](#2-spec-gate), the **unresolved nits** carried from the fix loop, and the **QA-plan path**. prkit writes the title and body from the real commits and diff, pushes the branch, opens the PR, and — its existing behavior — advances the linked issue `in-progress → in-review`. afkkit relies on prkit for that label flip rather than duplicating it; only if prkit is absent does the conductor fall back to `gh issue edit <n> --remove-label in-progress --add-label in-review` after opening the PR by hand.
 
 This is the successful terminus: an open PR, a QA plan, and an `in-review` issue.
 
