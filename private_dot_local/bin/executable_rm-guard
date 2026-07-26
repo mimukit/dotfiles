@@ -26,6 +26,10 @@
 #   ASK    untracked files in a repo, any rm -rf of a directory, globbed/unknown
 #          targets, ".." traversal, sudo, xargs-fed rm, git clean, and anything
 #          outside a repo and outside temp/orca workspaces.
+#          A target like "$SP/x.txt" is judged on its resolved path when SP is
+#          assigned literally in the same command (or is HOME/TMPDIR/PWD);
+#          anything still unresolved after that — $(…), `…`, unknown names —
+#          stays "ask".
 #   DENY   /, $HOME root, system roots, and globs anchored at those roots.
 
 HOMEN=${HOME%/}
@@ -48,6 +52,94 @@ lightnorm() {
   esac
   [ -z "$p" ] && p=/
   printf '%s' "$p"
+}
+
+# --- variable resolution ---------------------------------------------------
+#
+# Agents routinely write `SP=/tmp/scratch; rm -f $SP/x.txt`. The value is right
+# there in the same command, so resolve it instead of falling back to "ask".
+# Only literal assignments count — anything whose value is itself unresolved
+# (command substitution, nested vars) is skipped and the target stays "ask".
+
+# collect_assignments <cmd> — fills ASSIGNS with "NAME=VALUE" lines.
+collect_assignments() {
+  local cmd="$1" split line k name val
+  ASSIGNS=""
+  split=$(printf '%s' "$cmd" | tr ';&|<>()' '\n')
+  while IFS= read -r line; do
+    local -a w=()
+    read -ra w <<< "$line"
+    for k in "${w[@]}"; do
+      case "$k" in
+        export|local|declare|typeset|readonly) continue ;;
+        [A-Za-z_]*=*) ;;
+        *) break ;;
+      esac
+      name=${k%%=*}; val=${k#*=}
+      case "$name" in *[!A-Za-z0-9_]*) break ;; esac
+      case "$val" in
+        \"*\") val=${val#\"}; val=${val%\"} ;;
+        \'*\') val=${val#\'}; val=${val%\'} ;;
+      esac
+      case "$val" in *'$'*|*'`'*) break ;; esac
+      ASSIGNS="$ASSIGNS$name=$val
+"
+    done
+  done <<EOF
+$split
+EOF
+}
+
+# lookup_var <name> <cwd> -> sets VAR_VAL; last assignment wins.
+lookup_var() {
+  local name="$1" cwd="$2" line found=1
+  VAR_VAL=""
+  while IFS= read -r line; do
+    case "$line" in "$name="*) VAR_VAL=${line#*=}; found=0 ;; esac
+  done <<EOF
+$ASSIGNS
+EOF
+  [ "$found" = "0" ] && return 0
+  case "$name" in
+    HOME) [ -n "$HOME" ] && { VAR_VAL=$HOME; return 0; } ;;
+    TMPDIR) [ -n "$TMPDIR" ] && { VAR_VAL=$TMPDIR; return 0; } ;;
+    PWD) [ -n "$cwd" ] && { VAR_VAL=$cwd; return 0; } ;;
+  esac
+  return 1
+}
+
+# expand_vars <target> <cwd> -> sets EXPANDED; returns 1 if anything is unknown.
+expand_vars() {
+  local s="$1" cwd="$2" out="" rest="$1" name c guard=0 brace='}'
+  EXPANDED=""
+  case "$s" in *'`'*|*'$('*) return 1 ;; esac
+  while : ; do
+    case "$rest" in *'$'*) ;; *) out="$out$rest"; break ;; esac
+    guard=$((guard+1)); [ "$guard" -gt 16 ] && return 1
+    out="$out${rest%%\$*}"
+    rest=${rest#*\$}
+    name=""
+    case "$rest" in
+      '{'*)
+        case "$rest" in *"$brace"*) ;; *) return 1 ;; esac
+        name=${rest#\{}; name=${name%%"$brace"*}
+        rest=${rest#*"$brace"} ;;
+      *)
+        while [ -n "$rest" ]; do
+          c=${rest%"${rest#?}"}
+          case "$c" in
+            [A-Za-z0-9_]) name="$name$c"; rest=${rest#?} ;;
+            *) break ;;
+          esac
+        done ;;
+    esac
+    case "$name" in ''|[0-9]*|*[!A-Za-z0-9_]*) return 1 ;; esac
+    lookup_var "$name" "$cwd" || return 1
+    case "$VAR_VAL" in *'$'*|*'`'*) return 1 ;; esac
+    out="$out$VAR_VAL"
+  done
+  EXPANDED=$out
+  return 0
 }
 
 is_deny() {
@@ -125,7 +217,15 @@ decide_target() {
   esac
   case "$target" in
     *'$'*|*'`'*)
-      D_DEC=ask; D_REASON="unresolved variable in delete target: $target"; return ;;
+      if expand_vars "$target" "$cwd"; then
+        target=$EXPANDED
+        case "$target" in
+          /|/\*|/.\*|'~'|'~/')
+            D_DEC=deny; D_REASON="refuses to delete home or root: $1"; return ;;
+        esac
+      else
+        D_DEC=ask; D_REASON="unresolved variable in delete target: $target"; return
+      fi ;;
   esac
 
   case "$target" in *..*) has_dotdot=1 ;; *) has_dotdot=0 ;; esac
@@ -334,6 +434,7 @@ EOF
 
 guard_classify() {
   WORST_RANK=-1; G_DECISION=""; G_REASON=""; RG_DEPTH=0
+  collect_assignments "$1"
   classify_command "$1" "$2"
 }
 
