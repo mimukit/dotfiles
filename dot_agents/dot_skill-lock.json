@@ -42,9 +42,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/qakit/SKILL.md",
-      "skillFolderHash": "5f5442f6fc200230443ff0446c60ba56046cc318",
+      "skillFolderHash": "2a65f8ceab294d54fb3200396a864b6e4652d68e",
       "installedAt": "2026-07-12T12:37:16.350Z",
-      "updatedAt": "2026-07-24T15:41:33.539Z"
+      "updatedAt": "2026-07-26T07:54:15.712Z"
     },
     "grillkit": {
       "source": "mimukit/skills",
@@ -177,9 +177,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/afkkit/SKILL.md",
-      "skillFolderHash": "59993a08e1d1e5195d005c46993bdac0f30c2b07",
+      "skillFolderHash": "229faeebe02ba8054bb864d1c2f347bfd911dc1a",
       "installedAt": "2026-07-24T15:41:33.523Z",
-      "updatedAt": "2026-07-24T17:02:52.340Z"
+      "updatedAt": "2026-07-25T15:57:29.396Z"
     }
   },
   "dismissed": {
