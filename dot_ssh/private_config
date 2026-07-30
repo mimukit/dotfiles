@@ -15,27 +15,6 @@ Host github.com
 	IdentityAgent none
 	IdentityFile ~/.ssh/github_mimukit
 
-Host trackwell-test-ec2
-	User ubuntu
-	HostName ec2-44-209-70-66.compute-1.amazonaws.com
-	IdentityFile ~/.ssh/trackwell.pem
-
-Host trackwell-productioin-ec2
-	User ubuntu
-	HostName ec2-18-213-127-250.compute-1.amazonaws.com
-	IdentityFile ~/.ssh/trackwell.pem
-
-Host ubuntu-vnc-ts
-	User root
-	HostName ubuntu-vnc.tail31a6dd.ts.net
-  IdentitiesOnly yes
-	IdentityFile ~/.ssh/hetzner-key
-
-Host brainaloy-dokploy-remote-ts
-	User root
-	HostName brainaloy-dokploy-remote
-  IdentitiesOnly yes
-
 Host brainaloy-ovh-ts
 	User ubuntu
 	HostName brainaloy-ovh
