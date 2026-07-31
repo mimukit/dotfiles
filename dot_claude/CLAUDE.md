@@ -8,7 +8,7 @@ The only exception: if the owner's prompt explicitly asks you to commit (and/or 
 
 Before ending a turn, stop any dev server, test watcher, or other background process you started during that turn (e.g. via Bash `run_in_background`, `wrangler dev`, `pnpm dev`/`turbo run dev`, `vite`, `node --inspect`) — use TaskStop or kill it directly. Don't leave it running "in case it's useful later" unless the user explicitly asked you to keep it up (e.g. for their own manual testing in the browser).
 
-A global Stop hook (`~/.claude/hooks/cleanup-worktree-ports.sh`) is a backstop that force-kills anything still listening on a port whose cwd is under an Orca worktree (`~/orca/workspaces/*`) once you stop — but treat that as a safety net, not a substitute for cleaning up yourself.
+A global Stop hook (`~/.claude/hooks/cleanup-worktree-ports.sh`, invoked via `~/.local/bin/agent-hook`) is a backstop that force-kills anything still listening on a port whose cwd is under an Orca worktree (`~/orca/workspaces/*`) once you stop — but treat that as a safety net, not a substitute for cleaning up yourself.
 
 ## Deleting files
 
@@ -33,3 +33,23 @@ Only fall back to handing the owner a manual `rm` (as a to-do) when the guard
 blocks the operation, or when you genuinely cannot tell whether a delete is
 safe. If a delete you expected to succeed is denied, don't retry it in different
 ways — surface it to the owner instead.
+
+## Agent hooks
+
+Our own Claude Code and Codex CLI hooks route through one dispatcher,
+`~/.local/bin/agent-hook` (chezmoi:
+`private_dot_local/bin/executable_agent-hook`). It covers three events —
+`PreToolUse` (the `rm-guard` delete check), `Notification`, and `Stop` (desktop
+toast plus worktree port cleanup) — and each entry in `~/.claude/settings.json`
+and `~/.codex/hooks.json` is one line: `bash "$HOME/.local/bin/agent-hook"
+<agent> <Event>`. Change hook behaviour by editing the dispatcher, not the JSON.
+
+Orca and herdr install their own entries into those same files and keep them
+updated; leave those alone. They coexist with ours by design — Orca strips and
+replaces only commands naming its own `agent-hooks/*-hook.sh` script, and appends
+its entry after ours. Never wrap a vendor relay inside the dispatcher: Orca would
+stop recognising its own entry, reinstall it, and every hook would fire twice.
+
+Orca's relay can be switched off entirely in Orca Settings → "Agent status
+hooks", which removes its entries and stops reinstalling them — at the cost of
+the working/waiting/done pane indicators.

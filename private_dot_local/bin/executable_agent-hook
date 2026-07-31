@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# agent-hook — one dispatcher for the hooks we own, shared by Claude Code and
+# Codex CLI (chezmoi: private_dot_local/bin/executable_agent-hook).
+#
+# Our hook logic used to be inline shell in ~/.claude/settings.json and
+# ~/.codex/hooks.json — a copy per event, per agent, quietly drifting apart.
+# Codex's notifier checked two suppression vars where Claude's checked four, so
+# Codex kept toasting inside herdr panes. Everything now routes through here:
+#
+#     bash "$HOME/.local/bin/agent-hook" <agent> <Event>
+#
+# with the hook JSON payload on stdin. One short command per event, and the
+# behaviour lives in one readable place instead of being duplicated per agent.
+#
+# Scope — this owns OUR hooks only, three events:
+#   PreToolUse     rm-guard delete check
+#   Notification   desktop toast
+#   Stop           desktop toast + worktree port cleanup
+#
+# Vendor hooks are deliberately NOT routed through here. Orca and herdr install
+# and maintain their own entries alongside ours, and both are careful about it:
+# Orca's applyManagedHooks() strips only commands matching its own script name
+# and appends its entry after ours, so the two coexist without either clobbering
+# the other. Wrapping their relays here would mean Orca no longer recognises its
+# own entry, re-adds it, and every hook fires twice. Leave them alone.
+#
+# Design rules (all four are load-bearing — see the notes at each site)
+#   1. Only feat_rm_guard writes to stdout. Anything else leaking bytes would
+#      corrupt the permission decision the agent parses.
+#   2. rm-guard fails CLOSED; every other feature fails open and never breaks a
+#      turn. Hence no `set -e` — one dead feature must not abort the dispatcher.
+#   3. stdin is drained exactly once into $payload, then piped to each consumer.
+#   4. The script always exits 0. A non-zero exit is a hook error to the agent.
+
+RM_GUARD="$HOME/.local/bin/rm-guard"
+PORT_CLEANUP="$HOME/.claude/hooks/cleanup-worktree-ports.sh"
+
+# Suppress desktop toasts when a supervising UI already surfaces agent state.
+# Claude used to check all four of these and Codex only the first two — one list
+# now, both agents. ORCA_PANE_KEY is pane identity rather than hook plumbing, so
+# it stays set even if Orca's "Agent status hooks" setting is ever turned off.
+NOTIFY_SUPPRESS_VARS="ORCA_PANE_KEY ORCA_AGENT_HOOK_PORT HERDR_ENV SUPERSET_HOME_DIR"
+
+# --- features ---------------------------------------------------------------
+
+# The one function allowed to write to stdout. rm-guard prints a permission
+# decision for deletes and nothing at all otherwise, letting non-deletes fall
+# through to the agent's normal permission flow.
+feat_rm_guard() {
+  local tool
+  # Claude scopes this entry to matcher "Bash" in settings.json. Codex has no
+  # matcher support, so the tool check is repeated here — and Codex payloads may
+  # not name a tool at all, so an empty name passes through to rm-guard, which
+  # finds no command and prints nothing.
+  tool=$(payload_get '.tool_name // .tool_input.tool_name // ""')
+  case "$tool" in
+    Bash | bash | Shell | shell | "") ;;
+    *) return 0 ;;
+  esac
+
+  if [ -r "$RM_GUARD" ]; then
+    printf '%s' "$payload" | bash "$RM_GUARD" 2>/dev/null
+    return 0
+  fi
+
+  # Fail closed: with the guard gone, block anything that looks like a delete.
+  if printf '%s' "$payload" | grep -Eq '(^|[^[:alnum:]_])rm([^[:alnum:]_]|$)'; then
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"rm-guard script missing; blocking rm for safety"}}'
+  fi
+  return 0
+}
+
+feat_notify() {
+  local message="$1" title var
+  for var in $NOTIFY_SUPPRESS_VARS; do
+    eval "[ -n \"\${$var:-}\" ]" && return 0
+  done
+  command -v terminal-notifier >/dev/null 2>&1 || return 0
+  case "$AGENT" in
+    codex) title="Codex" ;;
+    *) title="Claude Code" ;;
+  esac
+  terminal-notifier -title "$title" -message "$message" >/dev/null 2>&1
+  return 0
+}
+
+# Kills dev/test servers left listening in an ephemeral Orca worktree. The
+# script self-limits to ~/orca/workspaces/*, so it never touches a dev server in
+# a regular checkout. Claude-only before this; Codex gets it too now.
+feat_port_cleanup() {
+  [ -r "$PORT_CLEANUP" ] || return 0
+  printf '%s' "$payload" | AGENT_PROJECT_DIR="$PROJECT_DIR" sh "$PORT_CLEANUP" >/dev/null 2>&1
+  return 0
+}
+
+# --- helpers ----------------------------------------------------------------
+
+payload_get() {
+  [ -n "$HAVE_JQ" ] || return 0
+  printf '%s' "$payload" | jq -r "$1" 2>/dev/null
+}
+
+usage() {
+  cat <<'EOF'
+agent-hook — central hook dispatcher for Claude Code and Codex CLI
+
+  agent-hook <claude|codex> <Event>   dispatch a hook (payload JSON on stdin)
+  agent-hook --help                   this message
+
+Handled events: PreToolUse, Notification, Stop.
+Orca and herdr manage their own hook entries separately — by design.
+EOF
+}
+
+# --- main -------------------------------------------------------------------
+
+case "${1:-}" in
+  -h | --help | help | "")
+    usage
+    exit 0
+    ;;
+esac
+
+AGENT="$1"
+EVENT="${2:-}"
+
+HAVE_JQ=""
+command -v jq >/dev/null 2>&1 && HAVE_JQ=1
+
+# Drain stdin once, before anything can exit early. Leaving the pipe unread
+# risks SIGPIPE or a blocked agent (design rule 3).
+payload=$(cat)
+
+PROJECT_DIR=$(payload_get '.cwd // .tool_input.cwd // ""')
+[ -n "$PROJECT_DIR" ] || PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${CODEX_PROJECT_DIR:-$PWD}}"
+
+case "$EVENT" in
+  PreToolUse)
+    feat_rm_guard
+    ;;
+  Notification)
+    feat_notify "Awaiting your input"
+    ;;
+  Stop)
+    feat_notify "Task completed"
+    feat_port_cleanup
+    ;;
+esac
+
+exit 0
