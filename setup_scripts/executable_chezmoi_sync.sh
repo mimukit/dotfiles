@@ -46,12 +46,19 @@ RED='\033[0;31m'
 # Edit these lists to match what your update flows touch.
 
 # Modifications only (safe; managed files only).
+# Note on the two agent hook files below: Orca and herdr install their own hook
+# entries into them and refresh those entries on upgrade, so both files legitimately
+# change outside chezmoi and need re-adding. Our own entries sit alongside the
+# vendor ones and are left alone — Orca matches only commands naming its own
+# script. See private_dot_local/bin/executable_agent-hook.
 RE_ADD_PATHS=(
   "$HOME/.zshrc"
   "$HOME/.ssh/config"
   "$HOME/.claude/settings.json"
   "$HOME/.claude/CLAUDE.md"
   "$HOME/.claude/statusline.sh"
+  "$HOME/.local/bin/agent-hook"
+  "$HOME/.local/bin/rm-guard"
   "$HOME/.config/nvim"
   "$HOME/.config/brew/Brewfile"
   "$HOME/.config/icons"
@@ -61,6 +68,7 @@ RE_ADD_PATHS=(
   "$HOME/.codex/hooks.json"
   "$HOME/.codex/rules/default.rules"
   "$HOME/.codex/AGENTS.md"
+  "$HOME/.codex/herdr-agent-state.sh"
   "$HOME/.config/yazi/package.toml"
 
 )

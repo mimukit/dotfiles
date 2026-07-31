@@ -168,28 +168,28 @@ trusted_hash = "sha256:d1da1ae0f9bb721fdd6dbe911717c3701a847e07d98fb55d0cc850151
 trusted_hash = "sha256:f2cb47f47eaa1079fc8c171d2cb346c44f5646776acfe1148925c431f3dc1d1d"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:pre_tool_use:1:0"]
-trusted_hash = "sha256:f2cb47f47eaa1079fc8c171d2cb346c44f5646776acfe1148925c431f3dc1d1d"
+trusted_hash = "sha256:71b0fa311e36f966700c7171152ace00ce0720c95646ffbd2fd5548eb9327552"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:permission_request:0:0"]
-trusted_hash = "sha256:77bf914acb3378491840d4c496a27cbc4910ac75731625d40566f8dfecea3534"
+trusted_hash = "sha256:6693e730629969ec49e6042a9975fd5ef422c5f56c2a5ecfb3efbef7adaac7e2"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:post_tool_use:0:0"]
-trusted_hash = "sha256:ccebca5c51bb867dd9e0fab700b308d999bbf3a64d1a69dd7636fe8d8230d534"
+trusted_hash = "sha256:e85b46104a4861e8615e33d43de913cc1a6be991c97a4d8e637e1ed5055a5262"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:session_start:0:0"]
-trusted_hash = "sha256:541e4662347b7633131996866a5b925512808df56ba429421f5450e45bd168bd"
+trusted_hash = "sha256:070b68793002898905c0c5cdd8c469e5ff4b4fddc1554ab7b510ae3be86f8305"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:user_prompt_submit:0:0"]
-trusted_hash = "sha256:16c686cdab68d1aab14ce596fffeb8be50efd904a7cdf27fcecbc34bc6e4438b"
+trusted_hash = "sha256:a4c5139811dc9522d49dc3ec573724de23201afd30d5e41e20de825616084be5"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:subagent_start:0:0"]
-trusted_hash = "sha256:5621f114e16a0119955268a53b196b8175d5004cac5403456c2038c2241f0e05"
+trusted_hash = "sha256:1c997ac72d2d998ce233443a713b3ae013673665a87e70c27eeb19de7b7055bd"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:subagent_stop:0:0"]
-trusted_hash = "sha256:b90e03e006ca4a7ee637c44e1c1bbcb7252b2801acca7d3f2eb31639190e7928"
+trusted_hash = "sha256:8f144ba32c3b067289c695a0acf64e2a81fb3acaac2956ad05650570f58ac679"
 
 [hooks.state."/Users/mukit/.codex/hooks.json:stop:1:0"]
-trusted_hash = "sha256:4435562863cd55287dea23ecb79fafe9eed5360985b9c62737d6bffecc050d4e"
+trusted_hash = "sha256:995bbbbbd0ea79f79ef04861ba05883fc0cf2442a836182c138749648b366e9f"
 
 [shell_environment_policy.set]
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
