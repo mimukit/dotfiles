@@ -30,7 +30,15 @@ Research before proposing, so the plan reuses what exists instead of reinventing
 - **Greenfield (no repo yet):** skip the code research; ground the plan in the user's stated goals and constraints.
 
 ### 3. Diverge — explore approaches
-Brainstorm the real options. For a decision with more than one credible path, lay out the alternatives with their tradeoffs and **recommend one** — give the user something concrete to accept or redirect, not a naked menu. This is the generative half; don't collapse to the first idea.
+Brainstorm the real options and **recommend one** — something concrete to accept or redirect, not a naked menu. This is the generative half: don't settle for the first idea, and consider the unconstrained version of the work before narrowing to the practical one.
+
+When more than one credible path exists, default to a spread that is genuinely different rather than variants of one idea — a **minimal viable** (the smallest diff that ships and is useful), an **ideal** (the shape you'd choose with time to do it properly), and where one exists a **lateral** (a reframe that dissolves the problem instead of solving it). Name what each option **reuses** from the research above, so the plan stays anchored to the code you just read. Collapsing to a single approach is fine when the work warrants it — "no credible alternative" beats an invented Option B.
+
+The failure mode is options that only *look* plural:
+
+> **Variants (avoid):** cache the response · cache it with a shorter TTL · cache it behind a flag we can tune later. One idea in three hats — there's no real choice to make.
+>
+> **Distinct (aim for):** cache the response — smallest diff, ships this week, goes stale on writes · denormalize the read path so there's nothing to cache — a migration, but the whole staleness class disappears · don't fix it here at all — it's only slow because it's called in a loop, so batch upstream and the endpoint stops mattering.
 
 ### 4. Converge — settle the structure
 Resolve the structural decisions a coherent draft needs — the architecture, the phases, the scope boundary — one at a time, each with a recommended answer. Then **stop**: deliberately leave the deeper, thin, or still-uncertain spots for grillkit rather than grinding every edge case here. Record those under **Open questions** in the doc so the hardening step has a target.
@@ -64,7 +72,7 @@ The problem, why it matters now, and the outcome that means success.
 | <the choice> | <what we picked and, briefly, why> |
 
 ## Approach
-The plan body as phases/milestones/tasks — each a concrete, verifiable unit of work. This is the structure issuekit reads to propose an issue breakdown.
+The chosen approach and what it **reuses** from the existing codebase, then the plan body as phases/milestones/tasks — each a concrete, verifiable unit of work. This is the structure issuekit reads to propose an issue breakdown. When the alternatives were close, keep the rejected ones to a line each so the choice stays legible later.
 
 ## Open questions
 Unresolved or thin spots, written as targets for grillkit to interrogate.
