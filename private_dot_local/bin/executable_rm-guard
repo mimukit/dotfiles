@@ -29,7 +29,10 @@
 #          A target like "$SP/x.txt" is judged on its resolved path when SP is
 #          assigned literally in the same command (or is HOME/TMPDIR/PWD);
 #          anything still unresolved after that — $(…), `…`, unknown names —
-#          stays "ask".
+#          stays "ask". A leading `cd DIR` retargets the relative paths that
+#          follow it; when the cd target can't be resolved to a real directory,
+#          every later relative delete stays "ask" rather than resolving
+#          against a stale cwd.
 #   DENY   /, $HOME root, system roots, and globs anchored at those roots.
 
 HOMEN=${HOME%/}
@@ -52,6 +55,56 @@ lightnorm() {
   esac
   [ -z "$p" ] && p=/
   printf '%s' "$p"
+}
+
+# resolve_path <path> — collapse ".." for real. Physically (via cd -P) when the
+# directory exists, so symlinked components resolve to where they actually
+# point; lexically otherwise. Only paths containing ".." are touched.
+#
+# Sets RESOLVED and RP_PHYSICAL (1 = trustworthy, 0 = lexical guess). Assigns
+# globals rather than printing: a $(…) call would run it in a subshell and
+# RP_PHYSICAL would never make it back.
+resolve_path() {
+  local p="$1" d b rd comp
+  RESOLVED="$p"; RP_PHYSICAL=1
+  case "$p" in *..*) ;; *) return ;; esac
+
+  if [ -d "$p" ]; then
+    rd=$(cd "$p" 2>/dev/null && pwd -P)
+    [ -n "$rd" ] && { RESOLVED="$rd"; return; }
+  fi
+  d=${p%/*}; b=${p##*/}
+  [ -n "$d" ] || d=/
+  if [ "$b" != ".." ] && [ -d "$d" ]; then
+    rd=$(cd "$d" 2>/dev/null && pwd -P)
+    if [ -n "$rd" ]; then
+      case "$rd" in
+        /) RESOLVED="/$b" ;;
+        *) RESOLVED="$rd/$b" ;;
+      esac
+      return
+    fi
+  fi
+
+  # Nothing on disk to walk — collapse lexically. Wrong under symlinks, so this
+  # feeds the deny check but never earns an allow on its own.
+  RP_PHYSICAL=0
+  local -a parts=() stack=()
+  local oldifs=$IFS
+  IFS=/; read -ra parts <<< "$p"; IFS=$oldifs
+  for comp in "${parts[@]}"; do
+    case "$comp" in
+      ''|.) continue ;;
+      ..)
+        if [ ${#stack[@]} -gt 0 ]; then
+          unset "stack[$(( ${#stack[@]} - 1 ))]"
+          stack=( ${stack[@]+"${stack[@]}"} )
+        fi ;;
+      *) stack+=( "$comp" ) ;;
+    esac
+  done
+  if [ ${#stack[@]} -eq 0 ]; then RESOLVED="/"; return; fi
+  RESOLVED="/$(IFS=/; printf '%s' "${stack[*]}")"
 }
 
 # --- variable resolution ---------------------------------------------------
@@ -142,6 +195,46 @@ expand_vars() {
   return 0
 }
 
+# --- cwd tracking ----------------------------------------------------------
+#
+# The hook payload carries one cwd — the session's. A command that opens with
+# `cd /tmp/scratch && rm -f a.json` would otherwise have "a.json" resolved
+# against the session cwd, which both nags on genuinely-temp deletes and, worse,
+# could auto-allow a repo path the command never touched. Track cd instead, and
+# fail SAFE when its target is anything we can't pin to a real directory.
+
+# apply_cd <raw-target> — updates CUR_CWD, or sets CD_UNKNOWN=1.
+apply_cd() {
+  local d="$1"
+  case "$d" in
+    \"*\") d=${d#\"}; d=${d%\"} ;;
+    \'*\') d=${d#\'}; d=${d%\'} ;;
+  esac
+  if [ -z "$d" ]; then
+    # bare `cd` goes home; treat as unknown rather than guessing at $CDPATH etc.
+    [ -n "$HOME" ] && { CUR_CWD=$HOME; CD_UNKNOWN=0; return; }
+    CD_UNKNOWN=1; return
+  fi
+  case "$d" in
+    *'$'*|*'`'*)
+      expand_vars "$d" "$CUR_CWD" || { CD_UNKNOWN=1; return; }
+      d=$EXPANDED ;;
+  esac
+  case "$d" in
+    *'*'*|*'?'*|*'['*|*..*|-) CD_UNKNOWN=1; return ;;
+  esac
+  case "$d" in
+    '~') d=$HOME ;;
+    '~/'*) d=$HOME/${d#\~/} ;;
+  esac
+  case "$d" in /*) ;; *) d=$CUR_CWD/$d ;; esac
+  d=$(lightnorm "$d")
+  # An unreadable target means we mis-parsed (a space in the path, a typo) —
+  # don't pretend to know where the following deletes land.
+  [ -d "$d" ] || { CD_UNKNOWN=1; return; }
+  CUR_CWD=$d; CD_UNKNOWN=0
+}
+
 is_deny() {
   local p="$1"
   [ "$p" = "/" ] && return 0
@@ -203,8 +296,8 @@ record() {
 # decide_target <target> <verb> <recursive> <cwd> -> sets D_DEC, D_REASON
 decide_target() {
   local target="$1" verb="$2" recursive="$3" cwd="$4"
-  local stripped has_dotdot globby t p cpath base
-  D_DEC=""; D_REASON=""
+  local stripped has_dotdot globby t p rp cpath base
+  D_DEC=""; D_REASON=""; D_TEMP=0
 
   case "$target" in
     /|/\*|/.\*|'~'|'~/'|'$HOME'|'${HOME}'|'$HOME/')
@@ -236,28 +329,40 @@ decide_target() {
     '~') t=$HOME ;;
     '~/'*) t=$HOME/${t#\~/} ;;
   esac
-  case "$t" in /*) ;; *) t=$cwd/$t ;; esac
+  case "$t" in
+    /*) ;;
+    *)
+      if [ "$CD_UNKNOWN" = "1" ]; then
+        D_DEC=ask; D_REASON="relative delete after an unresolved cd: $target"; return
+      fi
+      t=$cwd/$t ;;
+  esac
   p=$(lightnorm "$t")
+  resolve_path "$p"; rp=$RESOLVED
 
-  cpath=$p
+  cpath=$rp
   if [ "$globby" = "1" ]; then
-    base=${p##*/}
+    base=${rp##*/}
     case "$base" in
-      *'*'*|*'?'*|*'['*) cpath=${p%/*}; [ -z "$cpath" ] && cpath=/ ;;
+      *'*'*|*'?'*|*'['*) cpath=${rp%/*}; [ -z "$cpath" ] && cpath=/ ;;
     esac
   fi
 
-  if is_deny "$p" || is_deny "$cpath"; then
-    D_DEC=deny; D_REASON="refuses to delete a protected location: $p"; return
+  if is_deny "$p" || is_deny "$rp" || is_deny "$cpath"; then
+    D_DEC=deny; D_REASON="refuses to delete a protected location: $rp"; return
   fi
   if [ "$globby" = "1" ]; then
     if [ "$cpath" = "/" ] || [ "$cpath" = "$HOMEN" ] || is_deny "$cpath"; then
-      D_DEC=deny; D_REASON="refuses a glob delete at a protected location: $p"; return
+      D_DEC=deny; D_REASON="refuses a glob delete at a protected location: $rp"; return
     fi
   fi
 
-  if [ "$has_dotdot" = "0" ] && { is_temp "$cpath" || is_orca_workspace "$cpath"; }; then
-    D_DEC=allow; D_REASON=""; return
+  # Temp and orca workspaces are always allowed — recursive, globbed, sudo, or
+  # reached through "..". Judged on the RESOLVED path, so a target that merely
+  # reads as temp ("/private/tmp/x/../../../Users/…") is caught by the deny
+  # check above instead of riding the prefix out of temp.
+  if [ "$RP_PHYSICAL" = "1" ] && { is_temp "$cpath" || is_orca_workspace "$cpath"; }; then
+    D_DEC=allow; D_REASON=""; D_TEMP=1; return
   fi
 
   case "$verb" in
@@ -270,11 +375,11 @@ decide_target() {
       return ;;
     git-rm)
       if in_git "$cpath"; then D_DEC=allow; D_REASON=""
-      else D_DEC=ask; D_REASON="git rm outside a work tree: $p"; fi
+      else D_DEC=ask; D_REASON="git rm outside a work tree: $rp"; fi
       return ;;
     rmdir)
       if [ "$has_dotdot" = "0" ] && in_git "$cpath"; then D_DEC=allow; D_REASON=""
-      else D_DEC=ask; D_REASON="rmdir outside a repo/temp: $p"; fi
+      else D_DEC=ask; D_REASON="rmdir outside a repo/temp: $rp"; fi
       return ;;
   esac
 
@@ -282,17 +387,17 @@ decide_target() {
     D_DEC=ask; D_REASON="delete with .. traversal: $target"; return
   fi
   if [ "$recursive" = "1" ]; then
-    D_DEC=ask; D_REASON="recursive delete of a directory: $p"; return
+    D_DEC=ask; D_REASON="recursive delete of a directory: $rp"; return
   fi
   if [ "$globby" = "1" ]; then
-    D_DEC=ask; D_REASON="glob delete of an unknown set of files: $p"; return
+    D_DEC=ask; D_REASON="glob delete of an unknown set of files: $rp"; return
   fi
-  if in_git "$p"; then
-    if is_tracked "$p"; then D_DEC=allow; D_REASON=""
-    else D_DEC=ask; D_REASON="untracked file inside a repo (git can't restore): $p"; fi
+  if in_git "$rp"; then
+    if is_tracked "$rp"; then D_DEC=allow; D_REASON=""
+    else D_DEC=ask; D_REASON="untracked file inside a repo (git can't restore): $rp"; fi
     return
   fi
-  D_DEC=ask; D_REASON="delete outside a git repo and temp dirs: $p"
+  D_DEC=ask; D_REASON="delete outside a git repo and temp dirs: $rp"
 }
 
 # classify_verb <verb> <recmode> <sudo> <xargs> <cwd> <arg...>
@@ -332,7 +437,13 @@ classify_verb() {
   fi
   for t in "${targets[@]}"; do
     decide_target "$t" "$verb" "$recursive" "$cwd"
-    record "$D_DEC" "$D_REASON" "$sudo"
+    # Temp is allowed unconditionally, so sudo doesn't bump it to "ask" —
+    # there's nothing to lose under /tmp that root makes worse.
+    if [ "$D_TEMP" = "1" ]; then
+      record "$D_DEC" "$D_REASON" 0
+    else
+      record "$D_DEC" "$D_REASON" "$sudo"
+    fi
   done
 }
 
@@ -376,16 +487,30 @@ handle_statement() {
 
   case "$base" in
     bash|sh|zsh|dash|ksh)
-      local j nested
+      local j nested saved_cwd saved_unknown
       for (( j=0; j<${#args[@]}; j++ )); do
         if [ "${args[$j]}" = "-c" ] && [ $((j+1)) -lt ${#args[@]} ]; then
           nested="${args[*]:$((j+1))}"
           nested="${nested%\"}"; nested="${nested#\"}"
           nested="${nested%\'}"; nested="${nested#\'}"
+          # A cd inside the subshell dies with it — don't leak it outward.
+          saved_cwd=$CUR_CWD; saved_unknown=$CD_UNKNOWN
           classify_command "$nested" "$cwd"
+          CUR_CWD=$saved_cwd; CD_UNKNOWN=$saved_unknown
           return
         fi
       done ;;
+  esac
+
+  case "$base" in
+    cd)
+      local a target=""
+      for a in "${args[@]}"; do
+        case "$a" in -*) continue ;; esac
+        target="$a"; break
+      done
+      apply_cd "$target"
+      return ;;
   esac
 
   case "$base" in
@@ -422,10 +547,12 @@ classify_command() {
   local cmd="$1" cwd="$2" split line
   RG_DEPTH=$((RG_DEPTH+1))
   if [ "$RG_DEPTH" -gt 4 ]; then RG_DEPTH=$((RG_DEPTH-1)); return; fi
+  CUR_CWD="$cwd"
   split=$(printf '%s' "$cmd" | tr ';&|<>()' '\n')
   while IFS= read -r line; do
     [ -z "$line" ] && continue
-    case "$line" in *[![:space:]]*) handle_statement "$line" "$cwd" ;; esac
+    # CUR_CWD, not $cwd — an earlier statement's cd retargets what follows.
+    case "$line" in *[![:space:]]*) handle_statement "$line" "$CUR_CWD" ;; esac
   done <<EOF
 $split
 EOF
@@ -434,6 +561,7 @@ EOF
 
 guard_classify() {
   WORST_RANK=-1; G_DECISION=""; G_REASON=""; RG_DEPTH=0
+  CUR_CWD="$2"; CD_UNKNOWN=0
   collect_assignments "$1"
   classify_command "$1" "$2"
 }
