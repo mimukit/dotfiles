@@ -29,20 +29,21 @@ git branch --show-current
 
 - If `gh` is missing or unauthenticated, say so and point to `https://cli.github.com` / `gh auth login` — don't try to work around it.
 - If `git branch --show-current` is empty, stop: detached HEAD needs a branch before a PR can be opened. Offer to create or switch to one.
-- If the current branch is the default branch (`main`/`master`), stop: a PR needs a feature branch. Offer to create one (`git switch -c <name>`) before continuing.
+- If the current branch is the default branch, stop: a PR needs a feature branch. Offer to create one (`git switch -c <name>`) before continuing — and **get the name from gitkit**, which owns branch naming, rather than inventing a shape here. Work that traces to an issue gets `issue-<n>-<slug>`; anything else keeps whatever name the repo's convention or the human supplies.
 
 ### 2. Gather context
-Find the base branch and read what the branch actually changes — this is the raw material for the title and body. Fetch first so every ref below is the real remote state, not a stale local copy:
+Get the base branch from **gitkit**, then read what the branch actually changes — that diff is the raw material for the title and body. Fetch first so every ref below is the real remote state, not a stale local copy:
 
 ```sh
-git fetch origin                                                   # refresh remote-tracking refs before anything else
-gh repo view --json defaultBranchRef --jq .defaultBranchRef.name   # the base branch (structured field, not scraped output)
+git fetch origin                                         # refresh remote-tracking refs before anything else
 git log origin/<base>..HEAD --oneline --no-decorate      # commits in this PR
 git diff origin/<base>...HEAD --stat                     # files touched
 git diff origin/<base>...HEAD                            # the actual changes
 ```
 
-Read the base branch from `gh`'s structured JSON rather than parsing the display text of `git remote show origin` — the JSON field is a stable contract, the human-readable output isn't. Re-check the current branch against this authoritative base and stop if they match, including repos whose default is `develop` or `trunk`. If `gh` can't answer, fall back to `git symbolic-ref --short refs/remotes/origin/HEAD`; if `origin/HEAD` is unset, repair it with `git remote set-head origin --auto` and retry. Diff against `origin/<base>` (the just-fetched remote tip), not a local `<base>` that may be behind — otherwise the title, body, and file list are computed against commits that are no longer the merge target.
+**gitkit owns base-ref resolution** — its ladder runs `gh repo view --json defaultBranchRef` first, falls back to `git symbolic-ref --short refs/remotes/origin/HEAD`, repairs an unset `origin/HEAD` with `git remote set-head origin --auto` and retries, then checks which of `origin/main` / `origin/master` exists, and asks rather than guessing past that. Don't re-derive it here; repos whose default is `develop` or `trunk` are real, and getting this wrong silently produces an empty or enormous diff. Re-check the current branch against the base gitkit returns and stop if they match.
+
+Diff against `origin/<base>` (the just-fetched remote tip), not a local `<base>` that may be behind — otherwise the title, body, and file list are computed against commits that are no longer the merge target.
 
 Use the commits, branch name (e.g. `fix/login-123`), and diff to determine the scope, the type of change, and any issue reference (`#123`, `fixes #123`). If a linked issue clearly matters and you can't find it, ask — don't invent one.
 
@@ -54,7 +55,7 @@ git rev-list --left-right --count origin/<base>...HEAD   # "<behind>\t<ahead>"; 
 ```
 
 - **Behind by zero**: nothing to do — go to [Push the branch](#4-push-the-branch).
-- **Behind**: the branch needs `origin/<base>` rebased in — **always rebase** (`git rebase origin/<base>`), never merge the base into the branch; a merge commit muddies the PR's history and diff. Rebasing rewrites the branch, so **offer it and confirm before running** — never sync silently (mirrors the "never force-push without an ask" rule).
+- **Behind**: the branch needs `origin/<base>` brought in. Apply **gitkit's sync rule** — *rebase a branch you exclusively own and have not published for review; merge the base into a branch that is under review or shared.* At PR-open time the branch has no review on it yet, so this resolves to **rebase** (`git rebase origin/<base>`): nothing points at those commit SHAs, nothing breaks, and the PR gets a clean diff instead of a merge commit muddying it. That flips once the PR exists — a branch under review gets the base *merged* in, because rebasing would mark every review thread outdated. Rebasing rewrites the branch, so **offer it and confirm before running** — never sync silently (mirrors the "never force-push without an ask" rule).
 - **Rebase conflicts**: if the rebase stops on a conflict, **stop and surface it** — list the conflicted files (`git diff --name-only --diff-filter=U`) and resolve them (or hand them back to the user), then complete the rebase (`git rebase --continue`). Do not push, and do not open the PR, until the working tree is clean and the sync is finished. If the user declines the sync, say the PR may show conflicts and proceed only if they confirm.
 
 After a successful rebase, re-read the diff (`git diff origin/<base>...HEAD`) so the title and body reflect the rebased result.
@@ -105,7 +106,7 @@ gh issue edit <n> --remove-label in-progress --add-label in-review
 - If the issue doesn't currently carry `in-progress` (e.g. it was `ready` or already `in-review`), just add `in-review` and say what you found rather than forcing the removal. If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap.
 
 ### 9. After creating
-Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run, the common follow-ups: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or marking ready with `gh pr ready` if it was a draft.
+Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run, the common follow-ups: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or marking ready with `gh pr ready` if it was a draft. prkit's job ends here — when the reviewer is ready to pull the PR down, test it by hand, and land it, that's mergekit's half of the PR's life.
 
 ## Notes
 

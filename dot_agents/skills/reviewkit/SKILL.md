@@ -3,7 +3,7 @@ name: reviewkit
 description: >-
   Review AI-agent-implemented code specifically — four ordered passes for convention-fit, agent-slop signatures, requirement-completeness, then correctness — against the working tree or the branch diff, findings ranked by severity and backed by quoted evidence. Use when the user says "review this code", "review my changes", "review this diff", "check the agent's work", "/reviewkit", or wants a self-review of AI-written changes before commit or PR — even if they don't name the passes.
 license: MIT
-allowed-tools: Read, Bash, Grep, Glob, Write
+allowed-tools: Read, Bash, Grep, Glob, Write, Task, Agent
 metadata:
   internal: false
 ---
@@ -13,6 +13,14 @@ metadata:
 Review code an AI agent just wrote, for the failure modes that are specific to AI-generated changes. A generic "find bugs" pass misses the three things agents get wrong most: writing code that is *correct in a vacuum but wrong for this repo*, padding a change with *plausible-looking cruft nobody asked for*, and quietly *leaving part of the job undone*. reviewkit runs those checks first, then a correctness pass, and reports findings ranked by severity — it does not fix anything. Fixing is the human's call, or a handoff to an implement-style skill.
 
 This is a **reviewer, not an editor.** It reads the change and judges it; it never edits source. Its one optional artifact is a review report the user can save to feed a PR description.
+
+## Review with fresh eyes
+
+**The reviewer should not be the agent that wrote the change.** reviewkit usually fires in the same session that just produced the code, which means the reviewer arrives carrying every rationalization it made while writing — the shortcut it already justified, the edge case it already decided didn't matter. That is the single biggest way this review turns into a rubber stamp.
+
+So when you have a subagent tool, **delegate the passes to a fresh subagent**: hand it the diff, the stated intent, and the passes below, and let it report back with no memory of the implementation session. Review its findings, then present them. When no subagent tool is available, run the passes yourself but say plainly in the report that this was a **self-review** — the user needs to know how much weight the verdict carries. Never quietly self-review a change you just wrote.
+
+The one thing that survives either mode: judge the code that is actually on disk, not the code you remember intending to write.
 
 ## When this fires
 
@@ -26,8 +34,8 @@ It is distinct from a generic correctness linter: reviewkit leads with **convent
 
 Ground the review in an actual diff — reviewing from memory is worthless. Detect the target from git state, then state your pick and let the user override:
 
-- **Uncommitted changes present** (`git status --porcelain` is non-empty) → review the working tree: `git diff HEAD` (include staged with `git diff --staged`). This is the default after a fresh coding session.
-- **Clean tree, branch ahead of its base** → review the branch diff. Find the base from `git symbolic-ref --short refs/remotes/origin/HEAD` first; if that local ref is unavailable and network access exists, confirm with `git remote show origin`, then fall back to whichever of `main` or `master` exists. Run `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
+- **Uncommitted changes present** (`git status --porcelain` is non-empty) → review the working tree: `git diff HEAD` (include staged with `git diff --staged`). This is the default after a fresh coding session. **`git diff` does not show untracked files** — a brand-new file an agent never staged is invisible to it, and a whole new module silently escaping review is the worst possible miss. List them with `git status --porcelain` (the `??` entries) or `git ls-files --others --exclude-standard`, and `Read` each one in full as part of the change.
+- **Clean tree, branch ahead of its base** → review the branch diff. **Get the base branch from gitkit**, which owns that resolution — don't assume `main`, and don't re-derive it here; a wrong base silently yields an empty diff or one containing half the repo's history, and both look like a real review target. Then run `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
 - **If the invocation names a target** ("review the branch", "review my staged changes") → honor it directly, skip detection.
 
 Say which target you chose and why in one line, then proceed. If neither applies (clean tree, no branch ahead), ask what to review rather than guessing.
@@ -40,6 +48,8 @@ Read the diff in full before judging anything. Note the change's *stated intent*
 
 - **Skip what tooling already enforces.** Don't report formatting, import order, or lint rules a formatter/linter/CI catches on its own — the whole value of this review is what machines *miss*. Spend it there.
 - **Every finding needs evidence.** Quote the offending hunk and name what it violates — a specific line of a repo convention doc, the stated intent, a real API signature, or the concrete failing input. A finding you can't back with a quote is a guess; drop it. This is the primary guard against inventing findings.
+- **Hold each finding to a confidence bar before it ships.** Ask what would have to be true for this to be wrong, and report it only when the answer is *confirmed by the code, a reproduction, or a test run*, or *strongly supported with no credible innocent explanation*. "Probably a problem, but I couldn't check the runtime behavior" clears the bar only if you say which part you couldn't check. Anything weaker is not a finding — it is an **unverified area**, and it belongs in the coverage note in [Report the findings](#6-report-the-findings) rather than in the findings list. Downgrading a hunch to "unverified" is a real result; dressing it up as a bug wastes the reader's time and burns their trust in the whole report.
+- **Track what you could not judge.** As you go, keep a running list of areas the review didn't genuinely cover — a concurrency path you can't reason about statically, a security boundary whose auth model lives outside the diff, generated files you spot-checked rather than read, a dependency whose real API you couldn't verify offline. Silence reads as "clean," so an unexamined area must be named, not omitted.
 
 ### 2. Pass 1 — Convention-fit
 
@@ -87,6 +97,14 @@ Now the classic review, on what survives the earlier passes:
 - **Security** — injection, missing authz/ownership checks, secrets in code or logs, unsafe deserialization, unvalidated input crossing a trust boundary.
 - **Tests** — do the changed tests actually exercise the change, and do they pass? Run the repo's test command if one is obvious and cheap; report what you ran and what happened.
 
+A passing test suite is not evidence of a tested change — agents write tests that pass *because they assert nothing that could fail*. Hold each new or changed test to these:
+
+- **Would it fail against a broken implementation?** Mentally invert the logic it covers, or break a boundary value. If the test still passes, it's decoration. This is the single sharpest test-quality question.
+- **Does it assert observable behavior**, or does it re-implement the production logic in the assertion and compare the code to itself?
+- **Is the scenario visible in the test**, or buried in setup/fixtures/mocks so thoroughly that the test proves the mock works and nothing else?
+- **Does it cover the failure paths the change introduced**, not just the happy path the feature demo walks?
+- **Does it prove the stated requirement**, or an easier neighbor of it?
+
 ### 6. Report the findings
 
 Print the review inline, findings ranked by severity so the reader triages at a glance. Tag each:
@@ -95,7 +113,19 @@ Print the review inline, findings ranked by severity so the reader triages at a 
 - 🟡 **Should-fix** — a genuine problem worth addressing, not release-blocking.
 - 🟢 **Nit** — polish, style, minor slop; take it or leave it.
 
-For each finding give, in this order: the location as `file:line` (clickable), which pass caught it (convention / slop / completeness / correctness), **a quote of the offending hunk and what it violates** (the convention doc line, the stated requirement, the real API, or the failing input — per the evidence ground rules in [Pick the review target](#1-pick-the-review-target)), what's wrong in one sentence, and the concrete fix. Lead with a one-line verdict — ready, ready-with-fixes, or needs-work — then the findings, most severe first. If a pass found nothing, say so; a clean pass is a real result. **Never invent findings to look thorough** — if you can't quote the evidence, it's not a finding. An empty report on a clean diff is the honest outcome.
+For each finding give, in this order: the location as `file:line` (clickable), which pass caught it (convention / slop / completeness / correctness), **a quote of the offending hunk and what it violates** (the convention doc line, the stated requirement, the real API, or the failing input — per the evidence ground rules in [Pick the review target](#1-pick-the-review-target)), what's wrong in one sentence, and the concrete fix. If a pass found nothing, say so; a clean pass is a real result. **Never invent findings to look thorough** — if you can't quote the evidence, it's not a finding. An empty report on a clean diff is the honest outcome.
+
+Structure the report as: the verdict line, the findings most severe first, then the coverage note.
+
+**The verdict follows from the findings — it is not a vibe.** Pick it mechanically so a reader can trust it without re-reading the list:
+
+- **needs-work** — one or more 🔴 Blockers.
+- **ready-with-fixes** — no Blockers, but at least one 🟡 Should-fix.
+- **ready** — nothing above 🟢 Nits. Nits never hold up a change.
+
+Never soften a verdict because the change is mostly good or the author worked hard on it; never harden one to look rigorous. If a Blocker is real, the change needs work even if everything else is excellent.
+
+Close with the **coverage note**: one short paragraph naming what this review did *not* verify — the unverified areas collected during the passes, plus whether you ran the tests and whether this was a fresh-eyes review or a self-review (per [Review with fresh eyes](#review-with-fresh-eyes)). A reader who knows the concurrency path went unexamined can go look; a reader who assumes it was covered cannot. When a gap is serious enough that a real problem could be hiding in it — an unreviewed security boundary, a migration nobody can validate here — say the change is **blocked on outside review** rather than issuing a verdict the evidence doesn't support.
 
 Do not edit source or apply fixes. If the user wants the fixes made, hand off: they run an implement-style skill, or fix by hand and re-run reviewkit.
 

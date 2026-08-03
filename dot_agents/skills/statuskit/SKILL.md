@@ -50,7 +50,9 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 
 **git (always):**
 - working tree — `git status --porcelain`, current branch, upstream ahead/behind, `git log @{u}.. --oneline` (unpushed — skip if the branch has no upstream set, which is itself the "push/publish" signal), `git stash list`, and any local branches carrying unmerged commits.
-- **branch → issue mapping** — resolve the current branch to a tracked issue by reading an open PR's `Closes #N` (the reliable signal); fall back to a branch-name heuristic (`#N` / `issue-N` / a slug matching an issue title). When it stays unmappable, treat a dirty non-`main` branch as *continue*, not *commit*.
+- **the base branch** — from **gitkit**, not an assumption that it's `main`. Every "is this a feature branch?" and "is it unmerged?" judgment below turns on it, and on a `develop`- or `trunk`-defaulted repo, assuming `main` misreads the whole dashboard.
+- **branch → issue mapping** — resolve the current branch to a tracked issue by reading an open PR's `Closes #N` (the reliable signal); fall back to a branch-name heuristic. **The branch-name pattern comes from gitkit**, which named the branch in the first place (`issue-<n>-<slug>`) — read it there rather than keeping a second copy of the parser here, or a rename upstream leaves this one silently matching nothing. A bare `#N` or a slug matching an issue title are the looser fallbacks. When it stays unmappable, treat a dirty branch that isn't the base as *continue*, not *commit*.
+- **worktrees** — when the survey needs to know where a branch's code lives, ask gitkit rather than reading paths. statuskit never creates or removes one; it only reports.
 
 **GitHub (only when `gh` is usable):**
 - issues — `gh issue list --state open --json number,title,labels,updatedAt`, bucketed by lifecycle label (`in-progress` / `ready` / `blocked` / `in-review`) plus an **unlabeled/other-status** bucket for repos without that vocabulary. Counts and the actionable set only — no drift detection. Treat recent unlabeled issues as candidates for classification or planning, not as invisible work.
@@ -71,21 +73,21 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 1 | uncommitted work on a feature branch | continue / `commitkit` |
 | 2 | unpushed commits | `git push` |
 | 3 | a stash | restore or drop it |
-| 4 | an unmerged local feature branch | finish or clean it up |
+| 4 | an unmerged local feature branch | finish it, or clean it up — `gitkit` |
 | 5 | an unfiled plan doc | `implementkit` / `plankit` |
-| 6 | clean on `main`, nothing pending | start something (newest plan) / `plankit` |
+| 6 | clean on the base branch, nothing pending | start something (newest plan) / `plankit` |
 
 **Full ladder** (`gh` available) — every git-only state has an explicit home below. *(Surfaced, never crowned: an approved+green PR; a PR awaiting others.)*
 
 | # | State | Move → |
 |---|-------|--------|
-| 1 | your PR is red or change-requested | fix CI / address review — `implementkit` / `prkit` |
+| 1 | your PR is red or change-requested | fix CI / address review — `mergekit` |
 | 2 | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume / `implementkit` |
-| 3 | orphaned work — uncommitted on `main`/untracked branch, or unpushed commits | `commitkit` / push |
+| 3 | orphaned work — uncommitted on the base branch or an untracked branch, or unpushed commits | `commitkit` / push |
 | 4 | a stash | restore it to finish the work, or drop it if obsolete |
-| 5 | an unmerged local feature branch | finish it or clean it up |
+| 5 | an unmerged local feature branch | finish it, or clean it and its worktree up — `gitkit` |
 | 6 | stale-tracker signal fired | reconcile — `issuekit sync` |
-| 7 | a `ready` issue to start (most-recently-updated) | `implementkit` / `orcakit` |
+| 7 | a `ready` issue to start (most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
 | 8 | an unlabeled/other-status issue needing classification | classify it — `issuekit triage` |
 | 9 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
 
@@ -119,4 +121,5 @@ Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Iss
 - **Route, don't launch.** Routing means *naming* the kit and its one-line command — statuskit never invokes the kit for you; the user launches it. Naming "run `issuekit sync`" and then calling the kit yourself would restart mutation in the same breath as "orient me," breaking the read-only stance.
 - **Route, don't require.** Every recommendation degrades to a plain command when its kit isn't installed. statuskit is useful in a bare repo with only git.
 - **Hold the issuekit line.** Display issue counts and the ready/in-progress set; compute the one staleness boolean to rank "reconcile." Never render an itemized health verdict — the moment you're explaining *which* issues are stale and *why*, that's issuekit `triage`/`sync`, and statuskit should be pointing at it, not doing it.
+- **gitkit owns the git facts.** The base branch, the branch-name convention, and where a worktree lives all come from gitkit — statuskit reads them and reports. Keeping a second copy of any of them here is how a dashboard starts confidently describing a repo that no longer matches it.
 - **On-demand, no state.** statuskit doesn't persist a `STATUS.md` or a last-run cache; each run is a fresh read.
