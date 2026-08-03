@@ -53,6 +53,7 @@ RED='\033[0;31m'
 # script. See private_dot_local/bin/executable_agent-hook.
 RE_ADD_PATHS=(
   "$HOME/.zshrc"
+  "$HOME/.gitconfig"
   "$HOME/.ssh/config"
   "$HOME/.claude/settings.json"
   "$HOME/.claude/CLAUDE.md"
