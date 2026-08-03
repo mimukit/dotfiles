@@ -1,7 +1,7 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle with three modes — create issues from a plan-<slug>-YYYY-MM-DD.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, reconciled, or reviewed with the gh CLI.
+  Own the GitHub issue lifecycle with five modes — create issues from a plan-<slug>-YYYY-MM-DD.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), start a `ready` issue into its own worktree, close one out once its PR merges (close the issue, unblock dependents, tear the worktree down), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "begin working #42", "close #42", "close out #42", "wrap up #42 now the PR merged", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, started, landed, reconciled, or reviewed with the gh CLI.
 license: MIT
 allowed-tools: Bash, Read, Edit, Write
 metadata:
@@ -10,23 +10,31 @@ metadata:
 
 # issuekit
 
-Own the GitHub issue lifecycle through the [`gh` CLI](https://cli.github.com), in three explicit **modes**:
+Own the GitHub issue lifecycle through the [`gh` CLI](https://cli.github.com), in five explicit **modes**:
 
 - **`create`** — turn a plan document or a plain description into well-formed issues, with parent→child links.
+- **`start`** — take a `ready` issue into its own worktree and flip it `in-progress`.
+- **`close`** — once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down.
 - **`sync`** — reconcile and repair the PR↔issue relationship *after* the fact (issues a merged PR should have closed, a missing link on an existing PR, an un-ticked parent checklist).
 - **`triage`** — report the health of the tracker, then offer fixes you approve.
 
-One skill, three jobs, because they're the same job at three points in a dev workflow: file the work, keep it in sync as PRs land, and keep the tracker honest.
+One skill, five jobs, because they're the same job at five points in a dev workflow: file the work, pick it up, land it, keep everything in sync as PRs merge, and keep the tracker honest.
+
+**`close` vs `sync`.** They do overlapping tracker work and the split is by *scope*, not mechanism: `close` lands **one named issue** whose PR you know merged, and is the only mode that touches the filesystem (the worktree teardown). `sync` sweeps the **whole tracker** for drift after the fact — issues a merged PR should have closed but didn't, missing links, un-ticked parents — and never touches a worktree. `close` reuses `sync`'s reconciliation rather than restating it.
 
 ## When this fires
 
 The user wants to act on GitHub issues. Route to a mode from what they ask:
 
-- **create** — "create issues from this plan", "open issues for `plan-auth.md`", "file an issue for X", "start fresh with an issue".
+- **create** — "create issues from this plan", "open issues for `plan-auth.md`", "file an issue for X", "file this as an issue".
+- **start** — "start issue #42", "begin #42", "pick up #42", "spin up a worktree for #42", "I'm working on 42 now".
+- **close** — "close #42", "close out #42", "wrap up #42 now the PR merged", "tear down #42's worktree", "#42 landed, clean it up".
 - **sync** — "sync my issues", "this PR merged but the issue is still open", "link this PR to #42", "tick the parent checklist".
 - **triage** — "triage the backlog", "what's the state of my issues", "review open issues", "any stale issues".
 
-**If no mode is clear, ask first.** Present the three modes as options and let the user pick before doing anything — don't guess between creating and mutating the tracker.
+**If no mode is clear, ask first.** Present the modes as options and let the user pick before doing anything — don't guess between creating and mutating the tracker.
+
+**Worktrees and branches are gitkit's.** `start` and `close` bookend a worktree's life, and both get it from **gitkit** — the branch name, the path convention, create-or-adopt, and teardown all live there. issuekit answers *"is this issue workable, and what does the tracker say now?"*; gitkit answers *"where does the code for this branch live?"* Neither reaches into the other's internals: issuekit hands gitkit an issue number and title, gitkit hands back a branch and a path.
 
 ## Preflight (every mode)
 
@@ -89,7 +97,7 @@ The canonical map — exactly one **status** label is active at a time, moving l
 | `needs-planning` | `F1C40F` | not yet specified enough to work — a human plan/grill session is still owed | issuekit create / afkkit gate |
 | `ready` | `0E8A16` | specified and **independent** — safe to take into its own git worktree now | issuekit create |
 | `blocked` | `D93F0B` | has an unmet prerequisite; the blocker is named in the body as `Blocked by #N` | issuekit create / sync |
-| `in-progress` | `1D76DB` | actively being worked in a worktree | the implement step / a human |
+| `in-progress` | `1D76DB` | actively being worked in a worktree | issuekit start |
 | `in-review` | `5319E7` | a PR is open, awaiting review or merge | a PR-authoring skill / sync |
 | `needs-info` | `D4C5F9` | stalled pending more detail before it can proceed | triage |
 | `wontfix` | `FFFFFF` | will not be actioned | triage |
@@ -228,6 +236,106 @@ Use `Edit` for this. For an ad-hoc issue with no plan file, skip this step.
 
 ### 7. Report
 Print a table of what you created — number, title, parent, URL, and lifecycle label — and call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set** (and what each waits on). Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
+
+---
+
+## Mode: `start`
+
+Pick an issue up: guard that it's actually workable, get it a worktree, and move it to `in-progress`. This is the moment the tracker and the filesystem meet, and it is deliberately thin — the tracker half is issuekit's, the worktree half is gitkit's, and there is nothing in between.
+
+### 1. Guard — refuse anything not `ready`
+
+**Never start an issue that isn't labeled `ready`.**
+
+```sh
+gh issue view <n> --json labels,title,state
+```
+
+This one guard carries more weight than its size suggests, and it is the reason `start` lives here rather than in a worktree skill. An issue only reaches `ready` two ways: a human grilled its decisions settled, or issuekit `sync` promoted it `blocked → ready` when its prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free** — no unattended worker can get ahead of the tracker, and none can get ahead of human judgment. An orchestrator running issues without a person watching (afkkit is the one that does) depends on exactly this.
+
+Refuse with the reason, not a bare error:
+
+- **`needs-planning`** → the decisions aren't settled; it needs a human grill session first.
+- **`blocked`** → name the `Blocked by #N` prerequisite and its state.
+- **`in-progress`** → it's already started; go to the adopt path below rather than treating this as a failure.
+- **closed, or no lifecycle label** → say which, and offer `triage` to classify it.
+
+### 2. Derive the branch name
+
+**gitkit owns branch naming** — hand it the issue number and title and use what comes back. For an issue titled in the [`type(scope): summary` convention](#title-convention-every-issue-this-skill-creates), that yields `issue-<n>-<slug>`: the prefix stripped, the summary kebab-cased and capped. Don't re-derive the shape here; a second copy of the slug rules drifts from the one gitkit uses to *find* the worktree later, and then lookup silently stops matching.
+
+### 3. Get the worktree — gitkit, create or adopt
+
+Call gitkit for the branch. It looks the branch up first and **adopts an existing worktree** if there is one, creating a fresh one off the resolved base ref only when there is none. That is what makes `start` safe to re-run — the re-run path is real (an issue escalated back to `needs-planning`, grilled, and picked up again), and it must never recreate, never error, and never disturb work already sitting in the worktree.
+
+issuekit does not choose the path, the base ref, or the git commands. If gitkit isn't installed, say so and stop rather than improvising a worktree convention — a worktree in the wrong place is worse than none, because everything downstream then looks in the right place and finds nothing.
+
+### 4. Flip the label `ready → in-progress`
+
+```sh
+gh issue edit <n> --remove-label ready --add-label in-progress
+```
+
+Preview it and get an OK, like every mutation in this skill. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
+
+### 5. Report
+
+The branch, the worktree path, and the label move. **Stop there** — `start` prepares the ground and nothing else. It does not implement, does not launch an agent, and does not commit; writing code inside that worktree is a separate step someone runs from inside it.
+
+---
+
+## Mode: `close`
+
+The other bookend to [`start`](#mode-start): the issue's PR has merged, so close it out and reclaim its workspace. Every step here is destructive or outward-facing, so unlike `start` this mode **previews and waits for an OK** before it mutates anything.
+
+### 1. Confirm the PR actually merged — a hard precondition
+
+```sh
+gh pr list --search "<n>" --state merged --json number,title,url,closingIssuesReferences
+gh pr view <pr> --json state,mergedAt
+```
+
+**A merged PR is required, not assumed.** If none is found — no PR at all, or one that's still open — `close` does **nothing**: no close, no label change, no worktree removal. Report exactly what's blocking (`PR #X still open`, `no PR found for #N`) and stop.
+
+This precondition is the whole reason `close` is safe to run on a name you half-remember. Its two irreversible acts — closing the issue and deleting a worktree — are both gated behind evidence that the work actually landed. A forced teardown of unlanded work stays a deliberate thing the user does themselves, through gitkit directly.
+
+### 2. Preview, then confirm
+
+Show the full consequence in one line and wait:
+
+> PR #10 (`feat(auth): add sso login`) merged → close #42, tick parent #41's checklist, unblock #44, remove the worktree for `issue-42-add-sso-login`.
+
+Name every effect, including the ones that feel routine. Unblocking a dependent changes what someone else picks up next; removing a worktree deletes a directory they may have a terminal sitting in.
+
+### 3. Reconcile the tracker
+
+Close the issue, tick the parent epic's checklist, and flip any dependents `blocked → ready`. **This is [`sync`](#mode-sync)'s job and `close` reuses it rather than restating it** — apply [Reconcile](#1-reconcile--merged-pr-whose-issue-never-closed), [Checklist](#3-checklist--tick-the-parent-when-a-child-closes), and [Labels](#4-labels--advance-lifecycle-state-unblock-whats-freed) to this one issue:
+
+```sh
+gh issue close <n> --comment "Closed by #<pr> (merged)."
+gh issue edit <n> --remove-label in-review --remove-label in-progress
+# tick "- [ ] #<n>" → "- [x] #<n>" in a task-list parent's body
+# for each dependent whose body says "Blocked by #<n>":
+gh issue edit <dep> --remove-label blocked --add-label ready
+```
+
+Closing strips the active status label in the same action — a closed issue must never carry a stale `in-review`. Native sub-issues tick themselves; only the task-list fallback needs the body edit.
+
+### 4. Tear the worktree down — gitkit, keyed on the branch
+
+Hand this to **gitkit**, which looks the worktree up by its branch (`issue-<n>-<slug>`) through `git worktree list --porcelain`. Lookup is by branch, never by guessing at a path — which is what lets it find a worktree that predates the current path convention, or one that was moved.
+
+gitkit's own teardown rules apply and issuekit does not override them:
+
+- **A dirty worktree stops the removal** and shows what would be lost. A merged PR does not guarantee an empty worktree — scratch files, a stashed experiment, or an un-pushed follow-up commit all live there, and none of them are in the PR.
+- **Already gone → "already gone"**, not an error. `close` is idempotent in the same spirit as `start`'s adopt-and-stop; re-running it after a partial run is normal.
+- **The branch is deleted only if it's merged**, with `-d` rather than `-D`, so git itself refuses to drop unmerged work.
+
+If no worktree matches the branch, say so and carry on — the tracker half of `close` still succeeded.
+
+### 5. Report
+
+What changed: the issue closed and by which PR, the parent ticked, each dependent unblocked (`blocked → ready`), and whether the worktree was removed, left dirty, or already gone. If the worktree survived, name the path and why, so it doesn't quietly linger.
 
 ---
 
