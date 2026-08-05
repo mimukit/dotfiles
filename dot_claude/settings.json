@@ -50,7 +50,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-opus-5[1m]",
   "hooks": {
     "Notification": [
       {
@@ -216,5 +215,6 @@
     "command": "~/.claude/statusline.sh"
   },
   "effortLevel": "high",
-  "theme": "dark"
+  "theme": "dark",
+  "model": "opus[1m]"
 }
