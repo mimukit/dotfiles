@@ -234,8 +234,16 @@ Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays t
 
 Use `Edit` for this. For an ad-hoc issue with no plan file, skip this step.
 
-### 7. Report
-Print a table of what you created — number, title, parent, URL, and lifecycle label — and call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set** (and what each waits on). Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
+### 7. Hand off
+**What changed** — a table of what you created: number, title, parent, URL, and lifecycle label. Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
+
+**Where it landed** — call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set**, naming what each blocked issue waits on.
+
+**Next** — route on which set came back non-empty, naming a sibling kit only when it's installed and otherwise describing the action plainly:
+
+- **`ready` issues exist** → pick one up with `start <n>`, which gets it a worktree and flips it `in-progress`. Name the most valuable one rather than listing all of them.
+- **everything is `needs-planning`** (an ungrilled source) → the next move is a human grill session — **grillkit** on the plan, then re-run `create`, or relabel by hand once the decisions are settled. Nothing here is workable unattended yet, so say that plainly rather than offering `start`.
+- **everything is `blocked`** → surface the root prerequisite; that's the only thing anyone can act on.
 
 ---
 
@@ -278,9 +286,15 @@ gh issue edit <n> --remove-label ready --add-label in-progress
 
 Preview it and get an OK, like every mutation in this skill. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
 
-### 5. Report
+### 5. Hand off
 
-The branch, the worktree path, and the label move. **Stop there** — `start` prepares the ground and nothing else. It does not implement, does not launch an agent, and does not commit; writing code inside that worktree is a separate step someone runs from inside it.
+**What changed** — the label move (`ready → in-progress`, or that it was left alone on the adopt path).
+
+**Where it landed** — the branch and the worktree path, and whether it was created fresh or adopted.
+
+**Next** — the ground is prepared and nothing has been built, so the next move is always *switch into that worktree and start there*. Give the `cd` and name the builder: **implementkit** against this issue when it's installed, otherwise plain "implement the issue in that worktree". For an unattended run, **afkkit** is what takes it from here to an open PR — mention it only if the issue is genuinely groomed.
+
+**Stop there** — `start` prepares the ground and nothing else. It does not implement, does not launch an agent, and does not commit; naming the next step is routing, not doing it.
 
 ---
 
@@ -333,9 +347,18 @@ gitkit's own teardown rules apply and issuekit does not override them:
 
 If no worktree matches the branch, say so and carry on — the tracker half of `close` still succeeded.
 
-### 5. Report
+### 5. Hand off
 
-What changed: the issue closed and by which PR, the parent ticked, each dependent unblocked (`blocked → ready`), and whether the worktree was removed, left dirty, or already gone. If the worktree survived, name the path and why, so it doesn't quietly linger.
+**What changed** — the issue closed and by which PR, the parent ticked, and each dependent unblocked (`blocked → ready`).
+
+**Where it landed** — whether the worktree was removed, left dirty, or already gone. If it survived, name the path and why, so it doesn't quietly linger.
+
+**Next** — closing an issue is the moment a slot opens up, so point at what fills it, naming a kit only when it's installed:
+
+- **this close unblocked something** → that dependent is the strongest candidate; name it and offer `start <n>`.
+- **nothing was unblocked, but `ready` issues exist** → offer `start` on the most-recently-updated one.
+- **nothing is `ready`** → the workable queue is empty, so the move is back up the funnel: **statuskit** to re-orient, or `triage` if the tracker looks like it's hiding work.
+- **the worktree survived dirty** → that outranks everything above. Say it first; unlanded work in a stale worktree is what gets lost.
 
 ---
 
@@ -394,10 +417,10 @@ gh issue edit 42 --remove-label in-review   # closing → strip the active statu
 
 As everywhere in sync, **preview each move and wait for the OK** — never auto-relabel. If a label the map needs isn't provisioned, stop and point the user at **repokit** or the `gh label create` line — issuekit uses labels, it doesn't create them. If the repo predates this map and runs its own status scheme, follow that instead and say you did.
 
-### 5. Report
-Summarize what changed: issues closed, PR bodies repaired, checklists ticked, issues advanced or **unblocked** (`blocked` → `ready`) — each an action the user approved.
+### 5. Hand off
+**What changed** — issues closed, PR bodies repaired, checklists ticked, issues advanced or **unblocked** (`blocked` → `ready`) — each an action the user approved. Say plainly if nothing needed repairing; a clean sweep is a real result.
 
-Then close with the **actionable set** — a table of every open issue that is `in-progress` or `ready` *after* the sync, so the user sees at a glance what's being worked and what they can pick up next in a fresh worktree:
+**Where it landed** — the **actionable set**: a table of every open issue that is `in-progress` or `ready` *after* the sync, so the user sees at a glance what's being worked and what they can pick up next in a fresh worktree:
 
 ```sh
 gh issue list --state open --label in-progress --json number,title
@@ -410,6 +433,8 @@ gh issue list --state open --label ready --json number,title
 | 44 | `feat(auth): sso account linking` | `ready` |
 
 List `in-progress` rows first, then `ready`. If both sets are empty, say so instead of printing an empty table.
+
+**Next** — crown one row from that table, naming a kit only when it's installed: an `in-progress` issue is unfinished work and outranks a fresh start (resume it in its worktree — **implementkit**), while a `ready` one is the pick-up (`start <n>`). Both sets empty means the tracker has nothing workable: the move is `create` from a plan, or **plankit** if there isn't one yet.
 
 ---
 
@@ -448,8 +473,12 @@ gh issue comment <n> --body-file <decision>
 gh issue close <n> --comment "Closing as stale; reopen if still relevant."
 ```
 
-### 4. Report
-Recap what the report found and what was changed vs. left alone.
+### 4. Hand off
+**What changed** — what the report found, and which fixes you applied versus left alone. A flagged item the user declined is worth naming; it stays drift until someone decides otherwise.
+
+**Where it landed** — the tracker's state after the pass: how many open issues now carry a lifecycle label, and how many are still unmarked.
+
+**Next** — triage only classifies; the fixes it can't make itself belong to a sibling mode, so route by what survived: issues whose PR merged but that are still open → `sync`; a stale `blocked` whose prerequisite already landed → `sync`; an issue promoted to `ready` too early → a human grill session (**grillkit** when installed) before anything unattended touches it; missing lifecycle labels → **repokit**. If the tracker came back clean, say so and point at the `ready` set — the next move is `start`, not more tidying.
 
 ---
 

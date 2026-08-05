@@ -101,6 +101,13 @@ gh repo edit --add-topic new-one --add-topic another --remove-topic dropped-one
 
 To *replace the whole topic set* in one call instead of add/remove reconciliation, the topics API is cleaner: `gh api --method PUT repos/{owner}/{repo}/topics -f 'names[]=a' -f 'names[]=b'`. Either is fine — pick whichever expresses the change more simply.
 
+### 6. Hand off
+**What changed** — the description and topics as they now stand, and anything the user chose to keep current rather than replace. A field you proposed and they rejected is worth one line; it's the part most likely to come up again.
+
+**Where it landed** — the repo's About panel, with its URL, so they can eyeball the result.
+
+**Next** — name one move and stop. If `labels` hasn't run in this repo, that's it: the lifecycle labels are what an issue workflow needs and the About panel isn't. If both modes are done, repokit is finished with this repo — point at what the metadata unblocks (**issuekit** to start filing work, when installed) rather than manufacturing more configuration.
+
 ---
 
 ## Mode: `labels`
@@ -154,8 +161,12 @@ gh label edit blocked --color D93F0B --description "has an unmet prerequisite (s
 
 `gh label create --force` also upserts (create-or-overwrite) if you'd rather not branch on existence — but prefer the explicit create/edit split so the preview in [Diff against the canonical set and preview](#2-diff-against-the-canonical-set-and-preview) stays honest about what's new vs changed.
 
-### 4. Report
-List what was created, updated, and left as-is, and confirm the repo now carries the full lifecycle set — issuekit's label references will now resolve.
+### 4. Hand off
+**What changed** — what was created, updated, and left as-is, and confirm the repo now carries the full lifecycle set.
+
+**Where it landed** — the repo's label list. If you mapped onto an existing status scheme instead of provisioning ours, say which names won, because everything downstream now has to use those.
+
+**Next** — name one move and stop. The labels are a vocabulary, not an outcome: what they unblock is the issue workflow, so the move is to start using it — **issuekit** `create` to file work from a plan, or `triage` to classify issues that were sitting unlabeled while the vocabulary was missing. Absent issuekit, say the labels are now available to whatever issue workflow the repo runs. If `about` hasn't run yet and the repo's About panel is empty, offer that as the smaller follow-up.
 
 ---
 

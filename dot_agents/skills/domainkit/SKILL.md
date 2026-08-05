@@ -43,6 +43,15 @@ Show the proposed glossary entry or ADR and ask before writing. Keep the proposa
 ### 5. Defer when unsettled
 If the term or decision isn't actually resolved, don't manufacture certainty — use grillkit to settle it first when installed, or ask the user to settle it directly, then record the result.
 
+### 6. Hand off
+Keep this short. domainkit usually fires *inside* someone else's work, so a long report is an interruption on top of an interruption.
+
+**What changed** — one line: the term added or adjusted, or the ADR written with its number and title.
+
+**Where it landed** — the exact path (`CONTEXT.md`, or `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`).
+
+**Next** — normally, *return to what was interrupted*: name the grill, plan, or implementation this fired inside and pick it straight back up. Only when something genuinely follows from the write does it outrank that: a new ADR that supersedes an older one leaves the old record's `Status` stale, so offer that flip; a term that turned out to be contested isn't settled at all, so route to grillkit (when installed) or ask the user to settle it rather than leaving a guess on disk. Invoked directly with nothing to return to? Say what was written and stop — there is no next step to invent.
+
 ## CONTEXT.md — the glossary format
 
 `CONTEXT.md` is the single source of truth for **what words mean** in this project — a Domain-Driven-Design ubiquitous language, not a spec and not a status file.

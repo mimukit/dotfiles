@@ -141,9 +141,21 @@ Dispatch a subagent (worktree) to invoke **prkit**, handing it three things to f
 
 This is the successful terminus: an open PR, a QA plan, and an `in-review` issue.
 
-### 9. Report
+### 9. Hand off
 
-Emit one outcome line for the issue: **opened** (PR link) or **escalated** (which label, one-line reason, issue link). In a batch, accumulate these; the batch summary is emitted at the end (see [Batch mode](#batch-mode-all)).
+Nobody watched this run, so the report *is* the handover — a human is reading it cold, after the fact, to work out what they now have to do.
+
+**What changed** — one outcome line for the issue: **opened** (PR link) or **escalated** (which label, one-line reason, issue link). In a batch, accumulate these; the batch summary is emitted at the end (see [Batch mode](#batch-mode-all)).
+
+**Where it landed** — the worktree path and branch, which survive either way. On an escalation this is load-bearing: the commits are real work sitting on disk, and a human who doesn't know where they are will start over.
+
+**Next** — route by outcome, naming a sibling kit only when it's installed and otherwise describing the action plainly:
+
+- **opened** → the PR needs a human reviewer, which is exactly where afkkit's span ends. **mergekit `start <n>`** pulls it down into the worktree it was built in, syncs it, and prints the review pack; the QA plan committed in [QA plan](#7-qa-plan) is what they run by hand.
+- **escalated to `needs-planning`** → a decision is missing, so the move is a grill session — **grillkit** on the issue's open questions — then re-run afkkit once it's back to `ready`. Don't suggest re-running afkkit as-is; it will stop at the same wall.
+- **escalated, still `in-progress`** → execution is stuck, not the spec. Point at the commented gate output or surviving blockers and name the plain action: pick it up in the existing worktree by hand.
+
+Crown **one** next move even after a batch — the oldest open PR usually, since review is the bottleneck a returning human clears first. Route, don't launch: afkkit never invokes mergekit or grillkit itself, because both want a human in front of them.
 
 ## The escalation contract
 
@@ -163,7 +175,7 @@ Because [Confirm the worktree](#1-confirm-the-worktree) is a manual human step, 
 
 Sequential, not parallel: v1 keeps merge-conflict and resource behavior predictable, and a returning human faces one PR at a time rather than a pile of concurrent branches off the base. Process oldest-first (or by the order the user names). Each issue is independent — an escalation is logged and the walk continues to the next.
 
-At the end, print the **batch summary**: how many PRs opened (with links), how many escalated and to which state (`needs-planning` vs still `in-progress`, with links and one-line reasons). That summary plus GitHub's own PR notifications is the whole signal surface — afkkit writes no run-report artifact and sends no push notifications. Success is the PR itself; a blocked issue is a comment and a label the human sees on return.
+At the end, print the **batch summary**: how many PRs opened (with links), how many escalated and to which state (`needs-planning` vs still `in-progress`, with links and one-line reasons), then the single crowned next move from [Hand off](#9-hand-off). That summary plus GitHub's own PR notifications is the whole signal surface — afkkit writes no run-report artifact and sends no push notifications. Success is the PR itself; a blocked issue is a comment and a label the human sees on return.
 
 ## Non-goals
 

@@ -1,9 +1,9 @@
 ---
 name: statuskit
 description: >-
-  Survey a project's status and recommend the single best next move — a read-only sweep of the git working tree, GitHub issues, open PRs, and unfiled plans, rendered as a one-screen dashboard with one finish-first action crowned and routed to the kit that does it. Use when you sit down at a project and ask "what should I do next", "check project status", "where's this at", "what's next", "project status", "orient me", or run "/statuskit".
+  Survey a project's status and recommend the single best next move — a read-only sweep of the git working tree, GitHub issues, open PRs, and unfiled plans, rendered as a one-screen dashboard with one finish-first action crowned and routed to the kit that does it, and saved by default as a throwaway snapshot + tickable checklist under docs/status/. Use when you sit down at a project and ask "what should I do next", "check project status", "where's this at", "what's next", "project status", "orient me", "write me a status file", or run "/statuskit" — add "just print it" or "no file" to skip the snapshot.
 license: MIT
-allowed-tools: Bash, Read
+allowed-tools: Bash, Read, Write
 metadata:
   internal: false
 ---
@@ -81,7 +81,7 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 
 | # | State | Move → |
 |---|-------|--------|
-| 1 | your PR is red or change-requested | fix CI / address review — `mergekit` |
+| 1 | your PR is red or change-requested | fix CI / address review — `mergekit fix` |
 | 2 | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume / `implementkit` |
 | 3 | orphaned work — uncommitted on the base branch or an untracked branch, or unpushed commits | `commitkit` / push |
 | 4 | a stash | restore it to finish the work, or drop it if obsolete |
@@ -115,11 +115,42 @@ Then: <2–4 ranked runner-up actions, each with its kit>
 
 Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Issues + PRs and say so once).
 
+### 5. Write the status snapshot — the default, not an offer
+
+**Write the file every run.** A terminal dashboard scrolls away and its ranked moves can't be ticked off; the same content on disk reads better and doubles as the run's to-do list. So don't ask permission — write it, then say where it went in one line:
+
+> Saved to `docs/status/status-<repo-slug>-YYYY-MM-DD.md` — scratch file, gitignored, not committed.
+
+**Skip only when asked.** "Just print it", "no file", "don't write anything", "screen only", "/statuskit --no-file" — honor that for the run and print the dashboard alone. A skip applies to that run only; it isn't a standing preference unless the user says so or the repo's agent-guide file (`CLAUDE.md` or an equivalent) does. Skip silently too when there's no writable filesystem (below).
+
+**Where it goes.** `docs/status/status-<repo-slug>-YYYY-MM-DD.md` — a short lowercase kebab-case slug (normally the repo name; use a narrower one such as the branch or issue when the snapshot covers a slice of the project) and the ISO creation date. Create `docs/status/` if it doesn't exist. A second snapshot for the same slug and date **overwrites in place** — a status file is a point-in-time read, and keeping five from one afternoon is how a scratch directory becomes archaeology. Preserve any unchecked boxes the user has already ticked in the existing file rather than resetting them: re-derive the ladder, then carry over the checked state of moves that are still open. For genuinely distinct snapshots that would collide, make the slug more specific; only as a last resort insert a sequence immediately before the date (`status-api-02-2026-07-23.md`).
+
+**What it contains.** The dashboard as printed, with two additions the file earns:
+
+- a **provenance line** recording when the snapshot was taken and against which commit (`Snapshot: 2026-07-23 14:20 · <branch> @ <short-sha>`) — without it, a stale file reads as current;
+- the ranked moves as a **checkbox list** so the file works as a to-do, crowned move first and each carrying its kit/command:
+
+```markdown
+## Next moves
+
+- [ ] **<the #1 move>** — `<kit / command>`
+- [ ] <runner-up> — `<kit / command>`
+- [ ] <runner-up> — `<kit / command>`
+
+Surfaced, not queued: <approved+green PR / PR awaiting others, when either applies>
+```
+
+Beyond those two, don't inflate the file into a report the dashboard didn't contain — same survey, durable form.
+
+**It's disposable.** This file is scratch, not a tracked artifact: add `docs/status/` to `.gitignore` before writing the first one (say so in the same line), and leave it uncommitted. Commit it only if the user explicitly asks — then it's their call, and honor it without arguing. Skip the `.gitignore` edit if the path is already ignored or the repo has no `.gitignore` you should be touching.
+
+**No filesystem?** Print the snapshot as a codeblock with the canonical `docs/status/status-<repo-slug>-YYYY-MM-DD.md` path so the user can save it themselves.
+
 ## Notes
 
-- **Zero mutation, always.** statuskit surveys and advises; it never changes git or GitHub state. If a recommendation needs a mutation, it routes to the kit that owns it — that kit previews and gets approval on its own.
+- **Zero mutation, always.** statuskit surveys and advises; it never changes git or GitHub state. If a recommendation needs a mutation, it routes to the kit that owns it — that kit previews and gets approval on its own. The one thing it writes is the status snapshot — a gitignored scratch file that touches no git or tracker state, which is why writing it by default is still zero mutation.
 - **Route, don't launch.** Routing means *naming* the kit and its one-line command — statuskit never invokes the kit for you; the user launches it. Naming "run `issuekit sync`" and then calling the kit yourself would restart mutation in the same breath as "orient me," breaking the read-only stance.
 - **Route, don't require.** Every recommendation degrades to a plain command when its kit isn't installed. statuskit is useful in a bare repo with only git.
 - **Hold the issuekit line.** Display issue counts and the ready/in-progress set; compute the one staleness boolean to rank "reconcile." Never render an itemized health verdict — the moment you're explaining *which* issues are stale and *why*, that's issuekit `triage`/`sync`, and statuskit should be pointing at it, not doing it.
 - **gitkit owns the git facts.** The base branch, the branch-name convention, and where a worktree lives all come from gitkit — statuskit reads them and reports. Keeping a second copy of any of them here is how a dashboard starts confidently describing a repo that no longer matches it.
-- **On-demand, no state.** statuskit doesn't persist a `STATUS.md` or a last-run cache; each run is a fresh read.
+- **On-demand, no state.** Every run is a fresh read — statuskit keeps no `STATUS.md` at the repo root and no last-run cache, and it never *reads* a snapshot back to shortcut the survey. The one thing it takes from an existing file is which boxes were already ticked; the survey itself is always re-derived from git and GitHub. A `docs/status/` file is output for a human (or the next agent), not memory statuskit trusts.
