@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+#
+# chezmoi modify_ script for Orca's settings blob.
+#
+# Orca stores preferences and machine-local state together in this one file and
+# rewrites it every few seconds while running. It can never be managed as a
+# whole file: `repos`, `projects`, `worktreeMeta`, `workspaceSession`,
+# `sshTargets` and `telemetry.installId` all belong to whichever machine is
+# running, and copying them across would import a phantom worktree graph full of
+# another user's absolute paths.
+#
+# So chezmoi hands us the target's CURRENT bytes on stdin, and whatever we print
+# to stdout becomes the new file. We overlay only the keys tracked in
+# .chezmoitemplates/orca-settings.json (under `settings` and `ui`) and pass every
+# other top-level key straight through.
+#
+# The key policy lives in setup_scripts/executable_orca_settings_export.sh, which
+# is what generates that template. This script applies, it does not decide.
+#
+# Formatting: Orca writes compact JSON with no trailing newline, and `jq -c`
+# reproduces that byte-for-byte. Do NOT add --sort-keys or indentation, and note
+# that the payload arrives via includeTemplate (raw text) rather than
+# .chezmoidata — Go maps are unordered, so a data file would arrive with every
+# nested object alphabetised. jq preserves input key order, and that is what
+# keeps this a true no-op when the settings already match, instead of fighting
+# Orca over key order on every apply.
+#
+# Orca must be QUIT before `chezmoi apply`. A running Orca holds this state in
+# memory and overwrites the file on its next debounced save.
+
+# Deliberately no `set -e`: a failure here must fall through to the passthrough
+# below, never abort mid-stream and truncate the user's Orca state.
+set -uo pipefail
+
+PAYLOAD=$(
+  cat <<'ORCA_PAYLOAD_EOF'
+{{ includeTemplate "orca-settings.json" }}
+ORCA_PAYLOAD_EOF
+)
+
+# Buffer stdin to a file rather than a variable so the failure path can replay it
+# byte-for-byte (command substitution would eat trailing newlines).
+current=$(mktemp)
+trap 'rm -f "$current"' EXIT
+cat >"$current"
+
+# `__HOME__` is how the exporter stores paths under $HOME so they survive a
+# different username. Expand it back on the way in.
+JQ_EXPAND='def expand: walk(if type == "string" and startswith("__HOME__")
+                            then $home + .[8:] else . end);'
+
+if [ ! -s "$current" ]; then
+  # Fresh machine: Orca installed but never launched, so there is no state to
+  # preserve. Emit a minimal valid document for first launch to pick up.
+  if fresh=$(jq -cn --argjson payload "$PAYLOAD" --arg home "$HOME" \
+    "$JQ_EXPAND"' ($payload | expand) as $p
+       | {schemaVersion: 1, settings: ($p.settings // {}), ui: ($p.ui // {})}' 2>/dev/null) &&
+    [ -n "$fresh" ]; then
+    printf '%s' "$fresh"
+  fi
+  exit 0
+fi
+
+# `*` is jq's recursive merge: it descends into nested objects rather than
+# swapping them wholesale, so existing key order is kept and sub-keys Orca added
+# on its own survive. Arrays are still replaced whole, which is what we want for
+# lists like terminalQuickCommands.
+if merged=$(jq -c --argjson payload "$PAYLOAD" --arg home "$HOME" \
+  "$JQ_EXPAND"' ($payload | expand) as $p
+     | .settings = ((.settings // {}) * ($p.settings // {}))
+     | .ui       = ((.ui       // {}) * ($p.ui       // {}))' "$current" 2>/dev/null) &&
+  [ -n "$merged" ]; then
+  printf '%s' "$merged"
+  exit 0
+fi
+
+# Merge failed — jq missing, or Orca changed the schema out from under us. Our
+# stdout IS the file, so emit the original untouched rather than damaging it.
+echo "chezmoi: orca-data.json merge failed (jq missing or unexpected schema); leaving the file unchanged" >&2
+cat "$current"
