@@ -1,3 +1,4 @@
+tap "alielsokary/tap"
 tap "anomalyco/tap", trusted: true
 tap "gromgit/brewtils", trusted: true
 tap "infisical/get-cli", trusted: true
@@ -239,6 +240,8 @@ cask "bloom"
 cask "bluesnooze"
 # E-books management software
 cask "calibre"
+# Native GUI for Homebrew casks
+cask "alielsokary/tap/caskhub", trusted: true
 # OpenAI's official ChatGPT desktop app
 cask "chatgpt"
 # Anthropic's official Claude AI desktop app
@@ -349,10 +352,14 @@ cask "telegram-desktop"
 cask "thaw"
 # To-do & task list manager
 cask "ticktick"
+# Speech-to-text and AI text processing
+cask "typewhisper"
 # Open-source code editor
 cask "visual-studio-code"
 # Multimedia player
 cask "vlc"
+# Menu bar toolkit with keep-awake, system monitor and volume mixer
+cask "vorssaint"
 # GPU-accelerated cross-platform terminal emulator and multiplexer
 cask "wezterm"
 # Native desktop client for WhatsApp
@@ -363,6 +370,8 @@ cask "wireshark-app"
 cask "yaak"
 # Mesh VPN client
 cask "zerotier-one"
+# Video communication and virtual meeting platform
+cask "zoom"
 mas "Battery Monitor", id: 836505650
 mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
