@@ -93,8 +93,10 @@ git commit -m "type(scope): summary" -m "why in one line
 
 When the user delegated the commit ("commit", "commit my changes"), just do this for every group — no per-commit confirmation. Only show messages for approval first if the user asked you to draft rather than commit. If a commit fails (e.g. a pre-commit hook rejects it), surface the hook output and fix or ask — don't retry blindly or bypass hooks with `--no-verify` unless told to.
 
-### 6. Report the commits as a table
-After all groups are committed, print a summary table of what you created so the user sees the result at a glance:
+### 6. Hand off
+Close with what changed, where it landed, and the next move.
+
+**What changed** — print a summary table of the commits you created so the user sees the result at a glance:
 
 | # | commit message | files |
 |---|----------------|-------|
@@ -102,6 +104,10 @@ After all groups are committed, print a summary table of what you created so the
 | 2 | `chore(repo): bump ci node version` | `.github/workflows/ci.yml` |
 
 List each commit's changed/created files in the last column (get them with `git show --stat --oneline <ref>` or `git diff-tree --no-commit-id --name-only -r <ref>` for the commits you just made). If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped or left for the user), note it under the table.
+
+**Where it landed** — the branch the commits sit on, and whether it has an upstream (`git status -sb` shows both in one line). Commits on a local-only branch exist nowhere but this machine, and saying so is the most useful line in the report.
+
+**Next** — name one move and stop. The work is committed but unpublished, so the default is to publish it: **prkit** when it's installed, to open a pull request from exactly these commits; otherwise `git push -u origin HEAD` and open the PR by hand. If the feature clearly isn't finished, say that instead and name the plain action — keep building, then re-run commitkit for the next group. Don't push or open anything yourself; commitkit's job ends at the commit.
 
 ## Notes
 
