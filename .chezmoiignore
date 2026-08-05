@@ -11,6 +11,26 @@
 # local-only backups
 .config/raycast/settings-backup.rayconfig
 
+# Orca — the app installs these hook scripts itself and rewrites them on every
+# upgrade, exactly like the vendor entries in ~/.claude/settings.json. Ours live
+# in ~/.local/bin/agent-hook instead. Never track them.
+.orca/agent-hooks/**
+
+# Orca's app-support dir is runtime state: sqlite orchestration DB, cookies,
+# Chromium caches, terminal history, device-pairing tokens and e2ee key material.
+# Only the settings blob is managed, and only a curated slice of it, merged in by
+# a modify_ script. These patterns are a backstop: `chezmoi add` bypasses
+# .chezmoiignore, but anything that does slip into the source here will never be
+# applied to a target. Do not `chezmoi add` this directory.
+# Ignore level by level with a single `*` rather than `**`: an excluded directory
+# is never descended into, so the path down to orca-data.json has to stay open.
+Library/Application Support/orca/*
+!Library/Application Support/orca/profiles
+Library/Application Support/orca/profiles/*
+!Library/Application Support/orca/profiles/local-default
+Library/Application Support/orca/profiles/local-default/*
+!Library/Application Support/orca/profiles/local-default/orca-data.json
+
 # secrets / key material — never let chezmoi manage these (belongs in
 # 1Password / Keychain / ~/.ssh, not the source tree)
 **/*.pem

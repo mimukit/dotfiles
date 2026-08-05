@@ -71,6 +71,9 @@ RE_ADD_PATHS=(
   "$HOME/.codex/AGENTS.md"
   "$HOME/.codex/herdr-agent-state.sh"
   "$HOME/.config/yazi/package.toml"
+  # Orca keybindings. The rest of Orca's config does not go through chezmoi
+  # re-add — see the extract step below.
+  "$HOME/.orca/keybindings.json"
 
 )
 
@@ -107,6 +110,21 @@ if [ "$DRY_RUN" -eq 1 ]; then
 fi
 
 synced_any=0
+
+# --- Extract: apps that need more than a re-add -----------------------------
+# Orca keeps its preferences inside a single blob it rewrites every few seconds,
+# mixed in with this machine's repos, worktrees and telemetry id. `chezmoi re-add`
+# would drag all of that into the source, so a dedicated script pulls out just the
+# tracked keys instead. It no-ops when Orca is not installed.
+ORCA_EXPORT="$HOME/setup_scripts/orca_settings_export.sh"
+if [ -x "$ORCA_EXPORT" ]; then
+  echo -e "${CYAN}⏳ extract  Orca settings${RESET}"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    "$ORCA_EXPORT" --dry-run
+  else
+    "$ORCA_EXPORT"
+  fi
+fi
 
 # Re-add: capture modifications to already-managed files.
 for path in "${RE_ADD_PATHS[@]}"; do
