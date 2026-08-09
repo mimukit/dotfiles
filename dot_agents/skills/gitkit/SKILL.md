@@ -100,7 +100,7 @@ Report the path and the branch. Creating a worktree does not imply doing anythin
 ### Remove
 
 ```sh
-git -C "$REPO" worktree remove "$PATH"
+git -C "$REPO" worktree remove "$WT"
 git -C "$REPO" branch -d "$BRANCH"     # only a branch you created, and only if merged
 ```
 
@@ -136,23 +136,46 @@ Everything downstream — `git diff <base>...HEAD`, ahead/behind counts, the bra
 
 ## Rebase or merge
 
-Both rules people quote are correct in their own context and neither is correct alone. The reconciled one:
+Syncing a feature branch with its base has one default here, and it does not depend on whether a pull request is open:
 
-> **Rebase a branch you exclusively own and have not published for review. Merge the base into a branch that is under review or shared.**
+> **Rebase onto the base to sync a feature branch — published or not. Merging the base in is an exception that needs a stated reason and the user's consent.**
 
-The reason is mechanical, not aesthetic. Rebasing rewrites commit SHAs. Before a pull request exists, nothing points at those SHAs and nothing breaks, so rebase for a clean linear history. Once a review is open, its comment threads are anchored to commits — a force-push marks every one of them outdated, destroying human and bot findings at the exact moment they are needed. Anyone who pulled the branch is broken too.
+The default is rebase because that is the history worth having: a feature branch that reads as a linear sequence of its own commits, with the base's work underneath rather than braided through it. A repo that merges the base in on every sync accumulates one merge commit per sync, and the branch's own story becomes unreadable long before it lands.
+
+Rebasing does have a real cost, and it is mechanical rather than aesthetic: it rewrites commit SHAs. Once a pull request is open, its review threads are anchored to those commits, so a force-push marks every one of them outdated — human and bot findings alike. That is the cost to **disclose and weigh**, not a bar. It is also the one pre-baked reason to propose the merge exception.
 
 In practice:
 
 ```sh
 git fetch origin
 git rev-list --left-right --count "origin/$BASE"...HEAD   # "<behind>\t<ahead>"; left > 0 means behind
+git rebase "origin/$BASE"
 ```
 
-- **Branch not yet under review** → rebase onto `origin/$BASE`.
-- **Branch under review or shared** → merge `origin/$BASE` into it. Never force-push.
-- **A rebase you do push** uses `--force-with-lease`, never bare `--force` — the lease is what stops you overwriting a commit someone else pushed while you were rebasing.
+- **Rebase is the answer unless someone has said otherwise for this branch.** No pull request, an open one, a shared branch — the recommendation is the same.
+- **A branch with no remote counterpart rebases straight through.** Nothing points at those SHAs, so nothing can break; this is the cheap-and-reversible class, and it needs no confirmation.
+- **A published branch previews once and waits.** One confirmation covers the rebase *and* the `--force-with-lease` push that follows — they are a single decision, and asking twice asks the same question twice. Name what it costs: the base being synced, the commits being rewritten, and the number of unresolved review threads that will go outdated.
+- **Count the threads before you ask.** On a branch with an open PR, query the GraphQL `reviewThreads` connection for unresolved threads and put the number in the preview. "3 review threads will be marked outdated" is a fact the user can decide on; "this may outdate review comments" is not.
+- **Unresolved threads are the reason to *offer* the merge exception — not to take it.** Still recommend the rebase; name merge as the available alternative alongside the count. A preference that folds in the case that argues against it was never a preference.
+- **`--force-with-lease`, never bare `--force`** — the lease is what stops you overwriting a commit someone else pushed while you were rebasing.
 - **On conflict**, stop and surface it (`git diff --name-only --diff-filter=U`). Propose a resolution per file and confirm before writing. A conflict resolution is a code change: run the repo's test gate afterward.
+
+### The merge exception
+
+When the user takes the merge — or asks for it outright — it is still a sync, and it says so:
+
+```sh
+git merge "origin/$BASE" -m "chore(repo): sync with origin $BASE"
+```
+
+- **Never git's default subject.** `Merge branch 'main' into issue-42-tailwind-4-foundation` is what git writes when nobody chose a message, and it reads that way forever in `git log`. The fixed subject is the message.
+- **Interpolate the base, don't hardcode `main`.** The [base ref](#the-base-ref) ladder exists because `develop` and `trunk` repos are real; a subject that says `main` in one of them is simply false.
+- **No `--no-ff`.** If the sync can fast-forward, the branch had nothing of its own to preserve and git writes no commit at all — there is no subject to fix, and forcing one manufactures an empty merge commit.
+- **State the reason in the same breath as the ask.** "Merging instead of rebasing because this PR has 3 unresolved review threads" is a reason. "Merging to be safe" is not; if you cannot name what rebasing would break, rebase.
+
+### Never bare `git pull`
+
+`git pull` on a branch behind its remote merges by default, and writes `Merge branch 'main' of github.com:owner/repo` without asking anyone. Use `git pull --rebase`, or `git pull --ff-only` when you want the sync to fail loudly rather than resolve itself. The same holds for `git pull` invoked to refresh the base branch itself — configure it or pass the flag, but never let the default run.
 
 ## Containers and remote boxes
 
@@ -162,11 +185,13 @@ Git worktrees store **absolute** paths. If a repo is bind-mounted into a contain
 - Mount both at the **same absolute path** inside and outside the container. This is the robust answer.
 - Second belt, on git 2.48+: `git config worktree.useRelativePaths true` and `git worktree repair --relative-paths`. Relative pointers survive remapping *as long as the repo and the worktree root keep their relative positions* — which argues for siding them, e.g. `~/code/<repo>` and `~/worktrees/<repo>`.
 
-A GUI dev tool that manages worktrees is welcome to **observe** these — Orca and its peers read `git worktree list` and typically have a setting to surface externally-created worktrees. That is a one-time UI configuration on whichever machine runs the GUI, and it is the only asymmetry between machines. No skill should ever call a vendor worktree CLI: the moment one does, the two machines diverge.
+A GUI dev tool that manages worktrees is welcome to **observe** these — Orca and its peers read `git worktree list` and typically have a setting to surface externally-created worktrees. That is a one-time UI configuration on whichever machine runs the GUI, and it is the only asymmetry between machines.
+
+**No skill may create or remove a worktree through a vendor CLI**: the moment one does, the two machines diverge. A vendor's own *metadata* about a worktree — the issue its card links to, a status, a comment — is a different layer and is fair game, because it exists only inside that tool and has no git equivalent to diverge from. A companion skill may reconcile that layer (**orcakit** does, for Orca) as long as the worktree itself is still created and destroyed here. gitkit never calls in that direction: it must keep working on a machine where no such tool is installed.
 
 ## Notes
 
 - **gitkit is the single source of truth for what it owns.** A calling skill may hold policy about *when* to ask — that a PR is worth pulling down, that a branch is ready to publish — but never about *how* the git operation is done. If you find a worktree path, base-ref ladder, or rebase rule restated inside another skill, that is the bug.
 - **gitkit never implements, commits, or opens anything.** It prepares the ground and tears it down. Writing code in the worktree, committing, and publishing belong to other skills.
-- **Destructive steps preview and confirm.** Removing a worktree, deleting a branch, and force-pushing with a lease each show what is about to happen and wait for an OK. Creating and adopting are cheap and reversible — those run straight through.
+- **Destructive steps preview and confirm.** Removing a worktree, deleting a branch, and rebasing a *published* branch each show what is about to happen and wait for an OK. Creating, adopting, and rebasing an unpushed branch are cheap and reversible — those run straight through. The line is whether anything outside this machine points at what you are about to rewrite, not which command you typed.
 - **No shell available** (e.g. a browser-based agent)? Then you cannot run git. Reason from what the user provides and **print the exact commands** as a codeblock for them to run — never report a worktree created or removed that you could not perform.

@@ -1,7 +1,7 @@
 ---
 name: handoffkit
 description: >-
-  Compact the current conversation into a handoff document another agent or session can pick up cold — goal, state, next steps, key artifacts by reference, and constraints. Use when the user wants to hand off work, says "write a handoff", "create a handoff doc", "summarize this for the next session", or "pass this to another agent".
+  Compact the current conversation into a handoff document another agent or session can pick up cold — goal, state, next steps, key artifacts by reference, and constraints. Explicit invocation only — auto-triggering is disabled so a session compaction never fires mid-work. Use when you deliberately run "/handoffkit" (optionally with a focus argument) to hand off work, write a handoff doc, or summarize the session for the next agent.
 license: MIT
 disable-model-invocation: true
 allowed-tools: Read, Write
@@ -63,7 +63,7 @@ Capabilities the next session should reach for — e.g. a commit skill to land t
 2. **Separate carry-over from reference.** For each thing worth mentioning, decide: does it live only in this chat (carry it) or is it already an artifact (link it)?
 3. **Draft the document** in the shape above, slanted toward the focus argument if one was given. Keep it tight — a new agent should be able to read it in a minute and act.
 4. **Redact** any secrets or PII before output.
-5. **Save or print it** according to the output rules below, then give a one-line summary of what the next session should do first.
+5. **Save or print it** according to the output rules below, then close per [Hand off](#hand-off).
 
 ## Output
 
@@ -72,3 +72,11 @@ Capabilities the next session should reach for — e.g. a commit skill to land t
 **On explicit request — print inline.** When the user explicitly asks for terminal, inline, chat-only, or copy-pastable output, emit the finished handoff as a single Markdown codeblock and do not write a file.
 
 **No writable filesystem — degrade gracefully.** If the environment cannot write files, emit the finished handoff as a single Markdown codeblock and say that no file was created.
+
+## Hand off
+
+**What changed** — nothing in the project itself; the handoff is a new (or updated) document, and say which.
+
+**Where it landed** — the exact path (`docs/handoffs/handoff-<slug>-YYYY-MM-DD.md`), or "printed inline, no file written" when that's what happened.
+
+**Next** — one move: start a fresh session pointed at this document, beginning with the handoff's own first next-step — name that step here so the user doesn't have to open the file to learn it. Nothing else follows in *this* session; the whole point of the handoff is that this context can now end.

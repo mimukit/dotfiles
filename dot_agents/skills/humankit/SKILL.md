@@ -10,7 +10,9 @@ metadata:
 
 # humankit
 
-Rewrite text so it stops sounding like a language model produced it. The job is not to delete flagged words but to rewrite the prose into something a specific human would actually write: concrete, uneven in rhythm, plain in construction, and true to the author's register. Cover everything the original covers — a five-paragraph source becomes a five-paragraph rewrite, not a summary.
+Rewrite text so it stops sounding like a language model produced it. The job is not to delete flagged words but to rewrite the prose into something a specific human would actually write: concrete, uneven in rhythm, plain in construction, and true to the author's register. Keep every claim the original makes, but not its shape: compress the dull stretches, dwell where a person would, merge or split paragraphs freely. Uniform structure is itself a tell, so mirroring the original's paragraph count preserves the thing you came to remove. When coverage and structure pull against each other, coverage wins — a five-paragraph source may land in four, but it never becomes a summary.
+
+**Never invent facts.** The rewrite carries no fact, name, number, date, quote, or citation that isn't in the source or supplied by the user. This is the failure mode the rest of the skill invites: told to replace *nestled in the heart of a vibrant region* with something concrete, the tempting move is to supply the concrete detail yourself. Concreteness comes from the source or it doesn't come at all — where the source offers nothing specific, cut to the plain version and leave it plain. Opinions, reactions, and mixed feelings are voice rather than fact; add those where the register allows, but never a factual claim to make the prose feel human. Fiction is the exception, where inventing detail is the job. This governs everything else.
 
 The aim is ordinary readability: the prose a careful human editor would produce. This is copy-editing to make writing read well, not a way to disguise machine-written work as human where honesty is required — academic submissions, disclosure-bound, or attributed writing. Edit for the reader, not to game any automated check.
 
@@ -18,7 +20,15 @@ The aim is ordinary readability: the prose a careful human editor would produce.
 
 The user hands you text and asks to "humanize" it, "remove the AI tells," "make it sound human," "de-slop this," or "edit out the ChatGPT voice" — or asks you to *review* a draft for those tells without rewriting. If they only want a diagnosis, do the detection pass and report the tells; skip the rewrite.
 
+How you were reached decides what you deliver:
+
+- **Text in the conversation** — the default. Run the whole loop and deliver the three parts described under [Hand off](#hand-off).
+- **A file path** — read it, run the loop internally, and write the final rewrite back. Humanize the prose only: leave code blocks, frontmatter, tables, data, and link targets exactly as they are. Report a summary and the path rather than pasting the rewrite into chat.
+- **Another skill or agent calling you** as one step of a larger job (a PR body, a commit message, a docs pass) — run the loop internally and output the final text alone. No draft, no audit bullets, no summary. The caller wants prose, not ceremony.
+
 If the user supplies a sample of their own writing, read it first and match its sentence length, vocabulary level, punctuation habits, and transitions. Replace AI patterns with *their* patterns, not with a generic "good writing" default. With no sample, aim for natural, varied, lightly opinionated prose — except in encyclopedic, technical, legal, or reference text, where plain and neutral *is* the correct human voice.
+
+A sample outranks every style rule here, including [the em-dash rule](#the-em-dash-rule): if the author uses em dashes, keep them at roughly the sample's frequency. Matching the author beats scrubbing the tell.
 
 ## The tells
 
@@ -26,7 +36,7 @@ Scan for these. They matter in **clusters**, not in isolation — one em dash or
 
 **Inflated significance.** Puffing arbitrary facts into history: *stands as a testament to, marks a pivotal moment, reflects a broader, plays a crucial role, setting the stage for, evolving landscape, leaves an indelible mark.* Cut the editorializing; state the fact.
 
-**Promotional tone.** Travel-brochure adjectives: *nestled, in the heart of, vibrant, rich cultural heritage, breathtaking, boasts a, must-visit, renowned, stunning.* Replace with what the thing concretely is or does.
+**Promotional tone.** Travel-brochure adjectives: *nestled, in the heart of, vibrant, rich cultural heritage, breathtaking, boasts a, must-visit, renowned, stunning.* Replace with what the source says the thing is or does. When the source offers nothing concrete, the bare fact is the rewrite; do not supply a market, a founding date, or an 18th-century church to fill the hole.
 
 **Superficial -ing tails.** Present-participle clauses bolted on for fake depth: *…, highlighting its importance,* *…, reflecting the community's connection,* *…, ensuring seamless integration.* Delete or fold the real content into a plain clause.
 
@@ -50,7 +60,7 @@ Scan for these. They matter in **clusters**, not in isolation — one em dash or
 
 ## The em-dash rule
 
-The finished rewrite contains **no em dashes (—)** and uses **no en dashes (–) as sentence punctuation**. Replace those marks, in rough order of preference, with a period, comma, colon, parentheses, or a restructured sentence. Preserve legitimate numeric/date/page ranges by using a hyphen or writing "to" (`1914-1918`, `pp. 10 to 12`). Catch spaced em dashes (` — `) and double hyphens (` -- `) used the same way. Before delivering, search the draft for `—` and `–`; any remaining en dash must be a legitimate range, and any em dash means the rewrite is not done.
+The finished rewrite contains **no em dashes (—)** and uses **no en dashes (–) as sentence punctuation**. Replace those marks, in rough order of preference, with a period, comma, colon, parentheses, or a restructured sentence. Preserve legitimate numeric/date/page ranges by using a hyphen or writing "to" (`1914-1918`, `pp. 10 to 12`). Catch spaced em dashes (` — `) and double hyphens (` -- `) used the same way. Before delivering, search the draft for `—` and `–`; any remaining en dash must be a legitimate range, and any em dash means the rewrite is not done. One exception: a user-supplied writing sample that uses em dashes overrides this rule, and then the mark is matched to the sample's frequency rather than banned.
 
 ## What not to flag
 
@@ -67,14 +77,16 @@ Lean toward leaving prose alone when you see hard-to-fake specifics (a real addr
 
 1. Read the input and mark every instance of the tells above.
 2. Write a **draft rewrite**: read it aloud in your head, vary sentence length, prefer concrete detail and plain constructions (*is/are/has*), hold the original's register and coverage.
-3. Ask yourself: *what still makes this read as AI-generated?* Answer in a few blunt bullets.
-4. Revise into a **final rewrite** that fixes those, carrying no em or en dashes.
+3. Ask two questions: *what still makes this read as AI-generated?* and *does the draft state any fact, name, number, date, quote, or citation that isn't in the source?* Answer both in a few blunt bullets. A fabrication is a defect even when it reads more human than the vague original it replaced.
+4. Revise into a **final rewrite** that fixes both, carrying no em or en dashes.
 
 ## Hand off
 
-**What changed** — deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught when you asked *what still reads as AI-generated*, and a one-line **summary of changes**. If the user asked only for a review, skip the rewrite and report the located tells with line references instead.
+This is the hand-off for text pasted into the conversation. Called by another skill or agent, none of it applies: deliver the final text alone and stop. Working from a file, deliver the summary and the path, not the rewrite itself.
 
-**Where it landed** — when a writable filesystem is available and the source came from a file, write the rewrite back (or beside it) and report the path; otherwise print the rewrite in a fenced code block so it copies cleanly.
+**What changed** — deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught when you asked *what still reads as AI-generated*, and a one-line **summary of changes**. Say so plainly if the audit turned up a fabrication you had to pull back out. If the user asked only for a review, skip the rewrite and report the located tells with line references instead.
+
+**Where it landed** — when a writable filesystem is available and the source came from a file, write the rewrite back (or beside it), leaving code blocks, frontmatter, tables, data, and link targets untouched, and report the path; otherwise print the rewrite in a fenced code block so it copies cleanly.
 
 **Next** — name one move and stop. Rewritten a file in a repo? The change is uncommitted prose: offer to commit it (**commitkit** when installed, otherwise a plain commit). Reviewed rather than rewrote? The move is to apply the tells you listed — re-run humankit on the draft once they've decided which to take. Rewrote text that came from the chat rather than a file? There's nothing to route to; say the draft is theirs to paste back and stop rather than inventing a next step.
 

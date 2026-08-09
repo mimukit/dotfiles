@@ -3,7 +3,7 @@ name: reviewkit
 description: >-
   Review AI-agent-implemented code specifically — four ordered passes for convention-fit, agent-slop signatures, requirement-completeness, then correctness — against the working tree or the branch diff, findings ranked by severity and backed by quoted evidence. Use when the user says "review this code", "review my changes", "review this diff", "check the agent's work", "/reviewkit", or wants a self-review of AI-written changes before commit or PR — even if they don't name the passes.
 license: MIT
-allowed-tools: Read, Bash, Grep, Glob, Write, Task, Agent
+allowed-tools: Read, Bash, Grep, Glob, Write, Task, Agent, Skill
 metadata:
   internal: false
 ---
@@ -34,7 +34,7 @@ It is distinct from a generic correctness linter: reviewkit leads with **convent
 
 Ground the review in an actual diff — reviewing from memory is worthless. Detect the target from git state, then state your pick and let the user override:
 
-- **Uncommitted changes present** (`git status --porcelain` is non-empty) → review the working tree: `git diff HEAD` (include staged with `git diff --staged`). This is the default after a fresh coding session. **`git diff` does not show untracked files** — a brand-new file an agent never staged is invisible to it, and a whole new module silently escaping review is the worst possible miss. List them with `git status --porcelain` (the `??` entries) or `git ls-files --others --exclude-standard`, and `Read` each one in full as part of the change.
+- **Uncommitted changes present** (`git status --porcelain` is non-empty) → review the working tree: `git diff HEAD` (include staged with `git diff --staged`). This is the default after a fresh coding session. **`git diff` does not show untracked files** — a brand-new file an agent never staged is invisible to it, and a whole new module silently escaping review is the worst possible miss. List them with `git status --porcelain` (the `??` entries) or `git ls-files --others --exclude-standard`, and `Read` each one in full as part of the change — **every untracked source file, no exceptions**. The only untracked files you may skip are ones nobody wrote: lockfiles, build output, vendored dependencies, compiled assets, snapshots. Note them as generated, spot-check that they're actually generated rather than hand-edited, and move on.
 - **Clean tree, branch ahead of its base** → review the branch diff. **Get the base branch from gitkit**, which owns that resolution — don't assume `main`, and don't re-derive it here; a wrong base silently yields an empty diff or one containing half the repo's history, and both look like a real review target. Then run `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
 - **If the invocation names a target** ("review the branch", "review my staged changes") → honor it directly, skip detection.
 
@@ -42,7 +42,9 @@ Say which target you chose and why in one line, then proceed. If neither applies
 
 **Validate before reviewing.** Confirm the target resolves (`git rev-parse <ref>` for a named base) and the diff is actually non-empty. If the ref doesn't resolve or the diff is empty, stop and say so — reviewing a bad or empty range produces fabricated findings, not a review.
 
-Read the diff in full before judging anything. Note the change's *stated intent* — from the commit messages, the branch name, the plan or issue it references, or the user's own words — because half the review is asking "did it do what was asked, all of it, and *only* that?" Capture that intent concretely: it's the spec both [Requirement-completeness](#4-pass-3--requirement-completeness) and the scope-creep check in [Agent-slop signatures](#3-pass-2--agent-slop-signatures) measure against.
+Read the diff in full before judging anything — **once**. The four passes below are four questions asked of one reading, not four readings; don't re-run `git diff` at the top of each pass. If a pass needs a detail you didn't retain, pull that hunk (`git diff HEAD -- <path>`), not the whole diff again. The same applies to the neighboring code you compare against in [Convention-fit](#2-pass-1--convention-fit): read the sibling that establishes the pattern, not every file in the directory.
+
+Note the change's *stated intent* — from the commit messages, the branch name, the plan or issue it references, or the user's own words — because half the review is asking "did it do what was asked, all of it, and *only* that?" Capture that intent concretely: it's the spec both [Requirement-completeness](#4-pass-3--requirement-completeness) and the scope-creep check in [Agent-slop signatures](#3-pass-2--agent-slop-signatures) measure against.
 
 **Ground rules for every pass** — apply these throughout, they are what separate a real review from noise:
 

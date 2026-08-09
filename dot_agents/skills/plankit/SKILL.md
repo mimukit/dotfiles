@@ -3,7 +3,7 @@ name: plankit
 description: >-
   Turn a rough feature or change into a structured plan document (docs/plans/plan-<slug>-YYYY-MM-DD.md) before any code — brainstorm the approach, settle the big decisions, and write a plan that can be hardened and turned into issues. Use when the user says "plan this feature", "brainstorm a plan/PRD/spec", "write a plan doc", "help me think through this change before building", or runs "/plankit" — the front of the plan → grill → file workflow.
 license: MIT
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Skill
 metadata:
   internal: false
 ---
@@ -80,6 +80,8 @@ Unresolved or thin spots, written as targets for grillkit to interrogate.
 ## Non-goals
 Explicit scope boundaries — what this plan deliberately does not cover.
 ```
+
+A hardened plan additionally carries a **`Grilled: YYYY-MM-DD` line directly under the title** — grillkit writes it when the plan survives a grill session, and issuekit reads it as the gate for filing issues `ready`. plankit never writes the stamp itself; a fresh draft is ungrilled by definition.
 
 ## Notes
 
