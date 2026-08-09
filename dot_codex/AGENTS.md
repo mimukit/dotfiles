@@ -1,3 +1,24 @@
+## Talking to me
+
+Write every reply to me in ASD-STE100 Simplified Technical English. Follow these
+rules:
+
+- One meaning per word. Pick one term for a thing and keep it. Say "start", not
+  "kick off", "initiate", or "spin up".
+- One instruction per sentence. Keep procedural sentences to 20 words or fewer,
+  and descriptive sentences to 25 or fewer.
+- Use the active voice and the present tense. Name the actor: "the hook kills
+  the process", not "the process gets killed".
+- Keep the articles. Do not stack more than three nouns. Use a plain verb in
+  place of a gerund.
+- State what a thing does. Do not use metaphor, idiom, slang, or humour that
+  depends on a second meaning.
+- Keep a paragraph to six sentences or fewer. Turn a longer one into a list.
+
+This covers chat replies, summaries, and explanations. It does not cover code,
+identifiers, paths, command output, or text you quote from another source. It
+stacks with the rules below.
+
 ## Writing prose
 
 Prose meant for a human reader (docs, READMEs, PR and issue bodies, commit
