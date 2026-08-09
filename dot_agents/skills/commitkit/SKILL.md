@@ -21,13 +21,21 @@ This skill is built for AI coding sessions where the user hands off with a bare 
 ## Procedure
 
 ### 1. Read the state
-Run these together and read the output before deciding anything:
+Start from the file-level shape of the change — never the full diff:
 
 ```sh
 git status --short
-git diff --staged
-git diff            # unstaged, for context
+git diff --stat HEAD   # staged and unstaged together, one line per file
 ```
+
+**Then decide how much diff you actually need, by asking who wrote these changes.**
+
+- **You did, in this same context** (the typical coding-session hand-off) — you already know what the change does and, more importantly, *why*, and the why is the part a diff can't tell you: the approach you rejected, the test that caught a bug mid-way, the file you deliberately left alone. Group from the stat and write the body from what you know. Read a diff only for files you didn't touch yourself, or where you genuinely can't recall what landed.
+- **You didn't** — you were dispatched as a subagent, the session is fresh, the changes are the user's own edits, or the work happened far enough back that it's no longer in context. Then the diff is your only source: read it (`git diff HEAD`) before writing anything.
+
+When in doubt, read. A vague commit message costs more than the tokens it saved. But re-reading code you wrote minutes ago buys nothing — the stat already tells you which files moved, and you already know what you did to them.
+
+**Never read the content of generated files** in either mode — lockfiles (`*.lock`, `package-lock.json`, `pnpm-lock.yaml`, `go.sum`), build output, vendored directories, snapshots, compiled assets. Their stat line carries every bit of signal a commit message can use, and their diffs are the largest in most repos.
 
 - When the user has **delegated committing** (the typical coding-session "commit" / "commit my changes"), you are free to stage the files you need yourself — `git add` the paths for each logical group as you commit it. You don't have to ask first; grouping and staging is your job here.
 - Only pause to ask when intent is genuinely ambiguous — e.g. the tree holds half-finished work, secrets, changes you suspect the user didn't mean to commit, or a file is partially staged and staging its whole path would include deliberately unstaged hunks. Never `git add -A` blindly across unrelated concerns; stage per group instead (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)).
@@ -103,7 +111,7 @@ Close with what changed, where it landed, and the next move.
 | 1 | `feat(auth): add token refresh retry` | `auth/token.ts`, `auth/token.test.ts` |
 | 2 | `chore(repo): bump ci node version` | `.github/workflows/ci.yml` |
 
-List each commit's changed/created files in the last column (get them with `git show --stat --oneline <ref>` or `git diff-tree --no-commit-id --name-only -r <ref>` for the commits you just made). If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped or left for the user), note it under the table.
+List each commit's changed/created files in the last column. You already know them — they're the paths you passed to `git add` for each group, so build the table from that rather than querying git again. If you do need to check, one `git log --stat --oneline -<n>` covers every commit you just made; don't run a separate `git show` per commit. If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped or left for the user), note it under the table.
 
 **Where it landed** — the branch the commits sit on, and whether it has an upstream (`git status -sb` shows both in one line). Commits on a local-only branch exist nowhere but this machine, and saying so is the most useful line in the report.
 

@@ -1,9 +1,9 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle with five modes — create issues from a plan-<slug>-YYYY-MM-DD.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), start a `ready` issue into its own worktree, close one out once its PR merges (close the issue, unblock dependents, tear the worktree down), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "begin working #42", "close #42", "close out #42", "wrap up #42 now the PR merged", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, started, landed, reconciled, or reviewed with the gh CLI.
+  Own the GitHub issue lifecycle with five modes — create issues from a plan or description (kept independent for parallel worktree work), start a `ready` issue into its own worktree, close one out once its PR merges, sync PR↔issue links after merge, and triage the tracker for lifecycle and priority gaps. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "wrap up #42 now the PR merged", "sync my issues", "triage the backlog", "prioritize my issues", "set the priority on #42", "issuekit", or wants issues opened, started, landed, reconciled, ranked, or reviewed with the gh CLI.
 license: MIT
-allowed-tools: Bash, Read, Edit, Write
+allowed-tools: Bash, Read, Edit, Write, Skill
 metadata:
   internal: false
 ---
@@ -30,7 +30,7 @@ The user wants to act on GitHub issues. Route to a mode from what they ask:
 - **start** — "start issue #42", "begin #42", "pick up #42", "spin up a worktree for #42", "I'm working on 42 now".
 - **close** — "close #42", "close out #42", "wrap up #42 now the PR merged", "tear down #42's worktree", "#42 landed, clean it up".
 - **sync** — "sync my issues", "this PR merged but the issue is still open", "link this PR to #42", "tick the parent checklist".
-- **triage** — "triage the backlog", "what's the state of my issues", "review open issues", "any stale issues".
+- **triage** — "triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority".
 
 **If no mode is clear, ask first.** Present the modes as options and let the user pick before doing anything — don't guess between creating and mutating the tracker.
 
@@ -50,6 +50,8 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 - **No shell or `gh` at all** (e.g. a browser-based agent)? You can't call `gh`. Instead do the reasoning from what the user provides and **print the exact `gh` commands** for them to run themselves — issue bodies as codeblocks, `gh issue create …` / `gh issue close …` lines ready to paste.
 
 **Safety stance — the whole skill.** Creating, closing, relabeling issues and editing PR bodies are outward-facing mutations. **Preview every mutation and get an OK before it runs — nothing changes on GitHub unprompted.** Never merge PRs.
+
+**One exemption, for an unattended caller.** An orchestrator running with nobody at the keyboard (afkkit is the one that does) may pre-authorize exactly one mutation: [`start`'s `ready → in-progress` flip](#4-flip-the-label-ready--in-progress). It has to be told the run is unattended; it is never assumed. The exemption is narrow because it's the only mutation here whose approval is already implied by an earlier human act — [the `ready` guard](#1-guard--refuse-anything-not-ready) has refused everything a human hasn't grilled, so the only issues that reach the flip are ones a human already cleared for exactly this. Nothing else widens: `create` still previews, `close` still previews, `sync` and `triage` still preview every move, and no caller of any kind gets to skip the guard itself.
 
 ## Title convention (every issue this skill creates)
 
@@ -107,7 +109,7 @@ A **closed** issue needs no `done` label — the closed state is the signal.
 
 **`ready` vs `blocked` is the parallel-work pair.** issuekit sizes and sequences issues so each can be picked up in its own worktree with no ordering constraint — those get `ready`. The exception, an issue that genuinely can't start until another lands, gets `blocked` plus a `Blocked by #N` line in its body: the label says *that* it's blocked, the body says *by what*. `gh issue list --label ready` is then the exact set the user can fan out in parallel right now.
 
-**`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended** — an agent (or an orchestrator like afkkit) can take it straight to a PR without a human. `needs-planning` means a human plan/grill session is still owed before the issue is workable at all. An issue earns `ready` only once its decisions are settled by a grill — see [the grill gate at creation](#5-label-lifecycle-state-and-record-dependencies). `gh issue list --label needs-planning` is then the exact set that still needs the human, the mirror of the `ready` fan-out set.
+**`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended** — an agent (or an orchestrator like afkkit) can take it straight to a PR without a human. `needs-planning` means a human plan/grill session is still owed before the issue is workable at all. An issue earns `ready` only once its decisions are settled by a grill — see [the grill gate at creation](#5-label-lifecycle-state-and-priority-and-record-dependencies). `gh issue list --label needs-planning` is then the exact set that still needs the human, the mirror of the `ready` fan-out set.
 
 **Type lives in the title, not a label.** Issues already carry `feat(scope):` / `fix(scope):` per the [title convention](#title-convention-every-issue-this-skill-creates), so this map has no `type:` labels — only lifecycle status.
 
@@ -117,6 +119,34 @@ A **closed** issue needs no `done` label — the closed state is the signal.
 > `gh label create blocked --color D93F0B --description "has an unmet prerequisite (see 'Blocked by #N' in the body)"`
 
 Apply a label only once it exists (`gh issue edit <n> --add-label <label>`) and — like every mutation in this skill — [preview it and get an OK first](#preflight-every-mode).
+
+---
+
+## Priority labels (every mode)
+
+The **second** label namespace, and the one that decides what gets picked up next. Like the lifecycle set, issuekit **uses** these labels and never creates them — **repokit** provisions them, and a missing one is [reported, not worked around](#lifecycle-labels-every-mode).
+
+| label | color | means | typically set by |
+|-------|-------|-------|------------------|
+| `critical` | `B60205` | drop everything — preempts work already in progress | issuekit create / triage |
+| `high` | `E99695` | do this before other workable issues | issuekit create / triage |
+| `medium` | `FEF2C0` | normal priority — the default once assessed | issuekit create / triage |
+| `low` | `C5DEF5` | worth doing eventually — never preempts anything | issuekit create / triage |
+
+This table is the other half of the **shared contract with repokit**; keep names, colors, and meanings aligned across both skills.
+
+**Lifecycle and priority are orthogonal — one label from each, and neither implies the other.** Lifecycle answers *can this be worked?*; priority answers *should this be worked next?* An issue is `ready` **and** `high`, or `blocked` **and** `critical`, and both are coherent: a `low` issue that's workable right now is still workable, and a `critical` one that's blocked is exactly why its blocker matters. Never infer one from the other — promoting an issue to `ready` because it's `critical` is how ungrilled work reaches an unattended worker, and the `ready` guard exists precisely to stop that.
+
+**No priority label means unassessed, not `medium`.** The absence is a real state, and it's the one `triage` hunts for. Don't silently default an issue to the middle — an unranked issue that everyone assumes is normal-priority is indistinguishable from one somebody actually thought about, and the whole value of the scale is that distinction. Priority is expected on every open issue except the side-exits (`wontfix`, `duplicate`), which are going nowhere and need no rank.
+
+**Exactly one priority label at a time — and you have to enforce it, because GitHub won't.** Labels are a flat namespace with no mutual exclusion, so nothing stops an issue carrying `critical` and `low` at once, and an issue with two priorities sorts unpredictably everywhere downstream. Every write is therefore a *replace*, not an add: read the issue's current labels, and remove whichever sibling is actually there in the same call that adds the new one.
+
+```sh
+gh issue view 42 --json labels -q '[.labels[].name]'   # → ["ready","medium"]
+gh issue edit 42 --add-label high --remove-label medium
+```
+
+Compute the removal from what the issue actually carries rather than blind-removing all three siblings — it keeps the preview honest (`medium → high` reads differently from `set high`) and doesn't depend on how your `gh` version handles removing a label that was never there.
 
 ---
 
@@ -152,13 +182,17 @@ This turns one un-sliceable change into a fan of mostly-parallel issues with hon
 
 Present the proposal as a **preview table** and stop for approval — do **not** create anything yet:
 
-| # | Type | Title | Parent | Depends on | Checklist |
-|---|------|-------|--------|-----------|-----------|
-| 1 | epic | `epic(auth): add sso login` | — | — | — |
-| 2 | child | `feat(auth): oidc login end to end` | #1 | — | provider · session · token refresh · UI |
-| 3 | child | `feat(auth): sso account linking` | #1 | #2 | link existing · unlink · conflict handling |
+| # | Type | Title | Parent | Priority | Depends on | Checklist |
+|---|------|-------|--------|----------|-----------|-----------|
+| 1 | epic | `epic(auth): add sso login` | — | high | — | — |
+| 2 | child | `feat(auth): oidc login end to end` | #1 | high | — | provider · session · token refresh · UI |
+| 3 | child | `feat(auth): sso account linking` | #1 | medium | #2 | link existing · unlink · conflict handling |
 
-Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase, the epic and its children sharing the `auth` scope. Each child is a vertical slice with its layers folded into a checklist, not one issue per layer. The **Depends on** column is where independence is decided out loud: a blank cell means the issue is `ready` — pick it up in its own worktree now — while a `#N` means it's `blocked` by that issue (row 3 waits on row 2). Keep the column as empty as honesty allows; a mostly-blank column is a tracker the user can fan out in parallel. Let the user add, drop, retitle, reparent, **resequence to break a dependency**, or **split** any row before you proceed — offer splitting explicitly when a slice is large. This guard is the point — never spray a repo with auto-generated issues.
+Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase, the epic and its children sharing the `auth` scope. Each child is a vertical slice with its layers folded into a checklist, not one issue per layer. The **Depends on** column is where independence is decided out loud: a blank cell means the issue is `ready` — pick it up in its own worktree now — while a `#N` means it's `blocked` by that issue (row 3 waits on row 2). Keep the column as empty as honesty allows; a mostly-blank column is a tracker the user can fan out in parallel. Let the user add, drop, retitle, reparent, **reprioritize**, **resequence to break a dependency**, or **split** any row before you proceed — offer splitting explicitly when a slice is large. This guard is the point — never spray a repo with auto-generated issues.
+
+**Propose a [priority](#priority-labels-every-mode) per row, and expect to be overruled.** You can read relative importance off a plan — what it calls out as the core of the feature versus the polish, what it defers, what it flags as a risk — and that's a real signal worth putting in the column. What you cannot read is why the work is being done at all, which is the thing priority actually encodes. So propose from the plan, mark anything the plan doesn't rank as `medium`, and treat the column as the one most likely to be corrected. This is exactly the right moment for that correction: setting priority here costs the user one glance at a table they're already reviewing, where doing it later means a pass back over issues that have scattered across the tracker.
+
+**Don't hand out `critical` from a plan.** It means *preempt work already in progress*, which is a claim about right now and not about the plan — a document written last week cannot know what's in flight today. Propose `high` for the most important row and let the user escalate it if they mean it.
 
 For an **ad-hoc** description, skip the table: draft one issue (title + body) and confirm it before creating.
 
@@ -205,20 +239,24 @@ If that call fails — sub-issues disabled, older GitHub Enterprise, or insuffic
 - [ ] #44 session + token refresh
 ```
 
-### 5. Label lifecycle state and record dependencies
+### 5. Label lifecycle state and priority, and record dependencies
 Apply the [lifecycle labels](#lifecycle-labels-every-mode) so the fresh issues advertise their state. The **grill gate** decides which vocabulary applies — because `ready` is a promise the work can run *unattended*, it's earned only when the decisions are already settled:
 
 - **Grilled source** — the input plan file carries a `Grilled: YYYY-MM-DD` stamp (grillkit writes it when it hardens a plan), *or* the user explicitly says the work is grilled/ready. The decisions are settled, so the normal pair applies: every independent issue gets `ready`, every dependent one gets `blocked` plus a `Blocked by #N` line in its body naming the prerequisite.
 - **Ungrilled source** — an ad-hoc description, or a plan with no grill stamp. The decisions aren't settled, so **every issue gets `needs-planning`** — it still needs a human plan/grill session before anything unattended should touch it. Record any `Blocked by #N` dependency in the body anyway; it takes effect once the issue is grilled into `ready`. This is what keeps afkkit (and any unattended worker) from picking up work a human hasn't grilled yet.
 
-Confirm each label exists first (`gh label list`) — if one is missing, stop and point the user at **repokit** or the `gh label create` line rather than creating it yourself.
+Then apply the [priority label](#priority-labels-every-mode) the user approved in the preview table — **one per issue, in the same `gh issue edit` call** as the lifecycle label, so a fresh issue never exists in a half-labeled state that a concurrent survey could read.
+
+Priority is applied **regardless of the grill gate**. The gate governs the lifecycle namespace only: an ungrilled issue is `needs-planning` because nobody has settled its decisions, but "this matters more than that" is a judgment the user just made in the preview and it doesn't need a grill session to be true. Dropping it here would mean the ungrilled backlog — the exact pile that most needs ordering — is the one part of the tracker nothing can rank.
+
+Confirm each label exists first (`gh label list`) — if one is missing, stop and point the user at **repokit** or the `gh label create` line rather than creating it yourself. Check both namespaces in that one call; a repo that predates priority will have the lifecycle nine and none of the four.
 
 ```sh
-# grilled plan → ready / blocked
-gh issue edit 43 --add-label ready
-gh issue edit 44 --add-label blocked          # body carries: Blocked by #43
-# ungrilled source → needs-planning (until a human grills it)
-gh issue edit 45 --add-label needs-planning
+# grilled plan → ready / blocked, each with its approved priority
+gh issue edit 43 --add-label ready --add-label high
+gh issue edit 44 --add-label blocked --add-label medium   # body carries: Blocked by #43
+# ungrilled source → needs-planning, still ranked
+gh issue edit 45 --add-label needs-planning --add-label low
 ```
 
 Preview the label set alongside the issues and get an OK before applying — a mutation like any other.
@@ -235,13 +273,13 @@ Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays t
 Use `Edit` for this. For an ad-hoc issue with no plan file, skip this step.
 
 ### 7. Hand off
-**What changed** — a table of what you created: number, title, parent, URL, and lifecycle label. Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
+**What changed** — a table of what you created: number, title, parent, URL, lifecycle label, and priority. Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
 
-**Where it landed** — call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set**, naming what each blocked issue waits on.
+**Where it landed** — call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set**, naming what each blocked issue waits on. Order the `ready` set by priority, since that set exists to be picked from.
 
 **Next** — route on which set came back non-empty, naming a sibling kit only when it's installed and otherwise describing the action plainly:
 
-- **`ready` issues exist** → pick one up with `start <n>`, which gets it a worktree and flips it `in-progress`. Name the most valuable one rather than listing all of them.
+- **`ready` issues exist** → pick one up with `start <n>`, which gets it a worktree and flips it `in-progress`. Crown the **highest-priority** one rather than listing all of them, breaking a tie on whichever frees the most other work.
 - **everything is `needs-planning`** (an ungrilled source) → the next move is a human grill session — **grillkit** on the plan, then re-run `create`, or relabel by hand once the decisions are settled. Nothing here is workable unattended yet, so say that plainly rather than offering `start`.
 - **everything is `blocked`** → surface the root prerequisite; that's the only thing anyone can act on.
 
@@ -259,7 +297,9 @@ Pick an issue up: guard that it's actually workable, get it a worktree, and move
 gh issue view <n> --json labels,title,state
 ```
 
-This one guard carries more weight than its size suggests, and it is the reason `start` lives here rather than in a worktree skill. An issue only reaches `ready` two ways: a human grilled its decisions settled, or issuekit `sync` promoted it `blocked → ready` when its prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free** — no unattended worker can get ahead of the tracker, and none can get ahead of human judgment. An orchestrator running issues without a person watching (afkkit is the one that does) depends on exactly this.
+This one guard carries more weight than its size suggests, and it is the reason `start` lives here rather than in a worktree skill. An issue only reaches `ready` two ways: a human grilled its decisions settled, or issuekit `sync` promoted it `blocked → ready` when its prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free** — no unattended worker can get ahead of the tracker, and none can get ahead of human judgment.
+
+That last part is load-bearing for an orchestrator that calls `start` itself with nobody watching (afkkit does exactly this, as the first step of every run). The gate does not depend on who types the command: it's the `ready` *label* that carries the human's judgment, earned upstream at the grill, and nothing that calls `start` can award it. So refuse on the label alone — never soften the guard because the caller sounds confident, names a plan, or says it's fine.
 
 Refuse with the reason, not a bare error:
 
@@ -284,7 +324,7 @@ issuekit does not choose the path, the base ref, or the git commands. If gitkit 
 gh issue edit <n> --remove-label ready --add-label in-progress
 ```
 
-Preview it and get an OK, like every mutation in this skill. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
+Preview it and get an OK, like every mutation in this skill — **unless the caller has declared the run unattended**, which is [the skill's single exemption](#preflight-every-mode) and applies to this flip and nothing else. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
 
 ### 5. Hand off
 
@@ -292,7 +332,7 @@ Preview it and get an OK, like every mutation in this skill. If the issue was al
 
 **Where it landed** — the branch and the worktree path, and whether it was created fresh or adopted.
 
-**Next** — the ground is prepared and nothing has been built, so the next move is always *switch into that worktree and start there*. Give the `cd` and name the builder: **implementkit** against this issue when it's installed, otherwise plain "implement the issue in that worktree". For an unattended run, **afkkit** is what takes it from here to an open PR — mention it only if the issue is genuinely groomed.
+**Next** — the ground is prepared and nothing has been built, so the next move is always *switch into that worktree and start there*. Give the `cd` and name the builder: **implementkit** against this issue when it's installed, otherwise plain "implement the issue in that worktree". For an unattended run, **afkkit** takes it from here to an open PR — and since afkkit calls `start` itself, mention it as `afkkit <n>` from anywhere rather than as something to run from inside the worktree; it adopts the worktree this run just prepared.
 
 **Stop there** — `start` prepares the ground and nothing else. It does not implement, does not launch an agent, and does not commit; naming the next step is routing, not doing it.
 
@@ -427,14 +467,14 @@ gh issue list --state open --label in-progress --json number,title
 gh issue list --state open --label ready --json number,title
 ```
 
-| # | Title | Status |
-|---|-------|--------|
-| 43 | `feat(auth): oidc login end to end` | `in-progress` |
-| 44 | `feat(auth): sso account linking` | `ready` |
+| # | Title | Status | Priority |
+|---|-------|--------|----------|
+| 43 | `feat(auth): oidc login end to end` | `in-progress` | high |
+| 44 | `feat(auth): sso account linking` | `ready` | medium |
 
-List `in-progress` rows first, then `ready`. If both sets are empty, say so instead of printing an empty table.
+List `in-progress` rows first, then `ready`, each group ordered by priority. If both sets are empty, say so instead of printing an empty table. Drop the `Priority` column when no row carries one — an all-blank column reads as "nothing matters" when the truth is "nobody has ranked these," and the fix for that is `triage`, not a wider table.
 
-**Next** — crown one row from that table, naming a kit only when it's installed: an `in-progress` issue is unfinished work and outranks a fresh start (resume it in its worktree — **implementkit**), while a `ready` one is the pick-up (`start <n>`). Both sets empty means the tracker has nothing workable: the move is `create` from a plan, or **plankit** if there isn't one yet.
+**Next** — crown one row from that table, naming a kit only when it's installed: an `in-progress` issue is unfinished work and outranks a fresh start (resume it in its worktree — **implementkit**), while a `ready` one is the pick-up (`start <n>`). Priority orders *within* each group and doesn't jump a `ready` issue over an `in-progress` one — finishing beats starting, and a half-built `medium` still costs less to land than a fresh `high`. The exception is a `critical`, which means preempt by definition: crown it over in-progress work and say plainly what's being set down. Both sets empty means the tracker has nothing workable: the move is `create` from a plan, or **plankit** if there isn't one yet.
 
 ---
 
@@ -460,6 +500,9 @@ Produce a **status report** — a table — surfacing:
 - **Stale block** — an issue labeled `blocked` whose `Blocked by #N` target is already closed → it should be `ready` (hand the relabel to `sync`).
 - **Dangling / circular dependency** — a `Blocked by #N` pointing at a missing issue, or two issues blocking each other.
 - **Unmarked** — an open issue carrying no [lifecycle label](#lifecycle-labels-every-mode) at all → offer to classify it (`triage` / `needs-planning` / `ready` / `blocked`).
+- **Unassessed** — an open issue carrying no [priority label](#priority-labels-every-mode) → offer to rank it. Report this as its own count rather than folding it into *Unmarked*: the two are independent gaps, and a tracker with tidy lifecycle labels and no priorities anywhere is both a common state and an invisible one if the report only ever prints one number. Exclude `wontfix` and `duplicate`, which need no rank.
+- **Double-ranked** — an open issue carrying **more than one** priority label → offer to keep the highest and drop the rest. This is the failure mode the [one-at-a-time rule](#priority-labels-every-mode) exists to prevent, and it happens whenever a label is set outside this skill (the GitHub UI applies labels additively, with nothing to stop it). Keeping the highest is the safe repair: it can only ever over-rank an issue the user is about to look at anyway, where silently keeping the lowest buries work somebody explicitly escalated.
+- **Stale `critical`** — an issue labeled `critical` that hasn't been updated in weeks → offer to demote it. `critical` means *preempt what's in progress*, so an untouched one is self-refuting: nobody dropped anything for it, which is the tracker saying out loud that it isn't critical. Left alone it's worse than no label at all, because it outranks everything downstream forever and trains the user to ignore the level that's supposed to be unignorable. Scale "weeks" to the repo's pace, the same way the *Stale* check does.
 - **Ungrilled `ready`** — an issue labeled `ready` whose decisions clearly aren't settled (open questions in the body, no acceptance criteria) → it was promoted too early; offer to move it back to `needs-planning` so unattended workers skip it until a human grills it.
 - **Missing labels** — relative to the [lifecycle map](#lifecycle-labels-every-mode) (or the repo's own scheme, if it predates it); when the map's labels aren't provisioned, say so and point at **repokit** rather than creating them.
 - **Status cross-checks** — issues whose linked PR merged but that are still open (hand off to `sync` for the actual close).
@@ -469,16 +512,23 @@ For each flagged item, propose a concrete fix — relabel, reprioritize, close a
 
 ```sh
 gh issue edit <n> --add-label <label>
+gh issue edit <n> --add-label high --remove-label medium   # priority is a replace, never an add
 gh issue comment <n> --body-file <decision>
 gh issue close <n> --comment "Closing as stale; reopen if still relevant."
 ```
 
+**Ranking an unassessed backlog is a batch, so propose it as one table** — issue, title, and a proposed priority per row — rather than as one question per issue. Priority is comparative by nature: the user is deciding what beats what, and a table is the only shape that shows them the comparison they're actually making. Asked one at a time, twenty issues become twenty context-free judgments and every one of them comes back `medium`, which is the same as not ranking at all.
+
+**Propose a distribution, not a wall of `high`.** A backlog where most things are `high` has no priority information in it — the label stops discriminating and every consumer falls back to whatever tiebreak sits underneath it. Aim for a shape where `critical` is empty or nearly so, `high` is a handful, and the long tail is `medium` and `low`. When your own proposal comes out top-heavy, that's a signal to re-read the issues rather than to ship the table.
+
+**Never apply a priority the user didn't approve, even in a batch.** Ranking is the one thing in this map that can't be derived from the tracker — every other triage fix repairs a state that's provably wrong (a zombie label on a closed issue, a block whose blocker landed), where a priority is a claim about what matters that only the user can make. Approve-the-table is fine; approve-nothing-and-apply-anyway is not.
+
 ### 4. Hand off
 **What changed** — what the report found, and which fixes you applied versus left alone. A flagged item the user declined is worth naming; it stays drift until someone decides otherwise.
 
-**Where it landed** — the tracker's state after the pass: how many open issues now carry a lifecycle label, and how many are still unmarked.
+**Where it landed** — the tracker's state after the pass, per namespace: how many open issues now carry a lifecycle label and how many are still unmarked, and how many carry a priority and how many are still unassessed. Two numbers, because a pass can genuinely fix one and leave the other untouched.
 
-**Next** — triage only classifies; the fixes it can't make itself belong to a sibling mode, so route by what survived: issues whose PR merged but that are still open → `sync`; a stale `blocked` whose prerequisite already landed → `sync`; an issue promoted to `ready` too early → a human grill session (**grillkit** when installed) before anything unattended touches it; missing lifecycle labels → **repokit**. If the tracker came back clean, say so and point at the `ready` set — the next move is `start`, not more tidying.
+**Next** — triage only classifies; the fixes it can't make itself belong to a sibling mode, so route by what survived: issues whose PR merged but that are still open → `sync`; a stale `blocked` whose prerequisite already landed → `sync`; an issue promoted to `ready` too early → a human grill session (**grillkit** when installed) before anything unattended touches it; missing labels in either namespace → **repokit**. If the tracker came back clean, say so and point at the `ready` set — the next move is `start` on the **highest-priority** one, not more tidying.
 
 ---
 

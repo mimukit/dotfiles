@@ -46,10 +46,14 @@ Don't install the skill yourself — hand the user the commands to drive the liv
 
 When done testing, they remove the dev link the same way it was added (the collection's unlink command, or deleting the symlink/copy).
 
-### 8. Finish
-- Run the collection's skill lint if it has one; fix any errors and address warnings before handing off. Without one, self-check the draft against the [Conventions](#conventions), **Quality bar**, and (for public skills) **Portability** sections.
-- Update whatever the collection uses to list its skills — typically a README skills table, and for public skills a `skills.sh.json` directory-grouping file if the repo has one.
-- Hand off: surface a suggested conventional commit message (e.g. `feat(<name>): add <name> skill`) for the user to run. **Do not commit automatically** — committing is the user's call.
+### 8. Hand off
+First finish the mechanical tail: run the collection's skill lint if it has one (fix errors and address warnings; without one, self-check against the [Conventions](#conventions), **Quality bar**, and — for public skills — **Portability**), and update whatever the collection uses to list its skills (typically a README skills table, and a `skills.sh.json` directory-grouping file if the repo has one). Then close:
+
+**What changed** — the skill created (name, visibility, file count), the listing surfaces updated, and the lint or self-check result.
+
+**Where it landed** — the skill's directory path, and whether a dev link from [Live test](#7-live-test) is still in place (it should be removed by now; say so if it isn't).
+
+**Next** — the work is uncommitted, so the move is to commit it: suggest a conventional message (e.g. `feat(<name>): add <name> skill`) for the user to run. **Never commit automatically** — committing is the user's call.
 
 ## Conventions
 
@@ -76,6 +80,9 @@ When a skill creates a durable Markdown artifact under `docs/`, follow the host 
 ### Cross-referencing steps
 **Never reference a step by its number** (a bare "see step N" citation). A bare number binds to a step's *position*, so inserting or reordering steps silently makes it point at the wrong one. Reference the step's *identity* instead: for a step with a heading, link to it by name with a GitHub anchor (`[Gather intent](#1-gather-intent)` — GitHub builds the anchor from the full heading text: lowercase, punctuation dropped, spaces → hyphens); for a list item with no heading, name the action in prose rather than citing its ordinal.
 
+### Closing hand-off
+**Every skill ends by reporting what it did and naming what comes next**, in a closing section titled `## Hand off` (or `### N. Hand off` inside a numbered procedure; a mode-per-section skill gets one per mode). A skill that goes quiet at the end leaves the user to reconstruct what changed on disk and what the next move is — exactly the work skills exist to remove. Three beats, in order: **what changed** — the mutations, concretely, including the ones that didn't happen; **where it landed** — paths, branches, URLs, so nothing has to be hunted for; **next** — the single best move, crowned, not a menu of equals. Route, don't launch: name the follow-up and its one-line invocation without invoking it, name a sibling skill only when it's installed, and always give the plain fallback ("open a PR with a PR skill, otherwise `gh pr create`"). A terminal skill says plainly there is no next step rather than inventing one; a read-only skill may drop a genuinely empty beat, never pad it.
+
 ## Quality bar
 
 Apply these while drafting; they are the difference between a skill that triggers and reads well and one that doesn't:
@@ -88,6 +95,7 @@ Apply these while drafting; they are the difference between a skill that trigger
 - **One meaning, one place** — no duplication. For internal skills, point to the host repo's conventions doc instead of restating it; for public skills, inline what they need (see Portability).
 - **Prune no-ops** — test every line for relevance; delete weak sentences rather than trimming them. Explain the *why* behind a rule when it isn't obvious.
 - **No hard-wrapping** — per [Prose formatting](#prose-formatting).
+- **Close with a hand-off** — end on a `Hand off` section per [Closing hand-off](#closing-hand-off): what changed, where it landed, one crowned next move.
 - **Durable docs artifacts** — when the skill writes Markdown under `docs/`, apply [Documentation artifact naming](#documentation-artifact-naming) and inline the applicable convention in a public skill.
 - **kit naming + frontmatter** — obey the naming rules in [Propose names](#4-propose-names) and the [Frontmatter template](#frontmatter-template) exactly; `name` must match the directory; declare `metadata.internal`.
 

@@ -3,7 +3,7 @@ name: domainkit
 description: >-
   Maintain a project's domain model as a consented byproduct of design work — a CONTEXT.md glossary of the ubiquitous language and docs/adr/ decision records. Use when a domain term needs pinning down or is used inconsistently, when a hard-to-reverse trade-off decision gets settled, when the user says "record this decision", "write an ADR", "update the glossary/ubiquitous language", "add this term", or when another skill needs to keep the domain model current — it scribes the model, it doesn't interrogate it.
 license: MIT
-allowed-tools: Read, Write, Edit, Glob
+allowed-tools: Read, Write, Edit, Grep, Glob, Skill
 metadata:
   internal: false
 ---

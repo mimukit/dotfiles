@@ -1,7 +1,7 @@
 ---
 name: implementkit
 description: >-
-  Implement a plan, spec, or issue into working code — no commit, that's commitkit's job — picking straight-through vs TDD mode by precedence (prompt → CLAUDE.md → repo habit → ask), then running the repo's test + build/typecheck gate before declaring done. Use when the user says "implement this plan", "build this issue", "write the code for plan-<slug>-YYYY-MM-DD.md", "implement #42", "do this TDD", or hands off a hardened spec to be turned into code — even if they don't name a mode.
+  Implement a plan, spec, or issue into working code — no commit, that's commitkit's job — picking straight-through vs TDD mode by precedence (prompt → CLAUDE.md → repo habit → ask), then running the repo's test + build/typecheck gate before declaring done. Use when the user says "implement this plan", "build this issue", "write the code for plan-<slug>-YYYY-MM-DD.md", "implement #42", "do this TDD", "apply these review findings", or hands off a hardened spec to be turned into code — even if they don't name a mode.
 license: MIT
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write
 metadata:
@@ -26,10 +26,14 @@ Two hard boundaries:
 ## Procedure
 
 ### 1. Take an explicit input
-Require the user to name what to build — a plan file (`docs/plans/plan-<slug>-YYYY-MM-DD.md`), an issue (`#42`, or a URL/id `gh` can fetch), or a freeform spec written in the prompt. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it).
+Require the user to name what to build — a plan file (`docs/plans/plan-<slug>-YYYY-MM-DD.md`), an issue (`#42`, or a URL/id `gh` can fetch), a freeform spec written in the prompt, or a **fix round**: a concrete list of review findings (e.g. the blockers from a review pass), each naming what's wrong and where. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it).
 
 ### 2. Assess implementability, bounce if thin
 Before writing anything, judge whether the input is concrete enough to build without inventing the design. A hardened plan or a fleshed-out issue passes. A bare title, a one-line ask, or a spec with unresolved core decisions does **not** — stop and tell the user to harden it first with grillkit (to interrogate the decisions) or plankit (to draft a proper plan), naming the specific gaps you hit. Don't paper over a thin spec with assumptions; a wrong guess here costs more than the bounce.
+
+**Thin for a different reason gets a different route.** When the input is unsettled because *nobody has seen the design work* — the state model looks fine on paper, the screen has never been laid out — no amount of interrogation settles it, because the missing input is evidence rather than a decision. That routes to prototypekit when it's installed, or to a deliberate throwaway spike otherwise; it comes back here once the question is answered.
+
+A **fix round passes this bar by construction** — the findings name the defects, so there is no design to invent; never bounce one as thin. It also skips mode resolution below: apply the named fixes directly in the style the surrounding code already shows, and let the done-gate prove them.
 
 ### 3. Resolve the mode
 Pick **straight-through** or **TDD** by this precedence, taking the first tier that gives an answer:
@@ -49,6 +53,8 @@ Pick **straight-through** or **TDD** by this precedence, taking the first tier t
 3. **Refactor** — clean up code and test while the suite stays green.
 
 Repeat per slice until the input is fully implemented. Match the surrounding code's conventions, naming, and structure in either mode — reuse what exists rather than reinventing it.
+
+**Visual surfaces delegate.** When the work includes UI — a page, a component, a screen — and **uikit** is installed, apply it to those files instead of writing them blind; it carries the project's design constraint and runs its own visual pre-flight. Without it, write the UI directly. implementkit keeps everything else either way: the input contract, the mode resolved above, and the done-gate below, which remains the **only** gate.
 
 **Check as you go, not only at the end.** Keep the feedback loop tight while building: typecheck and run the **single** affected test file as each slice lands, so breakage surfaces where it's cheap to fix. Save the **full** suite and the build for the [done-gate](#5-run-the-done-gate). TDD's red→green already runs one test at a time; this closes the same gap in straight-through mode, which otherwise gets no signal until the end.
 

@@ -3,7 +3,7 @@ name: researchkit
 description: >-
   Research the credible options for a technical decision and recommend one — a tool, library, framework, architecture, or service — grounded in primary sources with cited, dated evidence. Use when the user asks "which should I use, A or B", "compare X and Y", "evaluate options for Z", "what's the best tool/library/service for …", "should we use X or Y", "research X before we build", or runs "/researchkit" — the decision research that front-runs a plan.
 license: MIT
-allowed-tools: WebSearch, WebFetch, Read, Grep, Glob, Write
+allowed-tools: WebSearch, WebFetch, Read, Grep, Glob, Write, AskUserQuestion
 metadata:
   internal: false
 ---
@@ -30,7 +30,7 @@ researchkit's deliverable is a cited argument, not a working artifact. It **neve
 
 The failure mode is specific and worth naming, because it feels helpful from the inside: research turns up a claim the docs don't settle, building a small test looks like the fastest way to settle it, and twenty minutes later the user is reading about a prototype they never asked for. The user asked which option to pick. Handing back an implementation instead answers a question they didn't ask, spends their time and tokens without consent, and buries the comparison they wanted.
 
-So: surface the hypotheses and the evidence, then **stop and let the user choose**. If a spike is genuinely the only way forward, say that in Open questions — "settling this needs a spike: <what it would measure>" — and wait. Building one is a separate, explicitly requested job, and implementkit's, not researchkit's.
+So: surface the hypotheses and the evidence, then **stop and let the user choose**. If a spike is genuinely the only way forward, say that in Open questions — "settling this needs a spike: <what it would measure>" — and wait. Building one is a separate, explicitly requested job: **prototypekit**'s when it's installed, and otherwise a throwaway the user asks for by name. It is never researchkit's, and it is not the build step's either — that one needs a settled intent and ships production code.
 
 ## Procedure
 
@@ -45,7 +45,7 @@ Use whatever web search/fetch tools the host exposes to read the **authoritative
 
 **No web access?** Say so plainly, then give a best-effort comparison from knowledge with an explicit staleness warning — and **never fabricate a citation**. A missing source is stated as missing, not invented.
 
-**A claim the sources won't settle** — a performance number for your exact workload, whether two libraries actually interop, whether an API does what its docs imply — is **not a cue to go test it**. Mark it unverified, carry it into Open questions, and let the reader decide whether it's worth a spike. Unresolved is a legitimate research finding; a surprise prototype is not.
+**A claim the sources won't settle** — a performance number for your exact workload, whether two libraries actually interop, whether an API does what its docs imply — is **not a cue to go test it**. Mark it unverified, carry it into Open questions, and let the reader decide whether it's worth a spike — **prototypekit** is where that spike belongs when it's installed. Unresolved is a legitimate research finding; a surprise prototype is not.
 
 ### 4. Compare
 Lay the options against the constraints that matter (from [Frame the decision](#1-frame-the-decision)), not a generic feature grid. Each load-bearing claim in the comparison carries its source. Keep it to the axes that actually move the decision.
@@ -79,7 +79,7 @@ Print inline by default; write to a file only when asked. Either way, the shape:
 - ...
 
 ## Open questions
-Unresolved or thin spots to settle when planning — including any claim that would need a spike to settle, named but not acted on.
+Unresolved or thin spots to settle when planning — including any claim that would need a spike to settle, named but not acted on. Those hand off cleanly to prototypekit when it's installed.
 ```
 
 Scale it to the decision — a two-way library pick is a short block; an architecture choice earns more. Drop any section that would be filler.
