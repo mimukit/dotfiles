@@ -292,7 +292,7 @@
       "microphoneDeviceLabel": null
     },
     "windowBackgroundBlur": false,
-    "workspaceDir": "__HOME__/orca/workspaces"
+    "workspaceDir": "~/worktrees"
   },
   "ui": {
     "agentActivityDisplayMode": "compact",
@@ -310,20 +310,20 @@
     "projectOrderBy": "manual",
     "rightSidebarExplorerView": "files",
     "rightSidebarOpen": true,
-    "rightSidebarTab": "source-control",
+    "rightSidebarTab": "explorer",
     "rightSidebarWidth": 335,
     "showActiveOnly": false,
     "showSleepingWorkspaces": true,
-    "sidebarWidth": 312,
-    "sortBy": "name",
+    "sidebarWidth": 342,
+    "sortBy": "manual",
     "statusBarItems": [
       "claude",
       "gemini",
       "kimi",
-      "ssh",
       "resource-usage",
       "ports",
-      "grok"
+      "grok",
+      "ssh"
     ],
     "statusBarUsageMode": "verbose",
     "statusBarVisible": true,
@@ -361,9 +361,6 @@
     "worktreeCardProperties": [
       "status",
       "unread",
-      "issue",
-      "linear-issue",
-      "jira-issue",
       "pr",
       "automation",
       "comment",
