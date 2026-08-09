@@ -50,6 +50,7 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -128,6 +129,15 @@
           {
             "type": "command",
             "command": "bash '/Users/mukit/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -r '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ] && [ -x '/Users/mukit/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/mukit/.orca/agent-hooks/claude-hook.sh'; else { command -p cat 2>/dev/null || cat; } >/dev/null 2>&1 || :; fi",
             "timeout": 10
           }
         ]
@@ -215,6 +225,5 @@
     "command": "~/.claude/statusline.sh"
   },
   "effortLevel": "high",
-  "theme": "dark",
-  "model": "opus[1m]"
+  "theme": "dark"
 }
