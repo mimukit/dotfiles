@@ -115,6 +115,8 @@ The diagnosis exists so you learn to write the prompt yourself rather than needi
 
 ### 7. Hand off
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — nothing on disk. `task` writes no files, ever; the artifact is a prompt you're about to paste into the session you're already in, and a file would be a detour on the way to the clipboard. Say the mode you ran and whether it was a rewrite, a review, or a no-rewrite verdict.
 
 **Where it landed** — the fenced block above, ready to paste.

@@ -3,7 +3,7 @@ name: refactorkit
 description: >-
   Survey an existing codebase for the structural change worth making — shallow interfaces, adapter sprawl, poor locality, untested coupling — rank the candidates, crown one, and write it up as a reviewable proposal. Use when the user says "where should I refactor", "what's wrong with this codebase's structure", "find refactoring opportunities", "this code is hard to change", "improve our architecture", "audit the module boundaries", or "/refactorkit". It proposes and never edits code.
 license: MIT
-allowed-tools: Bash, Read, Grep, Glob, Write, Task, Agent, Skill
+allowed-tools: Bash, Read, Grep, Glob, Write, Task, Agent
 metadata:
   internal: false
 ---
@@ -143,6 +143,8 @@ This file is **durable and committable** — it's a proposal meant to be reviewe
 **No writable filesystem** (a browser-based agent) → print the artifact as a codeblock under its canonical path and skip the write.
 
 ### 6. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
 **What changed** — the report written, and explicitly: no source file touched. **Where it landed** — the path. **Next** — take the crowned candidate to a grilling: the write-up is already plan-shaped, and what it lacks is interrogation rather than drafting. Name **grillkit** when it's installed; otherwise say plainly that the move is to interrogate the proposal yourself — the assumptions, the failure paths, the blast radius — before anybody builds it.
 

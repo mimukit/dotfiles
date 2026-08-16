@@ -200,6 +200,8 @@ Write `DESIGN.md` at the repo root, append the stamp, then run `lint` and report
 
 ### 5. Hand off
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — the file created, the rung that matched, how many tokens landed in each state, and what was omitted.
 
 **Where it landed** — `DESIGN.md` at the repo root, the swatch sheet's scratch path (and that it's disposable), and the lint result.

@@ -3,6 +3,7 @@ name: verifykit
 description: >-
   Prove a frontend feature actually works by driving it in a real browser and capturing screenshots + a short GIF as PR-ready proof, published so a pull request can embed it inline. Use when a frontend change is built and you want visual evidence it works before opening the PR — "verify this feature", "capture proof it works", "record the flow working", "prove the UI change", "/verifykit", or when a PR needs proof artifacts to attach.
 license: MIT
+allowed-tools: Bash, Read, Write, AskUserQuestion
 metadata:
   internal: false
 ---
@@ -90,10 +91,13 @@ Then write the ready-to-embed proof into the bundle's fixed **`proof.md`** (`doc
 
 ### 8. Hand off
 
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Report the bundle path, the flows verified (with pass/fail), the capture backend used, and — when published — the commit SHA and the ready-to-embed raw URLs. Offer the PR step next: the artifacts are ready for a pull request's **Proof** section. Don't open the PR from here.
 
 ## Notes
 
+- **`allowed-tools` covers the built-ins only, and the capture backend needs one thing more.** The declared four are what verifykit runs itself: `Bash` for git, `gh`, `ffmpeg`, and the bundled `verify-assets.sh`; `Read` for the diff and the linked issue; `Write` for the bundle; `AskUserQuestion` for the flow choice and the one auth ask. **The browser-automation surface is not in that list and cannot be** — it arrives as MCP tools whose names the server chooses (commonly `mcp__<server>__*`), so no list written here can name them in advance. On a host that enforces `allowed-tools` strictly, grant the browser MCP alongside these four, or verifykit will find no capture backend and take its documented degradation: print the manual capture recipe and stop. That degradation is the honest failure — it never fakes proof.
 - **Driver + recorder, not a provisioner.** It reuses or asks for auth and runs a seed command it's handed; it never creates fixtures, seeds databases, or runs migrations. This keeps it safe (it can't mutate real data) and portable across projects.
 - **No mp4.** A hosted mp4 does not embed inline in a PR body — GitHub only renders video uploaded through its web composer — so the proof format is screenshots + GIF. Video is a deliberate later add.
 - **Private repos.** Inline rendering needs a public repo. On a private one, `verify-assets.sh check` fails — skip publishing and hand off the local bundle path for manual attachment rather than embedding dead links.

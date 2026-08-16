@@ -27,7 +27,9 @@ A handoff earns its keep by carrying what a new agent *can't reconstruct*:
 
 ## Document shape
 
-Write these sections; drop any that are genuinely empty rather than padding them:
+Write these sections; drop any that are genuinely empty rather than padding them.
+
+**Two registers, split by section.** **Current state**, **Next steps** and **How to run / verify** are read by someone who is *doing* the work, so write them in ASD-STE100 Simplified Technical English: one instruction per sentence, procedural sentences 20 words or fewer, active voice, present tense, name the actor, no metaphor or idiom, and one term per thing for the whole document — if the top calls it the *worker*, the bottom does not call it the *job runner*. **Goal** and **Decisions & constraints** are read by someone forming a judgment before they touch anything, so they keep ordinary prose with the reasoning intact; flattening a rejected approach into clipped steps strips the *why* that stops the next agent repeating it.
 
 ```markdown
 # Handoff: <one-line title of the work>
@@ -74,6 +76,8 @@ Capabilities the next session should reach for — e.g. a commit skill to land t
 **No writable filesystem — degrade gracefully.** If the environment cannot write files, emit the finished handoff as a single Markdown codeblock and say that no file was created.
 
 ## Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
 **What changed** — nothing in the project itself; the handoff is a new (or updated) document, and say which.
 

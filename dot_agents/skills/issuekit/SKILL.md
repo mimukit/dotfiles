@@ -51,7 +51,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 
 **Safety stance — the whole skill.** Creating, closing, relabeling issues and editing PR bodies are outward-facing mutations. **Preview every mutation and get an OK before it runs — nothing changes on GitHub unprompted.** Never merge PRs.
 
-**One exemption, for an unattended caller.** An orchestrator running with nobody at the keyboard (afkkit is the one that does) may pre-authorize exactly one mutation: [`start`'s `ready → in-progress` flip](#4-flip-the-label-ready--in-progress). It has to be told the run is unattended; it is never assumed. The exemption is narrow because it's the only mutation here whose approval is already implied by an earlier human act — [the `ready` guard](#1-guard--refuse-anything-not-ready) has refused everything a human hasn't grilled, so the only issues that reach the flip are ones a human already cleared for exactly this. Nothing else widens: `create` still previews, `close` still previews, `sync` and `triage` still preview every move, and no caller of any kind gets to skip the guard itself.
+**One exemption, and it belongs to the mode, not the caller.** [`start`'s `ready → in-progress` flip](#4-flip-the-label-ready--in-progress) runs without a preview, for every caller — a person at the keyboard and an unattended orchestrator alike. It's the only mutation here that asks a question already answered twice over: [the `ready` guard](#1-guard--refuse-anything-not-ready) has refused everything a human hasn't grilled, and invoking `start <n>` *is* the instruction to start the issue. Flipping the label is what "started" means in the tracker, so a confirmation prompt buys nothing and costs the one thing `start` exists to protect — an issue sitting in a worktree while the tracker still advertises it as free for someone else to pick up. Nothing else widens: `create` still previews, `close` still previews, `sync` and `triage` still preview every move, and no caller of any kind gets to skip the guard itself.
 
 ## Title convention (every issue this skill creates)
 
@@ -273,6 +273,9 @@ Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays t
 Use `Edit` for this. For an ad-hoc issue with no plan file, skip this step.
 
 ### 7. Hand off
+
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — a table of what you created: number, title, parent, URL, lifecycle label, and priority. Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
 
 **Where it landed** — call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set**, naming what each blocked issue waits on. Order the `ready` set by priority, since that set exists to be picked from.
@@ -324,7 +327,7 @@ issuekit does not choose the path, the base ref, or the git commands. If gitkit 
 gh issue edit <n> --remove-label ready --add-label in-progress
 ```
 
-Preview it and get an OK, like every mutation in this skill — **unless the caller has declared the run unattended**, which is [the skill's single exemption](#preflight-every-mode) and applies to this flip and nothing else. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
+**Run it without asking.** This is [the skill's single exemption from the preview rule](#preflight-every-mode), it applies to every caller, and it applies to this flip and nothing else. Report the flip in the hand-off rather than proposing it first. If the issue was already `in-progress` (the adopt path), leave the label alone and say so. If either label is missing from the repo, [report the gap](#lifecycle-labels-every-mode) and point at **repokit** — the exemption skips the prompt, never the provisioning check.
 
 ### 5. Hand off
 

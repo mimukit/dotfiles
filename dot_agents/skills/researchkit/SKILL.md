@@ -54,6 +54,9 @@ Lay the options against the constraints that matter (from [Frame the decision](#
 Pick one. Give a one-line why, and state the condition under which you'd pick differently ("Drizzle — lighter runtime, no codegen; choose Prisma if you need its migration tooling and admin GUI"). A recommendation the reader can accept, reject, or redirect — not a shrug.
 
 ### 6. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Print the recommendation, then offer the next steps without starting either:
 
 - **Save it?** — offer to write the artifact to `docs/research/research-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case subject slug and the artifact's ISO creation date (for example, `research-auth-providers-2026-07-23.md`). Keep that date stable on later edits and update the same artifact in place. For a genuine same-day collision between distinct reports, make the slug more specific; only as a last resort insert a sequence immediately before the date (`research-auth-providers-02-2026-07-23.md`). Follow any established research/notes/RFC location or naming scheme the repository already uses. Default is inline-only; write the file only if the user wants a durable record.

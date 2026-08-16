@@ -103,6 +103,8 @@ If grilling settled a domain term or a hard-to-reverse trade-off decision worth 
 
 ## Hand off
 
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Close every grill the same way, naming a sibling skill only when it's installed and otherwise describing the action plainly:
 
 **What changed** — a brief recap of the decisions you settled together, each in a line. Name any question you raised and *didn't* resolve; a decision the user deferred is not a decision, and it will surface again downstream as a blocked build.

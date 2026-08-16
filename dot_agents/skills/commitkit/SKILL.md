@@ -102,6 +102,9 @@ git commit -m "type(scope): summary" -m "why in one line
 When the user delegated the commit ("commit", "commit my changes"), just do this for every group — no per-commit confirmation. Only show messages for approval first if the user asked you to draft rather than commit. If a commit fails (e.g. a pre-commit hook rejects it), surface the hook output and fix or ask — don't retry blindly or bypass hooks with `--no-verify` unless told to.
 
 ### 6. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Close with what changed, where it landed, and the next move.
 
 **What changed** — print a summary table of the commits you created so the user sees the result at a glance:

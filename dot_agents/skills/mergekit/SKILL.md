@@ -136,6 +136,8 @@ Everything the reviewer needs, assembled once so they don't go hunting:
 
 ### 6. Hand off
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — whether the worktree was adopted or created, and whether a sync was pushed (and if so, whether it rebased or took the merge exception, and how many threads it outdated). Nothing else here mutates anything.
 
 **Where it landed** — two lines: the worktree path, and the single command that starts the app.

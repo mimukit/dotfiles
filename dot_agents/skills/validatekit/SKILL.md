@@ -141,6 +141,9 @@ The evidence table is what stops the verdict being a vibe — the founder can po
 **Signal reflection earns the verdict.** Close on what you noticed about how they think, in *their words*: "you didn't say small businesses, you said Sarah the ops manager who gets audited in March." This is the warmth that makes a brutal verdict land as respect rather than dismissal.
 
 ### 8. Offer the artifact, then hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Ask whether they want this written to a file. **Only on yes**, write `docs/validation/validation-<slug>-YYYY-MM-DD.md` — a short lowercase kebab-case slug from the idea's core noun (ask if none is obvious), and the ISO creation date at the end. Create the directory if needed. Keep that date stable on later edits and update the same file in place; on a genuine same-day collision between distinct ideas, make the slug more specific, and only as a last resort insert a sequence before the date (`validation-invoice-ocr-02-2026-07-31.md`). Put a stamp near the top for downstream provenance:
 
 ```

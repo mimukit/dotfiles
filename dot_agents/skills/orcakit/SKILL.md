@@ -139,6 +139,8 @@ Rules:
 
 ### Hand off
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — how many workspaces gained an issue link, how many had their status corrected, how many were skipped and why.
 
 **Where it landed** — in Orca's sidebar; nothing on disk moved and no git state changed.

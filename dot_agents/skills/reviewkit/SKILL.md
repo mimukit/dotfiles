@@ -138,6 +138,7 @@ After showing the review, offer to save it (don't save unprompted). If the user 
 ## Notes
 
 - **Read-only by contract.** reviewkit runs git and read/search commands to understand the change, and at most the repo's own test command to check correctness. It never edits source, never commits, never pushes. Its only write is the optional report file in [Optional — save the report](#7-optional--save-the-report), and only when the user asks for it.
+- **`Skill` is in the tool list for gitkit, and for nothing else.** reviewkit *calls* gitkit to resolve the base ref when it reviews a branch diff — a wrong base yields an empty diff or half the repo's history, and both look like a real review target. The implement-style skill named in the findings hand-off is routed to, never invoked.
 - **Scale to the diff.** A one-line fix gets a quick pass-through and a one-line verdict; a large feature branch gets the full treatment. Don't pad a small change with ceremony.
 - **Not a substitute for tests or CI.** It's a judgment pass on top of them, tuned for how agent-written code fails. Report what the automated gates already cover as covered; spend the review on what they miss — this is the same reason the [review-target ground rules](#1-pick-the-review-target) skip tooling-enforced rules.
 - **No shell or git?** Ask the user to paste the diff *and* the original ask, then run the four passes on what they provide and print the report as a codeblock for them to save themselves.
