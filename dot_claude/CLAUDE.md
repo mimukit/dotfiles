@@ -15,9 +15,14 @@ rules:
   depends on a second meaning.
 - Keep a paragraph to six sentences or fewer. Turn a longer one into a list.
 
-This covers chat replies, summaries, and explanations. It does not cover code,
-identifiers, paths, command output, or text you quote from another source. It
-stacks with the rules below.
+This covers chat replies, summaries, and explanations. It also covers the
+procedural documents you write for me: QA steps, handoff documents, status
+snapshots, and the closing hand-off of a skill. It stops where the audience
+stops being me — content you produce for a third-party reader (project docs,
+published prose, UI copy, PR and issue bodies) is production writing and
+follows the section below instead. It does not cover code, identifiers, paths,
+command output, or text you quote from another source. It stacks with the rules
+below.
 
 ## Writing prose
 
@@ -26,7 +31,9 @@ bodies, chat replies) must not carry the usual AI tells: no em or en dashes as
 sentence punctuation, no puffery ("stands as a testament to", "vibrant",
 "seamless", "crucial"), no forced triads, no "not only X but also Y", no
 signposting ("let's dive in", "here's what you need to know"). Prefer plain
-verbs, concrete detail, and uneven sentence length.
+verbs and concrete detail. Prefer uneven sentence length too, but only in
+explanatory and public-facing prose — in a procedural document the section
+above wins, and uniform short sentences are correct there.
 
 For a full rewrite or a review pass over an existing draft, use the `humankit`
 skill, which carries the complete pattern catalog.
