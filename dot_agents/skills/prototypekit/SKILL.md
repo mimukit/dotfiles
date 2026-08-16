@@ -134,6 +134,8 @@ Remove the exclude entry **only when every prototype file is gone.** Any file th
 
 ### 8. Hand off
 
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — the files created, which were deleted and which the user chose to keep, whether the exclude entry was removed or retained, and whether the park happened.
 
 **Where it landed** — the verdict's destination by path (the plan file and the row it added, the issue, or the chat), and the absolute path of anything still on disk.

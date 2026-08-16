@@ -82,6 +82,8 @@ Lean toward leaving prose alone when you see hard-to-fake specifics (a real addr
 
 ## Hand off
 
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 This is the hand-off for text pasted into the conversation. Called by another skill or agent, none of it applies: deliver the final text alone and stop. Working from a file, deliver the summary and the path, not the rewrite itself.
 
 **What changed** — deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught when you asked *what still reads as AI-generated*, and a one-line **summary of changes**. Say so plainly if the audit turned up a fabrication you had to pull back out. If the user asked only for a review, skip the rewrite and report the located tells with line references instead.

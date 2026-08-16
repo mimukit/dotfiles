@@ -3,7 +3,7 @@ name: domainkit
 description: >-
   Maintain a project's domain model as a consented byproduct of design work — a CONTEXT.md glossary of the ubiquitous language and docs/adr/ decision records. Use when a domain term needs pinning down or is used inconsistently, when a hard-to-reverse trade-off decision gets settled, when the user says "record this decision", "write an ADR", "update the glossary/ubiquitous language", "add this term", or when another skill needs to keep the domain model current — it scribes the model, it doesn't interrogate it.
 license: MIT
-allowed-tools: Read, Write, Edit, Grep, Glob, Skill
+allowed-tools: Read, Write, Edit, Grep, Glob
 metadata:
   internal: false
 ---
@@ -44,6 +44,9 @@ Show the proposed glossary entry or ADR and ask before writing. Keep the proposa
 If the term or decision isn't actually resolved, don't manufacture certainty — use grillkit to settle it first when installed, or ask the user to settle it directly, then record the result.
 
 ### 6. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Keep this short. domainkit usually fires *inside* someone else's work, so a long report is an interruption on top of an interruption.
 
 **What changed** — one line: the term added or adjusted, or the ADR written with its number and title.

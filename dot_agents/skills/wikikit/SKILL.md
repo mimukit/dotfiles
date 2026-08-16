@@ -177,6 +177,8 @@ Write `<doc home>/.wikimap.yaml`, then update the docs engine's nav or sidebar c
 
 ### 7. Hand off
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — pages authored, pages adopted (mapped, not stamped), the README zone written or declined, and what could not be determined from code.
 
 **Where it landed** — the doc home, which ladder rung chose it, the manifest path, and the engine config touched.

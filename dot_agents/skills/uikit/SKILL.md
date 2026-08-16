@@ -113,6 +113,8 @@ Run [self-critique](#self-critique). It is a critique, not a gate — findings g
 
 ### 5. Hand off
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — the components and pages written or edited, one line each, and the composition decisions (what was reused, what was extended, what was newly written and why).
 
 **Where it landed** — the file paths, and the pre-flight result including anything left unfixed.

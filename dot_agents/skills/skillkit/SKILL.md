@@ -47,6 +47,9 @@ Don't install the skill yourself — hand the user the commands to drive the liv
 When done testing, they remove the dev link the same way it was added (the collection's unlink command, or deleting the symlink/copy).
 
 ### 8. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 First finish the mechanical tail: run the collection's skill lint if it has one (fix errors and address warnings; without one, self-check against the [Conventions](#conventions), **Quality bar**, and — for public skills — **Portability**), and update whatever the collection uses to list its skills (typically a README skills table, and a `skills.sh.json` directory-grouping file if the repo has one). Then close:
 
 **What changed** — the skill created (name, visibility, file count), the listing surfaces updated, and the lint or self-check result.
@@ -74,6 +77,9 @@ metadata:
 ### Prose formatting
 **No hard wrapping.** Write each paragraph and list item as one continuous line; let the editor and renderer soft-wrap. Fixed-width line breaks mid-sentence buy nothing — the agent reads the text regardless of newlines, and every Markdown renderer soft-wraps anyway. Keep line structure only where it is meaningful: code fences, tables, and YAML frontmatter (a folded `description: >-` scalar is fine).
 
+### Prose register
+**A skill writes for two different readers, and they need opposite prose.** Text a skill writes back to *its own operator* — QA steps, handoff documents, status snapshots, `Hand off` sections, next-move lines, preview-and-confirm lines — is procedural: write it in ASD-STE100 Simplified Technical English. One instruction per sentence. Procedural sentences 20 words or fewer, descriptive sentences 25 or fewer. Active voice, present tense, name the actor. No metaphor, idiom, or second meaning. Pick one term per concept and keep it *within a single document*; the rule never reaches across documents. Text a person reads *to form an opinion* — plan context, research recommendations, ADR rationale, review verdicts — is explanatory and keeps uneven rhythm and a stated position; do not apply STE to it. Machine-read or format-bound text is exempt: commit subjects, issue titles, prompts, design tokens, code, paths, commands, and quoted source. **Content the skill produces for a third-party audience is out of scope entirely** — project documentation, published prose, UI copy — because that is production writing for readers outside the session and needs room to explain a concept. Precedence: an explicit user instruction, then the target repository's documented convention, then the register. Inline this rule in a public skill rather than linking it.
+
 ### Documentation artifact naming
 When a skill creates a durable Markdown artifact under `docs/`, follow the host collection's convention when it has one. Otherwise use `<type>-<slug>-YYYY-MM-DD.md`: a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end (for example, `docs/plans/plan-sso-login-2026-07-23.md`). Keep that creation date stable when the file is edited. Update the same artifact in place; for a genuine same-day collision, make the slug more specific and only then insert a sequence immediately before the date (`research-auth-providers-02-2026-07-23.md`). ADRs retain their sequence as `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`. Multi-file artifacts put the convention on their bundle directory, such as `docs/verify/verify-<slug>-YYYY-MM-DD/`, while structural child names remain fixed. Inline the applicable rule in every public skill that creates such an artifact so the installed skill remains self-contained.
 
@@ -95,7 +101,8 @@ Apply these while drafting; they are the difference between a skill that trigger
 - **One meaning, one place** — no duplication. For internal skills, point to the host repo's conventions doc instead of restating it; for public skills, inline what they need (see Portability).
 - **Prune no-ops** — test every line for relevance; delete weak sentences rather than trimming them. Explain the *why* behind a rule when it isn't obvious.
 - **No hard-wrapping** — per [Prose formatting](#prose-formatting).
-- **Close with a hand-off** — end on a `Hand off` section per [Closing hand-off](#closing-hand-off): what changed, where it landed, one crowned next move.
+- **Classify the output's register** — per [Prose register](#prose-register). Text the skill writes back to its operator is procedural and follows STE; text a reader weighs an opinion against is explanatory; content produced for a third-party audience is out of scope and keeps its own standards. Getting this wrong flattens a verdict or bloats a runbook.
+- **Close with a hand-off** — end on a `Hand off` section per [Closing hand-off](#closing-hand-off): what changed, where it landed, one crowned next move, written in the procedural register.
 - **Durable docs artifacts** — when the skill writes Markdown under `docs/`, apply [Documentation artifact naming](#documentation-artifact-naming) and inline the applicable convention in a public skill.
 - **kit naming + frontmatter** — obey the naming rules in [Propose names](#4-propose-names) and the [Frontmatter template](#frontmatter-template) exactly; `name` must match the directory; declare `metadata.internal`.
 

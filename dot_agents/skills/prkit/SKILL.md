@@ -112,10 +112,16 @@ Opening the PR is the moment the linked issue moves from being worked to awaitin
 gh issue edit <n> --remove-label in-progress --add-label in-review
 ```
 
-- **Preview the mutation and get an OK before it runs** — relabeling an issue is an outward-facing change, so name the issue and the flip and wait for confirmation; never relabel silently.
-- If the issue doesn't currently carry `in-progress` (e.g. it was `ready` or already `in-review`), just add `in-review` and say what you found rather than forcing the removal. If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap.
+- **Run it without asking.** This is prkit's one exemption from the preview rule, and it belongs to this step rather than to whoever called it. Opening the pull request *is* the instruction to move the issue to review, so a confirmation asks a question the invocation already answered — and it costs the one thing this step protects: an issue that still advertises itself as being worked while its PR sits open for review. Report the flip in the hand-off rather than proposing it first.
+- **The exemption covers two starting states and no others.** An issue carrying `in-progress` gets the flip above. An issue carrying `ready` gets `in-review` **added**, with no removal, and you say what you found — that is the state issuekit `start` produces, so it is the other one a PR can legitimately arrive from.
+- **Any other lifecycle state is drift, not a transition.** `blocked`, `needs-planning`, `triage`, `needs-info`, already `in-review`, or no lifecycle label at all — stop and change nothing. Report the state you found. Ask when a human is present; escalate when the run is unattended. A label nobody checked is worse than a label nobody set.
+- **Everything else in prkit still previews.** The exemption is this one label move. Creating the PR, committing a handed-in path, and force-pushing a sync are unchanged.
+- If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap. The exemption skips the prompt, never the provisioning check.
 
 ### 9. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — the PR created or updated (title and number), whether a sync rebase ran, whether a handed-in path was committed, whether a proof section was embedded, and whether the linked issue was flipped to `in-review`.
 
 **Where it landed** — the PR URL and the branch it points at. Mention that CI will run if configured.
@@ -128,5 +134,5 @@ gh issue edit <n> --remove-label in-progress --add-label in-review
 - Uncommitted changes are not in a PR. If `git status` shows staged or unstaged work the user seems to want included, point it out and offer to commit first — don't silently leave it behind or commit it without asking.
 - If the branch is not ahead of the base (no commits), stop and say there's nothing to open a PR for.
 - **Proof embedding is optional and self-contained** — prkit only *reads* verifykit's `proof.md` and embeds it; it never runs the publish itself (that's verifykit's job, with its own bundled script). No verifykit bundle → no Proof section, and prkit works exactly as it always has.
-- **Advancing the linked issue is optional and previewed** — the `in-progress → in-review` flip only happens when the PR references an issue, prefers issuekit when installed but falls back to a plain `gh issue edit`, and never runs without an OK. No linked issue → prkit opens the PR exactly as before.
+- **Advancing the linked issue is optional and exempt from the preview rule** — the flip only happens when the PR references an issue, and prefers issuekit when installed, falling back to a plain `gh issue edit`. It runs unprompted from `in-progress` or `ready` and refuses every other state, because those two are the only ones a PR legitimately arrives from. The exemption is the step's, not the caller's: a human at the keyboard and an unattended orchestrator get exactly the same behavior, and prkit never widens it. No linked issue → prkit opens the PR exactly as before.
 - No shell or `gh` available (e.g. a browser-based agent)? Then you can't push or call `gh`. Instead read the diff the user provides and print the finished PR **title** and **body** as codeblocks for them to paste into the GitHub "New pull request" form.

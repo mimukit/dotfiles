@@ -102,6 +102,9 @@ gh repo edit --add-topic new-one --add-topic another --remove-topic dropped-one
 To *replace the whole topic set* in one call instead of add/remove reconciliation, the topics API is cleaner: `gh api --method PUT repos/{owner}/{repo}/topics -f 'names[]=a' -f 'names[]=b'`. Either is fine — pick whichever expresses the change more simply.
 
 ### 6. Hand off
+
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — the description and topics as they now stand, and anything the user chose to keep current rather than replace. A field you proposed and they rejected is worth one line; it's the part most likely to come up again.
 
 **Where it landed** — the repo's About panel, with its URL, so they can eyeball the result.
