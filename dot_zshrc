@@ -44,7 +44,6 @@ zinit light MichaelAquilina/zsh-you-should-use
 
 
 # Add in snippets
-zinit snippet OMZP::command-not-found
 zinit snippet OMZP::git
 zinit snippet OMZP::vi-mode
 
