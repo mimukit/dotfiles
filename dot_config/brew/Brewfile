@@ -1,4 +1,4 @@
-tap "alielsokary/tap"
+tap "alielsokary/tap", trusted: { casks: ["caskhub"] }
 tap "anomalyco/tap", trusted: true
 tap "gromgit/brewtils", trusted: true
 tap "infisical/get-cli", trusted: true
@@ -241,7 +241,7 @@ cask "bluesnooze"
 # E-books management software
 cask "calibre"
 # Native GUI for Homebrew casks
-cask "alielsokary/tap/caskhub", trusted: true
+cask "caskhub"
 # OpenAI's official ChatGPT desktop app
 cask "chatgpt"
 # Anthropic's official Claude AI desktop app
@@ -308,6 +308,8 @@ cask "losslesscut"
 cask "markdown-preview"
 # Free up RAM manually and automatically
 cask "memory-cleaner"
+# Meet, chat, call, and collaborate in just one place
+cask "microsoft-teams"
 # App to write, plan, collaborate, and get organised
 cask "notion"
 # Calculator and converter application
