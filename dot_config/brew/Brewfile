@@ -56,8 +56,6 @@ brew "fd"
 brew "ffmpeg"
 # macOS CLI for managing custom icons for files and folders
 brew "fileicon"
-# User-friendly command-line shell for UNIX-like operating systems
-brew "fish"
 # Terminal JSON viewer
 brew "fx"
 # Command-line fuzzy finder written in Go
