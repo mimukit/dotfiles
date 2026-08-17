@@ -36,7 +36,6 @@ apps=(
   ffmpeg
   fileicon
   fileicon
-  fish
   fzf
   gh
   gifsicle
