@@ -1,7 +1,14 @@
-# Load brew tools to shell 
+# Load brew tools to shell
 if [[ -f "/opt/homebrew/bin/brew" ]] then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+
+# Prepend a directory to PATH once, and only when the directory exists.
+# Re-sourcing this file therefore never grows or duplicates PATH.
+path_prepend() {
+  [[ -d "$1" ]] || return 0
+  path=("$1" ${path:#$1})
+}
 
 # Open or attach to default tmux session on startup
 # if command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
@@ -32,43 +39,58 @@ fi
 
 # Source/Load zinit
 source "${ZINIT_HOME}/zinit.zsh"
-zinit ice depth=1
 
-# Add in zsh plugins
-zinit light jeffreytse/zsh-vi-mode
-zinit light zsh-users/zsh-syntax-highlighting
-zinit light zsh-users/zsh-completions
-zinit light zsh-users/zsh-autosuggestions
-zinit light Aloxaf/fzf-tab
-zinit light MichaelAquilina/zsh-you-should-use
+# Add in zsh plugins.
+# An `ice` modifier applies to the next command only, so repeat it per plugin.
+# zsh-vi-mode also enables vi mode, so this file never calls `bindkey -v`.
+zinit ice depth=1; zinit light jeffreytse/zsh-vi-mode
+zinit ice depth=1; zinit light zsh-users/zsh-completions
+zinit ice depth=1; zinit light zsh-users/zsh-autosuggestions
+zinit ice depth=1; zinit light MichaelAquilina/zsh-you-should-use
 
-
-# Add in snippets
-zinit snippet OMZP::git
-zinit snippet OMZP::vi-mode
-
-# Load completions
-autoload -Uz compinit && compinit
+# Load completions.
+# compaudit is the slowest step in startup and its result rarely changes.
+# Run the full check when the dump is over a day old; use the cache otherwise.
+# The glob must sit in an array assignment. `[[ -n ... ]]` does not expand globs.
+autoload -Uz compinit
+_zcompdump_fresh=(${ZDOTDIR:-$HOME}/.zcompdump(Nm-1))
+if (( ${#_zcompdump_fresh} )); then
+  compinit -C
+else
+  compinit
+fi
+unset _zcompdump_fresh
 
 zinit cdreplay -q
 
-# Keybindings
-bindkey -v
-bindkey '^p' history-search-backward
-bindkey '^n' history-search-forward
-bindkey '^y' autosuggest-accept
+# fzf-tab requires compinit first. It owns the TAB key; see zvm_after_init below.
+zinit ice depth=1; zinit light Aloxaf/fzf-tab
+
+# zsh-syntax-highlighting must load last, after every plugin that wraps a widget.
+zinit ice depth=1; zinit light zsh-users/zsh-syntax-highlighting
+
+# Keybindings.
+# zsh-vi-mode resets the keymaps at the first prompt, after this file ends.
+# Every binding must live in zvm_after_init to survive that reset.
+function zvm_after_init() {
+  bindkey '^p' history-search-backward
+  bindkey '^n' history-search-forward
+
+  (( ${+widgets[fzf-tab-complete]} ))   && bindkey '^I' fzf-tab-complete
+  (( ${+widgets[autosuggest-accept]} )) && bindkey '^y' autosuggest-accept
+  (( ${+widgets[fzf-file-widget]} ))    && bindkey '^t' fzf-file-widget
+  (( ${+widgets[fzf-history-widget]} )) && bindkey '^r' fzf-history-widget
+  (( ${+widgets[atuin-search]} ))       && bindkey '^f' atuin-search
+}
 
 # History
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
 SAVEHIST=$HISTSIZE
-HISTDUP=erase
-setopt appendhistory
 setopt sharehistory
 setopt hist_ignore_space
 setopt hist_ignore_all_dups
 setopt hist_save_no_dups
-setopt hist_ignore_dups
 setopt hist_find_no_dups
 
 # Completion styling
@@ -90,8 +112,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
    # env vars; setting it here avoids "ignored in non-global config" warnings.
    export MISE_TRUSTED_CONFIG_PATHS="$HOME/Projects"
    eval "$(mise activate zsh)"
-
-   bindkey '^f' atuin-search
 fi
 
 # Alias list
@@ -134,9 +154,16 @@ alias fdd='cd "$(find . -type d | fzf)"'
 alias ff='fd -t f | fzf --preview "bat --color=always --style=numbers {}"'
 alias fm='fzf-make'
 alias fr='fzf-make repeat'
+alias g='git'
+alias ga='git add'
+alias gb='git branch'
+alias gc='git commit --verbose'
+alias gco='git checkout'
 alias gg='lazygit'
 alias gitclean='git remote prune origin'
 alias gitcleanmerged='git\ branch\ --merged\ main\ \|\ grep\ -v\ \"^\\\*\ main\"\ \|\ xargs\ -n\ 1\ -r\ git\ branch\ -d'
+alias glo='git log --oneline --decorate'
+alias gp='git push'
 alias gst='git status'
 alias gw='git worktree'
 alias gwa='git worktree add'
@@ -211,34 +238,36 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
   # pnpm
   export PNPM_HOME="$HOME/Library/pnpm"
-  case ":$PATH:" in
-    *":$PNPM_HOME/bin:"*) ;;
-    *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-  esac
+  path_prepend "$PNPM_HOME/bin"
   # pnpm end
+
+  # Use the 1Password SSH agent. `~` does not expand inside quotes, so use $HOME.
+  export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 fi
 
 # Add sbin folder to path
-export PATH="/usr/local/sbin:$PATH"
+path_prepend "/usr/local/sbin"
 
 # Add user-local bin to path (uv/pipx installed executables, agent-hook, rm-guard)
-export PATH="$HOME/.local/bin:$PATH"
+path_prepend "$HOME/.local/bin"
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/usr/local/share/google-cloud-sdk/path.zsh.inc' ]; then . '/usr/local/share/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/usr/local/share/google-cloud-sdk/completion.zsh.inc' ]; then . '/usr/local/share/google-cloud-sdk/completion.zsh.inc'; fi
-
-# SSH Agent Sock
-SSH_AUTH_SOCK="~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+# Google Cloud SDK path and completion. Homebrew on Apple Silicon installs the
+# SDK under /opt/homebrew; the Intel prefix is the fallback.
+for _gcloud_sdk in /opt/homebrew/share/google-cloud-sdk /usr/local/share/google-cloud-sdk; do
+  if [ -f "$_gcloud_sdk/path.zsh.inc" ]; then
+    . "$_gcloud_sdk/path.zsh.inc"
+    [ -f "$_gcloud_sdk/completion.zsh.inc" ] && . "$_gcloud_sdk/completion.zsh.inc"
+    break
+  fi
+done
+unset _gcloud_sdk
 
 # Add by Antigravity
-export PATH="/Users/mukit/.antigravity/antigravity/bin:$PATH"
+path_prepend "$HOME/.antigravity/antigravity/bin"
 
-# Add Postgres cli tools
-export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"
-export PATH="/usr/local/opt/postgresql@18/bin:$PATH"
+# Add Postgres cli tools. Neither prefix exists until you install the formula.
+path_prepend "/opt/homebrew/opt/postgresql@18/bin"
+path_prepend "/usr/local/opt/postgresql@18/bin"
 
 # Initialize zoxide last, after all PATH changes (per zoxide doctor)
 if [[ "$OSTYPE" == "darwin"* ]]; then
