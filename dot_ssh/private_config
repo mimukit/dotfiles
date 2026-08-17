@@ -6,10 +6,12 @@ Include ~/.ssh/1Password/config
 
 
 # GitHub: sign/push using the local key file directly, bypassing the
-# 1Password agent so no Touch ID / fingerprint prompt is needed (e.g. remote sessions).
+# 1Password agent so no Touch ID / fingerprint prompt is needed (e.g. remote
+# sessions, or unattended agents like Claude Code and Codex).
+# ssh.github.com is the port-443 fallback endpoint; gist.github.com serves gists.
+# No HostName here, so each pattern keeps its own address.
 # Placed before "Host *" because ssh uses the first matching value per keyword.
-Host github.com
-	HostName github.com
+Host github.com ssh.github.com gist.github.com
 	User git
 	IdentitiesOnly yes
 	IdentityAgent none
