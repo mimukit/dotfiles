@@ -1,0 +1,14 @@
+#!/bin/sh
+# Git's SSH signing helper (git config gpg.ssh.program).
+#
+# ssh-keygen -Y sign prefers an SSH agent over the private key file. When
+# SSH_AUTH_SOCK points at the 1Password agent, every signed commit asks
+# 1Password for the key, which shows a Touch ID prompt. Unattended agents such
+# as Claude Code and Codex then stall on that prompt.
+#
+# ssh-keygen does not read ssh_config, so "IdentityAgent none" in ~/.ssh/config
+# has no effect here. Only the environment variable controls it.
+#
+# Remove SSH_AUTH_SOCK so ssh-keygen reads the private key file named by
+# user.signingkey. That key has no passphrase, so signing needs no prompt.
+exec env -u SSH_AUTH_SOCK /usr/bin/ssh-keygen "$@"
