@@ -23,5 +23,8 @@
 	  lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
 [gpg "ssh"]
 	allowedSignersFile = /Users/mukit/.ssh/allowed_signers
+	; Wrapper that clears SSH_AUTH_SOCK, so ssh-keygen signs with the key file
+	; instead of asking the 1Password agent for Touch ID on every commit.
+	program = /Users/mukit/.local/bin/git-ssh-sign
 [coderabbit]
 	machineId = cli/246b513fa35240ca8573e992f22bc632
