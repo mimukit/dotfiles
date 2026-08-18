@@ -111,6 +111,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
    # Security-sensitive mise settings are only honored from the global config or
    # env vars; setting it here avoids "ignored in non-global config" warnings.
    export MISE_TRUSTED_CONFIG_PATHS="$HOME/Projects"
+   # mise walks up from $PWD and loads any <ancestor>/mise/config.toml. Inside
+   # the chezmoi source tree that matches dot_config/mise/config.toml, so the
+   # source copy of the global config loads as a project config and warns about
+   # its global-only keys. This setting is only read from the environment, not
+   # from a config file.
+   export MISE_IGNORED_CONFIG_PATHS="$HOME/.local/share/chezmoi"
    eval "$(mise activate zsh)"
 fi
 
