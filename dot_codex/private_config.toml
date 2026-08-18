@@ -3,12 +3,12 @@ model_reasoning_effort = "medium"
 notify = ["/Users/mukit/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
 
 [marketplaces.openai-bundled]
-last_updated = "2026-07-22T10:41:48Z"
+last_updated = "2026-08-18T13:34:46Z"
 source_type = "local"
 source = "/Users/mukit/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-07-17T08:06:28Z"
+last_updated = "2026-08-18T13:36:23Z"
 source_type = "local"
 source = "/Users/mukit/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
@@ -30,10 +30,10 @@ enabled = true
 [plugins."spreadsheets@openai-primary-runtime"]
 enabled = true
 
-[plugins."sites@openai-bundled"]
+[plugins."browser@openai-bundled"]
 enabled = true
 
-[plugins."browser@openai-bundled"]
+[plugins."codex-app-tools@openai-bundled"]
 enabled = true
 
 [projects."/Users/mukit/Github/mimukit/resume"]
@@ -117,15 +117,15 @@ startup_timeout_sec = 120
 NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
 NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
 NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
-NODE_REPL_TRUSTED_CODE_PATHS = "/Users/mukit/.codex"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/mukit/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
 CODEX_HOME = "/Users/mukit/.codex"
-NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f,f6a4312a0a663361556224da122fe509c001f3641aaeee81b402813ccbf63121"
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
 NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
 NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
 NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.715.72028"
+BROWSER_USE_CODEX_APP_VERSION = "26.814.41407"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/mukit/.codex/plugins/cache/openai-bundled/browser/26.814.41407/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
 CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
 
 [mcp_servers.computer-use]
@@ -195,6 +195,4 @@ trusted_hash = "sha256:8f144ba32c3b067289c695a0acf64e2a81fb3acaac2956ad05650570f
 trusted_hash = "sha256:995bbbbbd0ea79f79ef04861ba05883fc0cf2442a836182c138749648b366e9f"
 
 [shell_environment_policy.set]
-BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
 NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f,f6a4312a0a663361556224da122fe509c001f3641aaeee81b402813ccbf63121"
-NODE_REPL_TRUSTED_CODE_PATHS = "/Users/mukit/.codex"
