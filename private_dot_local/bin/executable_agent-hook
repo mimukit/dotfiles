@@ -39,7 +39,15 @@ PORT_CLEANUP="$HOME/.claude/hooks/cleanup-worktree-ports.sh"
 # Claude used to check all four of these and Codex only the first two — one list
 # now, both agents. ORCA_PANE_KEY is pane identity rather than hook plumbing, so
 # it stays set even if Orca's "Agent status hooks" setting is ever turned off.
-NOTIFY_SUPPRESS_VARS="ORCA_PANE_KEY ORCA_AGENT_HOOK_PORT HERDR_ENV SUPERSET_HOME_DIR"
+#
+# Paseo runs an agent two ways and each gets its own identity var, so both are
+# listed: PASEO_TERMINAL_ID for a shell in a Paseo terminal pane, PASEO_AGENT_ID
+# for a session Paseo drives itself through the SDK. Only the terminal case has
+# Paseo hook entries in settings.json (they are gated on PASEO_TERMINAL_ID);
+# the agent case reports state over its own client. Both end in a native toast,
+# so ours is a duplicate either way. PASEO_CLI is the bundled binary path rather
+# than session identity — not a suppression signal.
+NOTIFY_SUPPRESS_VARS="ORCA_PANE_KEY ORCA_AGENT_HOOK_PORT HERDR_ENV SUPERSET_HOME_DIR PASEO_TERMINAL_ID PASEO_AGENT_ID"
 
 # --- features ---------------------------------------------------------------
 

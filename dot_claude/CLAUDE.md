@@ -47,6 +47,6 @@ way.
 Our Claude Code and Codex hooks route through one dispatcher,
 `~/.local/bin/agent-hook` (chezmoi: `private_dot_local/bin/executable_agent-hook`).
 Change hook behaviour there, not in `~/.claude/settings.json` or
-`~/.codex/hooks.json`. Orca and herdr install and maintain their own entries in
-those files. Leave those entries alone, and never wrap a vendor relay inside the
-dispatcher.
+`~/.codex/hooks.json`. Orca, herdr and Paseo install and maintain their own
+entries in those files. Leave those entries alone, and never wrap a vendor relay
+inside the dispatcher.
