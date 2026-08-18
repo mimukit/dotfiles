@@ -46,16 +46,20 @@ RED='\033[0;31m'
 # Edit these lists to match what your update flows touch.
 
 # Modifications only (safe; managed files only).
-# Note on the two agent hook files below: Orca and herdr install their own hook
-# entries into them and refresh those entries on upgrade, so both files legitimately
-# change outside chezmoi and need re-adding. Our own entries sit alongside the
-# vendor ones and are left alone — Orca matches only commands naming its own
-# script. See private_dot_local/bin/executable_agent-hook.
+# Note on ~/.codex/hooks.json below: Orca and herdr install their own hook entries
+# into it and refresh those entries on upgrade, so it legitimately changes outside
+# chezmoi and needs re-adding. Our own entries sit alongside the vendor ones and
+# are left alone — Orca matches only commands naming its own script. See
+# private_dot_local/bin/executable_agent-hook.
+#
+# ~/.claude/settings.json is deliberately absent. It is managed by a modify_
+# script, and `chezmoi re-add` silently skips modify_ entries, so listing it here
+# would look like it was covered while doing nothing. The extract step below
+# handles it instead.
 RE_ADD_PATHS=(
   "$HOME/.zshrc"
   "$HOME/.gitconfig"
   "$HOME/.ssh/config"
-  "$HOME/.claude/settings.json"
   "$HOME/.claude/CLAUDE.md"
   "$HOME/.claude/statusline.sh"
   "$HOME/.local/bin/agent-hook"
@@ -78,6 +82,9 @@ RE_ADD_PATHS=(
 )
 
 # New + modified files (recursive; keep these dirs free of runtime junk).
+# Never list a path managed by a modify_ script here, and never let one fall
+# inside a listed directory. `chezmoi add` does not skip modify_ entries the way
+# re-add does: it deletes the script and replaces it with a plain file.
 ADD_PATHS=(
   "$HOME/.agents/"
   "$HOME/.claude/skills/"
@@ -123,6 +130,21 @@ if [ -x "$ORCA_EXPORT" ]; then
     "$ORCA_EXPORT" --dry-run
   else
     "$ORCA_EXPORT"
+  fi
+fi
+
+# Claude Code's settings file carries hook entries that Orca and herdr install
+# and rewrite on every upgrade. It is managed by a modify_ script that merges our
+# keys in and passes those entries through, which `chezmoi re-add` cannot capture
+# because it skips modify_ entries. This pulls our slice back out instead. It
+# no-ops when Claude Code has never written a settings file.
+CLAUDE_EXPORT="$HOME/setup_scripts/claude_settings_export.sh"
+if [ -x "$CLAUDE_EXPORT" ]; then
+  echo -e "${CYAN}⏳ extract  Claude settings${RESET}"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    "$CLAUDE_EXPORT" --dry-run
+  else
+    "$CLAUDE_EXPORT"
   fi
 fi
 
