@@ -1,0 +1,361 @@
+/* tutorkit — lesson stylesheet
+ *
+ * Tufte constraints: one column, generous margins, sidenotes rather than
+ * footnotes, and a measure short enough to read without losing the line.
+ * Copied into the learning repo on first run and never overwritten, so a
+ * lesson keeps rendering the way it was written.
+ *
+ * Structure a lesson expects:
+ *   <article>
+ *     <header>  h1 + .mission  (the dated MISSION.md entry this was written against)
+ *     <section class="prediction">
+ *     <section class="mechanism">
+ *     <section class="example">
+ *     <section class="practice">
+ *     <section class="cues">
+ *     <section class="source">
+ *     <nav class="siblings">
+ *     <footer>
+ *   </article>
+ *
+ * Sidenote markup:
+ *   <label for="sn-1" class="sidenote-toggle">&#8853;</label>
+ *   <input type="checkbox" id="sn-1" class="sidenote-toggle">
+ *   <span class="sidenote">…</span>
+ */
+
+:root {
+  --ink: #111;
+  --ink-soft: #555;
+  --rule: #d8d4cc;
+  --paper: #fffdf9;
+  --accent: #7a2e1d;
+  --wrong: #8c2f2f;
+  --right: #2f6b3f;
+  --code-bg: #f3f0e9;
+  --measure: 34rem;
+  --serif: et-book, Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  padding: 4rem 2rem 8rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+article {
+  max-width: 58rem;
+  margin: 0 auto;
+}
+
+/* Body text keeps a short measure; the extra width belongs to the sidenotes. */
+p, ol, ul, blockquote, pre, table, .callout {
+  max-width: var(--measure);
+}
+
+/* --- Headings ------------------------------------------------------------ */
+
+h1, h2, h3 {
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  margin: 0 0 0.4rem;
+  font-size: 2.6rem;
+}
+
+h2 {
+  margin: 3rem 0 0.6rem;
+  font-size: 1.7rem;
+  font-style: italic;
+}
+
+h3 {
+  margin: 2rem 0 0.4rem;
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* --- Header: the tie back to the mission --------------------------------- */
+
+header {
+  margin-bottom: 3rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.mission {
+  max-width: var(--measure);
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  font-style: italic;
+}
+
+.mission a {
+  color: inherit;
+}
+
+/* --- Sidenotes ----------------------------------------------------------- */
+
+.sidenote {
+  float: right;
+  clear: right;
+  width: 17rem;
+  margin-right: -21rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.sidenote-toggle {
+  display: none;
+}
+
+.sidenote-number {
+  counter-increment: sidenote;
+}
+
+.sidenote-number::after,
+.sidenote::before {
+  position: relative;
+  font-size: 0.8rem;
+  content: counter(sidenote) " ";
+  color: var(--accent);
+}
+
+.sidenote-number::after {
+  top: -0.5rem;
+  left: 0.05rem;
+}
+
+body {
+  counter-reset: sidenote;
+}
+
+/* --- The prediction section: the diagnosis, not decoration ---------------- */
+
+.prediction {
+  padding-left: 1.2rem;
+  border-left: 3px solid var(--rule);
+}
+
+.prediction .said,
+.prediction .actual {
+  display: block;
+  max-width: var(--measure);
+}
+
+.prediction .said::before {
+  content: "You predicted — ";
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.prediction .actual::before {
+  content: "What happens — ";
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.wrong { color: var(--wrong); }
+.right { color: var(--right); }
+
+/* --- Code and exercises -------------------------------------------------- */
+
+code, kbd, samp {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--code-bg);
+  padding: 0.1em 0.3em;
+  border-radius: 2px;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 1rem 1.1rem;
+  background: var(--code-bg);
+  border-radius: 3px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  font-size: 1em;
+}
+
+.run {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+}
+
+.run::before {
+  content: "$ ";
+  color: var(--ink-soft);
+}
+
+/* --- Cues, sources, callouts --------------------------------------------- */
+
+.callout {
+  margin: 1.6rem 0;
+  padding: 0.9rem 1.1rem;
+  background: #f7f4ec;
+  border-left: 3px solid var(--accent);
+  font-size: 1.05rem;
+}
+
+.cues ol {
+  padding-left: 1.2rem;
+}
+
+.cues li {
+  margin-bottom: 0.5rem;
+}
+
+.cues .due {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.source a,
+a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
+.unsourced {
+  color: var(--wrong);
+  font-style: italic;
+}
+
+/* --- Tables (reference sheets lean on these) ----------------------------- */
+
+table {
+  border-collapse: collapse;
+  font-size: 1.05rem;
+}
+
+th, td {
+  padding: 0.4rem 0.9rem 0.4rem 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rule);
+}
+
+th {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* --- Sibling anchors and footer ------------------------------------------ */
+
+.siblings {
+  max-width: var(--measure);
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 1rem;
+}
+
+.siblings ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+footer {
+  max-width: var(--measure);
+  margin-top: 2rem;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  font-style: italic;
+}
+
+/* --- Narrow screens: sidenotes fold inline ------------------------------- */
+
+@media (max-width: 76rem) {
+  body {
+    padding: 2.5rem 1.2rem 5rem;
+    font-size: 1.15rem;
+  }
+
+  .sidenote {
+    display: none;
+  }
+
+  .sidenote-toggle:checked + .sidenote {
+    display: block;
+    float: none;
+    width: auto;
+    max-width: var(--measure);
+    margin: 0.8rem 0;
+    padding: 0.7rem 0.9rem;
+    background: var(--code-bg);
+    border-radius: 3px;
+  }
+
+  label.sidenote-toggle {
+    display: inline;
+    color: var(--accent);
+    cursor: pointer;
+  }
+}
+
+/* --- Print: a lesson is meant to be printed and annotated ---------------- */
+
+@media print {
+  :root {
+    --paper: #fff;
+  }
+
+  body {
+    padding: 0;
+    font-size: 11pt;
+  }
+
+  article {
+    max-width: none;
+  }
+
+  .sidenote {
+    width: 14rem;
+    margin-right: -17rem;
+    font-size: 9pt;
+  }
+
+  h2, h3 {
+    break-after: avoid;
+  }
+
+  pre, .callout, .prediction, table {
+    break-inside: avoid;
+  }
+
+  a::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: var(--ink-soft);
+  }
+
+  .siblings a::after {
+    content: "";
+  }
+}
