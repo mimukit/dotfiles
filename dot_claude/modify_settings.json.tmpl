@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+#
+# chezmoi modify_ script for Claude Code's settings file.
+#
+# Three programs write ~/.claude/settings.json:
+#
+#   us      everything in .chezmoitemplates/claude-settings.json — env,
+#           permissions, model, statusLine, and the three agent-hook entries
+#   Orca    twelve hook entries calling ~/.orca/agent-hooks/claude-hook.sh
+#   herdr   a SessionStart entry calling ~/.claude/hooks/herdr-agent-state.sh
+#
+# Orca and herdr reinstall their entries whenever the app starts, and rewrite
+# the command string on every upgrade. Tracking the file whole meant a diff in
+# the chezmoi source each time one of them shipped a new build. Turning their
+# hooks off is not an option either: Orca's "Agent status hooks" setting gates
+# the hook server itself, not just the install, so disabling it takes the
+# working/waiting/done pane indicators with it.
+#
+# So chezmoi hands us the target's CURRENT bytes on stdin, and whatever we print
+# to stdout becomes the new file. We own the keys in the payload and leave every
+# vendor hook entry exactly where we found it.
+#
+# Ownership of a hook entry is decided by the command it runs. Ours all invoke
+# $HOME/.local/bin/agent-hook, so the marker below is that path. Match on the
+# full `.local/bin/agent-hook` and not on `agent-hook` alone — Orca's command
+# names its own `.orca/agent-hooks/` directory and a bare substring would claim
+# it as ours and delete it.
+#
+# Formatting: Claude Code writes 2-space JSON with a trailing newline, which is
+# `jq --indent 2` byte for byte. jq preserves input key order, so an apply that
+# changes nothing produces the same bytes back and `chezmoi status` stays quiet.
+#
+# Do NOT `chezmoi add ~/.claude/settings.json`. That bypasses this script and
+# puts a plain settings.json back in the source next to it, which then wins.
+# Edit .chezmoitemplates/claude-settings.json instead.
+
+# Deliberately no `set -e`: a failure here must fall through to the passthrough
+# below, never abort mid-stream and truncate the settings file.
+set -uo pipefail
+
+PAYLOAD=$(
+  cat <<'CLAUDE_PAYLOAD_EOF'
+{{ includeTemplate "claude-settings.json" }}
+CLAUDE_PAYLOAD_EOF
+)
+
+# Marker identifying a hook entry as ours rather than a vendor's.
+MARKER=".local/bin/agent-hook"
+
+# Buffer stdin to a file rather than a variable so the failure path can replay it
+# byte-for-byte (command substitution would eat trailing newlines).
+current=$(mktemp)
+trap 'rm -f "$current"' EXIT
+cat >"$current"
+
+if [ ! -s "$current" ]; then
+  # Fresh machine: Claude Code has never written a settings file, so there are
+  # no vendor entries to preserve. Emit the payload as-is.
+  printf '%s\n' "$PAYLOAD"
+  exit 0
+fi
+
+# The merge, in three parts:
+#   $events        every event name, target order first, then any event only we
+#                  define. keys_unsorted preserves insertion order; a plain
+#                  `keys` would alphabetise and churn the file.
+#   .hooks         per event, our entries first, then the target's entries that
+#                  are not ours, in the order the vendors left them. Events that
+#                  end up empty are dropped.
+#   the rest       `*` is jq's recursive merge, so nested objects like
+#                  `permissions` keep their key order and gain our values, while
+#                  arrays such as permissions.allow are replaced whole. Any
+#                  top-level key we do not declare passes through untouched.
+JQ_PROGRAM='
+  def is_ours: ((.hooks // []) | any((.command // "") | index($marker) != null));
+  ($payload.hooks // {}) as $mine
+  | (.hooks // {}) as $cur
+  | (reduce (($cur | keys_unsorted) + ($mine | keys_unsorted))[] as $e
+      ([]; if index($e) then . else . + [$e] end)) as $events
+  | (reduce $events[] as $e ({};
+      . + { ($e): (($mine[$e] // []) + (($cur[$e] // []) | map(select(is_ours | not)))) }
+    )) as $hooks
+  | (. * ($payload | del(.hooks)))
+  | .hooks = ($hooks | with_entries(select(.value | length > 0)))
+'
+
+if merged=$(jq --indent 2 --argjson payload "$PAYLOAD" --arg marker "$MARKER" \
+  "$JQ_PROGRAM" "$current" 2>/dev/null) && [ -n "$merged" ]; then
+  printf '%s\n' "$merged"
+  exit 0
+fi
+
+# Merge failed — jq missing, or the file is not valid JSON. Our stdout IS the
+# file, so emit the original untouched rather than damaging it.
+echo "chezmoi: ~/.claude/settings.json merge failed (jq missing or invalid JSON); leaving the file unchanged" >&2
+cat "$current"
