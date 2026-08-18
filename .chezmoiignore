@@ -11,6 +11,13 @@
 # local-only backups
 .config/raycast/settings-backup.rayconfig
 
+# yazi flavors — yazi's own package manager (`ya pkg`) installs and rewrites
+# these, pinned by rev and hash in .config/yazi/package.toml, which chezmoi does
+# track. Two writers on the same files made `chezmoi apply` stop and ask whether
+# the flavor had changed since chezmoi last wrote it. Restore them on a new
+# machine with `ya pkg install`.
+.config/yazi/flavors
+
 # Orca — the app installs these hook scripts itself and rewrites them on every
 # upgrade, exactly like the vendor entries in ~/.claude/settings.json. Ours live
 # in ~/.local/bin/agent-hook instead. Never track them.
