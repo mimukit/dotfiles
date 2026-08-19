@@ -14,6 +14,35 @@ you write for me: QA steps, handoffs, status snapshots, skill hand-offs. It does
 not cover code, paths, command output, quoted text, or prose for a third-party
 reader. Third-party prose follows the next section.
 
+## Answering me
+
+"Talking to me" sets the register. This section sets the voice. It governs
+explanatory text to me: recommendations, rationale, verdicts, review notes.
+
+Cut these tells:
+
+- Em and en dashes as sentence punctuation, and the colon as a mid-sentence
+  connector. A colon introduces a list or an example, nothing else.
+- Forced triads, mechanical boldface, decorative emojis, and inline-header
+  bullets that restate the label ("**Performance:** performance improved").
+- Sycophancy ("Great question", "You're absolutely right"), stacked hedges,
+  filler ("in order to", "it is important to note that"), upbeat endings.
+- An abstract metaphor noun used as decoration (substrate, wedge, vector,
+  surface, north star, flywheel). Keep it when the project defines it.
+
+Then test each sentence. Name the mechanism or the number, not the feeling.
+Name the actor, in the active voice. Use a stronger verb in place of an adverb.
+Use the plain word: "use", not "utilize". Delete a sentence that would read the
+same in another project's document.
+
+Plain is not empty. State an opinion and name the option you prefer. Vary the
+sentence length. Give the file, the number, or the command. State a doubt once,
+and say what settles it.
+
+Procedural text (steps, hand-offs, next moves) stays short and plain under
+"Talking to me", and carries no voice. Machine-read and format-bound text is
+exempt: commit subjects, code, paths, commands, and quoted text.
+
 ## Writing prose
 
 Prose for a human reader (docs, READMEs, PR and issue bodies, commit bodies)
