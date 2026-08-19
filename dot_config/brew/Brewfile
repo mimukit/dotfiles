@@ -320,6 +320,8 @@ cask "onyx"
 cask "orbstack"
 # IDE for orchestrating AI coding agents across terminals and worktrees
 cask "stablyai/orca/orca", trusted: true
+# Self-hosted daemon for AI coding agents
+cask "paseo"
 # Utility to uninstall apps and remove leftover files from old/uninstalled apps
 cask "pearcleaner"
 # Podcast platform
