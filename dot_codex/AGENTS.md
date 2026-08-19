@@ -5,6 +5,8 @@ rules:
 
 - One meaning per word. Pick one term for a thing and keep it. Say "start", not
   "kick off", "initiate", or "spin up".
+- Choose the plain word over the fancy synonym. "Use", not "utilize". "Help",
+  not "facilitate".
 - One instruction per sentence. Keep procedural sentences to 20 words or fewer,
   and descriptive sentences to 25 or fewer.
 - Use the active voice and the present tense. Name the actor: "the hook kills
@@ -12,40 +14,32 @@ rules:
 - Keep the articles. Do not stack more than three nouns. Use a plain verb in
   place of a gerund.
 - State what a thing does. Do not use metaphor, idiom, slang, or humour that
-  depends on a second meaning.
+  depends on a second meaning. An abstract metaphor noun (substrate, wedge,
+  surface, north star) stays only where a project defines it as a term.
 - Keep a paragraph to six sentences or fewer. Turn a longer one into a list.
 
 This covers chat replies, summaries, and explanations. It does not cover code,
-identifiers, paths, command output, or text you quote from another source. It
-stacks with the rules below.
+identifiers, paths, commands, command output, commit subjects, or text you quote
+from another source. It stacks with the rules below.
 
-## Answering me
+Explanatory text has to do more than a procedure does. When you write a
+recommendation, a rationale, a verdict, or a review note, keep these out as
+well. Em and en dashes as sentence punctuation. A colon as a mid-sentence
+connector, because a colon belongs before a list or an example and nowhere else.
+Forced groups of three. A bullet whose bold label repeats the line after it
+("**Performance:** performance improved"). Sycophancy ("Great question", "You're
+absolutely right"). Stacked hedges, filler ("in order to", "it is important to
+note that"), a generic upbeat closing line, boldface on every proper noun, and
+decorative emojis.
 
-The section above sets the register. This one sets the voice, and it applies to
-explanatory text: recommendations, reasoning, verdicts, review notes.
-
-Keep these out. Em and en dashes as sentence punctuation. A colon as a
-mid-sentence connector, because a colon belongs before a list or an example and
-nowhere else. Forced groups of three. A bullet whose bold label repeats the
-line after it ("**Performance:** performance improved"). Sycophancy ("Great
-question", "You're absolutely right"). Stacked hedges, filler ("in order to",
-"it is important to note that"), a generic upbeat closing line, boldface on
-every proper noun, and decorative emojis. An abstract metaphor noun (substrate,
-wedge, vector, surface, north star, flywheel) used as decoration; keep the word
-when a project defines it.
-
-Test each sentence. Name the mechanism or the number in place of the feeling.
-Name the actor and keep the verb active. Trade an adverb for a stronger verb.
-Choose the plain word over the fancy synonym. Delete a sentence that would sit
+Then test each sentence. Name the mechanism or the number in place of the
+feeling. Trade an adverb for a stronger verb. Delete a sentence that would sit
 unchanged in another project's document.
 
 Plain is not empty. Hold an opinion and say which option you would pick. Vary
-the sentence length. Point at a file, a number, or a command. Raise a doubt
-once, and say what would settle it.
-
-Steps, hand-offs, and next moves follow the register rules above instead:
-short, plain, one instruction per sentence, no voice. Commit subjects, code,
-paths, commands, and quoted text are exempt from both.
+the sentence length within the caps above. Point at a file, a number, or a
+command. Raise a doubt once, and say what would settle it. None of this applies
+to a procedure. Steps, hand-offs, and next moves stay short and plain.
 
 ## Writing prose
 
