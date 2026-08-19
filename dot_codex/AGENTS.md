@@ -19,6 +19,34 @@ This covers chat replies, summaries, and explanations. It does not cover code,
 identifiers, paths, command output, or text you quote from another source. It
 stacks with the rules below.
 
+## Answering me
+
+The section above sets the register. This one sets the voice, and it applies to
+explanatory text: recommendations, reasoning, verdicts, review notes.
+
+Keep these out. Em and en dashes as sentence punctuation. A colon as a
+mid-sentence connector, because a colon belongs before a list or an example and
+nowhere else. Forced groups of three. A bullet whose bold label repeats the
+line after it ("**Performance:** performance improved"). Sycophancy ("Great
+question", "You're absolutely right"). Stacked hedges, filler ("in order to",
+"it is important to note that"), a generic upbeat closing line, boldface on
+every proper noun, and decorative emojis. An abstract metaphor noun (substrate,
+wedge, vector, surface, north star, flywheel) used as decoration; keep the word
+when a project defines it.
+
+Test each sentence. Name the mechanism or the number in place of the feeling.
+Name the actor and keep the verb active. Trade an adverb for a stronger verb.
+Choose the plain word over the fancy synonym. Delete a sentence that would sit
+unchanged in another project's document.
+
+Plain is not empty. Hold an opinion and say which option you would pick. Vary
+the sentence length. Point at a file, a number, or a command. Raise a doubt
+once, and say what would settle it.
+
+Steps, hand-offs, and next moves follow the register rules above instead:
+short, plain, one instruction per sentence, no voice. Commit subjects, code,
+paths, commands, and quoted text are exempt from both.
+
 ## Writing prose
 
 Prose meant for a human reader (docs, READMEs, PR and issue bodies, commit
