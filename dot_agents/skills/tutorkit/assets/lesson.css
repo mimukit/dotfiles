@@ -1,4 +1,4 @@
-/* tutorkit — lesson stylesheet
+/* tutorkit lesson stylesheet
  *
  * Tufte constraints: one column, generous margins, sidenotes rather than
  * footnotes, and a measure short enough to read without losing the line.
@@ -162,13 +162,13 @@ body {
 }
 
 .prediction .said::before {
-  content: "You predicted — ";
+  content: "You predicted: ";
   color: var(--ink-soft);
   font-style: italic;
 }
 
 .prediction .actual::before {
-  content: "What happens — ";
+  content: "What happens: ";
   color: var(--ink-soft);
   font-style: italic;
 }

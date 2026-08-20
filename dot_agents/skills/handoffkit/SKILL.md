@@ -1,7 +1,7 @@
 ---
 name: handoffkit
 description: >-
-  Compact the current conversation into a handoff document another agent or session can pick up cold — goal, state, next steps, key artifacts by reference, and constraints. Explicit invocation only — auto-triggering is disabled so a session compaction never fires mid-work. Use when you deliberately run "/handoffkit" (optionally with a focus argument) to hand off work, write a handoff doc, or summarize the session for the next agent.
+  Compact the current conversation into a handoff document another agent or session can pick up cold: goal, state, next steps, key artifacts by reference, and constraints. Explicit invocation only, because auto-triggering is disabled so a session compaction never fires mid-work. Use when you deliberately run "/handoffkit" (optionally with a focus argument) to hand off work, write a handoff doc, or summarize the session for the next agent.
 license: MIT
 disable-model-invocation: true
 allowed-tools: Read, Write
@@ -11,25 +11,25 @@ metadata:
 
 # handoffkit
 
-Turn everything learned in this conversation into a single **handoff document** a fresh agent — with none of this context — can read and continue from. The point is transfer, not archival: capture the *state and reasoning* that only lives in this session, and **point** at the artifacts that already exist (specs, PRs, commits, diffs, issues) rather than copying them. By default, save it as a Markdown file under `docs/handoffs/`; print it as a copy-pastable block only when the user explicitly asks for inline or terminal output, or when no writable filesystem is available.
+Turn everything learned in this conversation into a single **handoff document** a fresh agent, with none of this context, can read and continue from. The point is transfer, not archival: capture the *state and reasoning* that only lives in this session, and **point** at the artifacts that already exist (specs, PRs, commits, diffs, issues) rather than copying them. By default, save it as a Markdown file under `docs/handoffs/`; print it as a copy-pastable block only when the user explicitly asks for inline or terminal output, or when no writable filesystem is available.
 
 ## When this fires
 
-The user wants continuity across a context boundary: "write a handoff", "hand this off", "summarize for the next session", "pass this to another agent", "compact this before we run out of context". If they give an argument (e.g. "handoff for finishing the migration"), treat it as the **focus of the next session** and slant the whole document toward it — lead with what that goal needs and prune what it doesn't.
+The user wants continuity across a context boundary: "write a handoff", "hand this off", "summarize for the next session", "pass this to another agent", "compact this before we run out of context". If they give an argument (e.g. "handoff for finishing the migration"), treat it as the **focus of the next session** and slant the whole document toward it. Lead with what that goal needs and prune what it doesn't.
 
-## What goes in — and what stays out
+## What goes in, and what stays out
 
 A handoff earns its keep by carrying what a new agent *can't reconstruct*:
 
 - **Include**: the goal and why it matters; what's done vs. still open; the immediate next action; decisions made and the reasoning behind them; dead ends already ruled out; gotchas, constraints, and how to run/verify.
-- **Exclude** (reference instead): anything already written down — specs, ADRs, plans, issues, commit messages, diffs, PR descriptions. Link them by **path or URL**; don't paste their contents. A handoff that restates the diff is noise.
-- **Redact**: API keys, tokens, passwords, and personally identifiable information — never carry secrets into the document. Refer to them by name ("the staging DB password in `.env`"), not value.
+- **Exclude** (reference instead): anything already written down, meaning specs, ADRs, plans, issues, commit messages, diffs, PR descriptions. Link them by **path or URL**; don't paste their contents. A handoff that restates the diff is noise.
+- **Redact**: API keys, tokens, passwords, and personally identifiable information. Never carry secrets into the document. Refer to them by name ("the staging DB password in `.env`"), not value.
 
 ## Document shape
 
 Write these sections; drop any that are genuinely empty rather than padding them.
 
-**Two registers, split by section.** **Current state**, **Next steps** and **How to run / verify** are read by someone who is *doing* the work, so write them in ASD-STE100 Simplified Technical English: one instruction per sentence, procedural sentences 20 words or fewer, active voice, present tense, name the actor, no metaphor or idiom, and one term per thing for the whole document — if the top calls it the *worker*, the bottom does not call it the *job runner*. **Goal** and **Decisions & constraints** are read by someone forming a judgment before they touch anything, so they keep ordinary prose with the reasoning intact; flattening a rejected approach into clipped steps strips the *why* that stops the next agent repeating it.
+**Two registers, split by section.** **Current state**, **Next steps** and **How to run / verify** are read by someone who is *doing* the work, so write them in ASD-STE100 Simplified Technical English: one instruction per sentence, procedural sentences 20 words or fewer, active voice, present tense, name the actor, no metaphor or idiom, and one term per thing for the whole document. If the top calls it the *worker*, the bottom does not call it the *job runner*. **Goal** and **Decisions & constraints** are read by someone forming a judgment before they touch anything, so they keep ordinary prose with the reasoning intact; flattening a rejected approach into clipped steps strips the *why* that stops the next agent repeating it.
 
 ```markdown
 # Handoff: <one-line title of the work>
@@ -41,7 +41,7 @@ What we're trying to achieve and why. If the user gave a focus argument, frame t
 What's done and working, what's half-done, what's untouched. Be concrete.
 
 ## Next steps
-The ordered actions the next agent should take — start with the very first one.
+The ordered actions the next agent should take. Start with the very first one.
 
 ## Key files & artifacts
 Paths and URLs that matter (source files, the spec, the open PR, the failing test). Reference, don't reproduce.
@@ -53,34 +53,34 @@ Choices made and *why*; approaches already ruled out; hard limits and things not
 Unknowns, pending answers, or anything waiting on the user.
 
 ## How to run / verify
-Commands to build, run, or test — enough to reproduce the current state.
+Commands to build, run, or test, enough to reproduce the current state.
 
 ## Suggested skills
-Capabilities the next session should reach for — e.g. a commit skill to land the work, a PR skill to open the pull request, a test-plan skill to verify. Name them by function, not by a specific tool that may not be installed. Recommend by relevance to the goal.
+Capabilities the next session should reach for, e.g. a commit skill to land the work, a PR skill to open the pull request, a test-plan skill to verify. Name them by function, not by a specific tool that may not be installed. Recommend by relevance to the goal.
 ```
 
 ## Procedure
 
-1. **Reread the session.** Scan the conversation for the goal, the current state, decisions, and loose ends — this is the raw material.
+1. **Reread the session.** Scan the conversation for the goal, the current state, decisions, and loose ends. That is the raw material.
 2. **Separate carry-over from reference.** For each thing worth mentioning, decide: does it live only in this chat (carry it) or is it already an artifact (link it)?
-3. **Draft the document** in the shape above, slanted toward the focus argument if one was given. Keep it tight — a new agent should be able to read it in a minute and act.
+3. **Draft the document** in the shape above, slanted toward the focus argument if one was given. Keep it tight; a new agent should be able to read it in a minute and act.
 4. **Redact** any secrets or PII before output.
 5. **Save or print it** according to the output rules below, then close per [Hand off](#hand-off).
 
 ## Output
 
-**Default — save a Markdown file.** Write the finished handoff into `docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `handoff-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case subject slug and the handoff's ISO creation date at the end (for example, `handoff-auth-migration-2026-07-13.md`). Keep that date stable if the same handoff is edited, and update the existing file in place. If a genuinely distinct handoff would collide on the same day, make the slug more specific; only as a last resort insert the next available sequence immediately before the date (`handoff-auth-migration-02-2026-07-13.md`). Tell the user the exact path.
+**Default: save a Markdown file.** Write the finished handoff into `docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `handoff-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case subject slug and the handoff's ISO creation date at the end (for example, `handoff-auth-migration-2026-07-13.md`). Keep that date stable if the same handoff is edited, and update the existing file in place. If a genuinely distinct handoff would collide on the same day, make the slug more specific; only as a last resort insert the next available sequence immediately before the date (`handoff-auth-migration-02-2026-07-13.md`). Tell the user the exact path.
 
-**On explicit request — print inline.** When the user explicitly asks for terminal, inline, chat-only, or copy-pastable output, emit the finished handoff as a single Markdown codeblock and do not write a file.
+**On explicit request: print inline.** When the user explicitly asks for terminal, inline, chat-only, or copy-pastable output, emit the finished handoff as a single Markdown codeblock and do not write a file.
 
-**No writable filesystem — degrade gracefully.** If the environment cannot write files, emit the finished handoff as a single Markdown codeblock and say that no file was created.
+**No writable filesystem: degrade gracefully.** If the environment cannot write files, emit the finished handoff as a single Markdown codeblock and say that no file was created.
 
 ## Hand off
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed** — nothing in the project itself; the handoff is a new (or updated) document, and say which.
+**What changed.** Nothing in the project itself; the handoff is a new (or updated) document, and say which.
 
-**Where it landed** — the exact path (`docs/handoffs/handoff-<slug>-YYYY-MM-DD.md`), or "printed inline, no file written" when that's what happened.
+**Where it landed.** Give the exact path (`docs/handoffs/handoff-<slug>-YYYY-MM-DD.md`), or "printed inline, no file written" when that's what happened.
 
-**Next** — one move: start a fresh session pointed at this document, beginning with the handoff's own first next-step — name that step here so the user doesn't have to open the file to learn it. Nothing else follows in *this* session; the whole point of the handoff is that this context can now end.
+**Next.** One move. Start a fresh session pointed at this document, beginning with the handoff's own first next-step. Name that step here so the user doesn't have to open the file to learn it. Nothing else follows in *this* session; the whole point of the handoff is that this context can now end.
