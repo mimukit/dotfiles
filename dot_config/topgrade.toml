@@ -1,0 +1,22 @@
+# /Users/mukit/.config/topgrade.toml
+#
+# Only the settings that differ from topgrade's defaults live here. Print the
+# full annotated option list with `topgrade --config-reference`.
+
+[misc]
+# Steps another tool already owns:
+#   brew_formula, brew_cask -> brewupx (dot_zshrc)
+#   chezmoi                 -> czs, which also refreshes the Brewfile
+# Steps turned off on purpose: containers, vim
+disable = ["brew_cask", "brew_formula", "chezmoi", "containers", "vim"]
+
+# Cache the sudo credential at the start of the run. Without this a cask or a
+# softwareupdate step opens a password prompt in a pane nobody is watching, and
+# the run stalls there.
+pre_sudo = true
+
+# Do not ask for confirmations. Replaces the --yes flag.
+assume_yes = true
+
+# Remove temporary and old files after the steps that support it.
+cleanup = true
