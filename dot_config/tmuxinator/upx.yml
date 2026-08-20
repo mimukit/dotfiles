@@ -7,14 +7,9 @@ windows:
       layout: even-vertical
       panes:
         - brew_update:
-            - clear
-            - sh ~/setup_scripts/brew_apps_backup.sh
             - brewupx
         - topgrade:
-            - clear
-            - topgrade --disable containers --disable chezmoi --disable brew_formula --disable brew_cask --disable vim --yes
+            - topgrade
         - misc:
-            - clear
             - atuin sync
-            - skup
             - exit
