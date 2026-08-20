@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# verify-assets.sh — publish verifykit proof assets to a hidden git ref that a
+# verify-assets.sh publishes verifykit proof assets to a hidden git ref that a
 # normal `git clone` never fetches (refs/verify-assets/<slug>), then hand back
 # SHA-pinned raw URLs that render inline in a GitHub PR body.
 #
 # Why a hidden ref: assets live in the repo (not a personal gist or the Releases
-# tab), yet cost zero clone bloat — `git clone` fetches only refs/heads/* and
+# tab), yet cost zero clone bloat, because `git clone` fetches only refs/heads/* and
 # tags, so this namespace and its blobs are never downloaded. Per-slug refs never
 # race across parallel worktrees. Publishing uses an isolated index, so the
 # working tree and current branch are never touched.
