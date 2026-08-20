@@ -11,8 +11,8 @@
 # diff in the source every time either shipped a build.
 #
 # The file is therefore managed by a chezmoi modify_ script
-# (dot_claude/modify_settings.json.tmpl), which merges the payload this script
-# writes into whatever is on disk and passes vendor hook entries through. That
+# (private_dot_claude/modify_settings.json.tmpl), which merges the payload this
+# script writes into whatever is on disk and passes vendor hook entries through. That
 # makes `chezmoi re-add` useless on it — chezmoi silently skips modify_ entries —
 # so this script is how target -> source drift gets captured instead.
 #
@@ -50,7 +50,7 @@ RED='\033[0;31m'
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 
 # Marker identifying a hook entry as ours rather than a vendor's. Keep this in
-# step with the same constant in dot_claude/modify_settings.json.tmpl.
+# step with the same constant in private_dot_claude/modify_settings.json.tmpl.
 MARKER=".local/bin/agent-hook"
 
 DRY_RUN=0
