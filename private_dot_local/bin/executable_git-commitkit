@@ -79,8 +79,6 @@ generate, then act:
   --commit         write the message and commit straight away
   --edit           write the message and open $EDITOR on it, with the diff below
   --amend          reword HEAD from its own diff, leaving staged work untouched
-  --menu           write the message, then print `value|label` lines for a
-                   lazygit menuFromCommand prompt
 
 act on a message already written:
   --commit-pending commit the pending message as it stands
@@ -100,7 +98,6 @@ while [ $# -gt 0 ]; do
     --commit) mode=commit ;;
     --edit) mode=edit ;;
     --amend) mode=amend ;;
-    --menu) mode=menu ;;
     --commit-pending) mode=commit-pending ;;
     --edit-pending) mode=edit-pending ;;
     --clear) mode=clear ;;
@@ -119,10 +116,9 @@ pending_path() { printf '%s/%s' "$GIT_DIR_ABS" "$PENDING_FILE"; }
 
 # --- modes that need no model call ------------------------------------------
 #
-# lazygit's menu runs the generator inside a `prompts` entry, which finishes
-# before the custom command itself starts. By then the message is already on
-# disk, so the action the user picks must reuse it rather than pay for a second
-# call and hand back a different message than the one they just approved.
+# The -pending pair acts on a message a previous run already wrote, so deciding
+# to use the editor after the fact costs nothing and keeps the exact text you
+# just read rather than rolling a new one.
 
 case "$mode" in
   clear)
@@ -330,22 +326,6 @@ case "$mode" in
     printf '%s\n' "$msg" > "$(pending_path)"
     command -v pbcopy >/dev/null 2>&1 && printf '%s\n' "$msg" | pbcopy
     printf '%s\n' "$msg"
-    ;;
-  menu)
-    # Feeds lazygit's menuFromCommand prompt: `value|label` per line. The message
-    # is stored first, so every action below reads it back rather than
-    # regenerating. The message itself leads the menu as unselectable-in-practice
-    # rows, which is how the user sees what they are approving.
-    printf '%s\n' "$msg" > "$(pending_path)"
-    command -v pbcopy >/dev/null 2>&1 && printf '%s\n' "$msg" | pbcopy
-    while IFS= read -r line; do
-      printf 'review|  %s\n' "$line"
-    done <<< "$msg"
-    printf 'review| \n'
-    printf 'review|→ keep it, press c to open the commit panel\n'
-    printf 'commit|→ commit it now\n'
-    printf 'edit|→ open it in nvim\n'
-    printf 'discard|→ discard it\n'
     ;;
   commit)
     printf '%s\n' "$msg" | git commit -F - || die "git commit failed"
