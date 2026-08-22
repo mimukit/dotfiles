@@ -10,7 +10,7 @@ metadata:
 
 # plankit
 
-Turn a rough idea (a feature, a project, a spec, a PRD) into a structured plan document you can act on. plankit is generative: it brainstorms the approach, settles the decisions needed for a coherent draft, and writes a `plan-<slug>-YYYY-MM-DD.md` grounded in the real codebase (not a guess). It is the front of a three-step flow, **plankit drafts → grillkit hardens → issuekit files**, so the plan it writes is the exact input those next steps expect. plankit **plans only**: it never writes application code and never creates issues.
+Turn a rough idea (a feature, a project, a spec, a PRD) into a structured plan document you can act on. plankit is generative: it brainstorms the approach, settles the decisions needed for a coherent draft, and writes a `plan-<slug>-YYYY-MM-DD.md` grounded in the real codebase (not a guess). It is the front of a flow, **plankit drafts → grillkit hardens → issuekit files** where a project tracks work in GitHub Issues, and **plankit drafts → grillkit hardens → implementkit builds** where it doesn't. Either way the plan it writes is the exact input the next step expects. plankit **plans only**: it never writes application code and never creates issues.
 
 ## When this fires
 
@@ -53,7 +53,10 @@ _Write this section in the procedural register: one instruction per sentence, ac
 Report where the plan landed and offer the next step, in order, naming a sibling kit only when it is installed and otherwise describing the action in plain language:
 
 - **grillkit.** Pressure-test and harden the draft (it can update this same file in place).
-- **issuekit.** Turn the hardened plan into GitHub issues.
+- **issuekit**, when the project tracks work in GitHub Issues. Turn the hardened plan into issues.
+- **implementkit**, when it does not. Build straight from the plan, one phase at a time.
+
+Name the second or the third, not both, when you can tell which applies. The prompt or the repo's agent-guide file says which; open issues on the repo are the weaker signal. Name both when nothing settles it, and never assume a project files GitHub issues just because it is hosted on GitHub.
 
 If the planning surfaced project vocabulary worth pinning down or a hard-to-reverse trade-off decision, offer **domainkit** when installed; otherwise offer to record a glossary entry or ADR directly.
 
@@ -85,6 +88,19 @@ Explicit scope boundaries, meaning what this plan deliberately does not cover.
 ```
 
 A hardened plan additionally carries a **`Grilled: YYYY-MM-DD` line directly under the title**. grillkit writes it when the plan survives a grill session, and issuekit reads it as the gate for filing issues `ready`. plankit never writes the stamp itself; a fresh draft is ungrilled by definition.
+
+### The phase-heading annotation slot
+
+**A phase heading ends in an optional annotation, and downstream skills write into it.** plankit writes a bare heading (`### Phase 2: auth`) and never annotates one itself, because a fresh plan has neither been filed nor built. Two vocabularies share the slot:
+
+- **`(#41)`**, written by issuekit when it files that phase as an issue. It says where the phase is tracked.
+- **`(built YYYY-MM-DD)`**, written by implementkit when it finishes building that phase. It says the phase is done.
+
+They coexist, so `### Phase 2: auth (#41) (built 2026-08-20)` is a tracked phase that shipped. Keeping both in one slot is what lets a reader and a survey tool answer "what is left in this plan?" from the plan alone, with no tracker to consult, which is the only way that question has an answer on a project that files no issues.
+
+**The stamp is opt-in per plan.** A plan with no annotation anywhere makes no claim about itself, so nothing may read its phases as unbuilt. That is what lets the convention arrive without a migration: plans written before it stay silent and correct, and a plan starts making claims the first time something stamps it.
+
+**Match the heading loosely.** A phase heading begins `Phase <n>` and the separator that follows varies across real plan sets, so anything reading these headings accepts a colon, a dash, or nothing.
 
 ## Notes
 

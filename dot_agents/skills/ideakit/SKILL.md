@@ -1,7 +1,7 @@
 ---
 name: ideakit
 description: >-
-  Think an idea through across many sessions, with one ideas repo holding a folder per idea, one idea open at a time, and every research or validation answer folded back into that idea's own log. Use when the user says "capture this idea", "I just had an idea", "let's think about the <X> idea", "brainstorm <X> with me", "what was I thinking about <X>", "where do my ideas stand", "what should I think about next", or names their ideas repo or runs "/ideakit".
+  Think an idea through across many sessions, with one ideas repo holding a folder per idea, one idea open at a time, and nothing written to disk until you ask for it. Use when the user says "capture this idea", "I just had an idea", "let's think about the <X> idea", "brainstorm <X> with me", "what was I thinking about <X>", "where do my ideas stand", "what should I think about next", or names their ideas repo or runs "/ideakit".
 license: MIT
 allowed-tools: Read, Write, Edit, Glob, Bash, AskUserQuestion, WebSearch, WebFetch
 metadata:
@@ -10,11 +10,13 @@ metadata:
 
 # ideakit
 
-Keep one ideas repo, one folder per idea, and think about exactly one of them at a time. ideakit captures an idea the moment it arrives, runs the discussion sessions, reports where every idea stands, dispatches the research and validation work to the kits that own it, and folds every answer back into that idea's own log.
+Keep one ideas repo, one folder per idea, and think about exactly one of them at a time. ideakit captures an idea the moment it arrives, runs the discussion sessions, reports where every idea stands, dispatches the research and validation work to the kits that own it, and folds an answer back into that idea's own log when the user asks to keep it.
 
 An idea is a subject someone wants to think about, not a project they have committed to building. Some ideas become products. Most stay notes, and that is the design.
 
 Six modes. [`capture`](#mode-capture) writes an idea down and stops. [`session`](#mode-session) is the mode that thinks. [`status`](#mode-status) reports and writes nothing. [`research`](#mode-research) and [`validate`](#mode-validate) send a question out and bring the answer back. [`close`](#mode-close) records a verdict.
+
+**`capture` and `close` write on their own. Every other mode offers its writes and takes no for an answer.** See [Saving is a demand, not a default](#saving-is-a-demand-not-a-default).
 
 ## Mode selection
 
@@ -43,8 +45,8 @@ All state lives in one repo outside the user's work repos, at `~/ideas` unless `
     NOTES.md                        ← the dated log, append-only
     SOURCES.md                      ← collected links, created lazily
     docs/plans/                     ← a plan skill writes here
-    docs/research/                  ← a research skill, and the landscape scan
-    docs/validation/                ← a validation skill writes here
+    docs/research/                  ← research answers, kept on request
+    docs/validation/                ← validation write-ups, kept on request
     docs/sessions/                  ← full session records, on request only
     docs/adr/                       ← decision records
     assets/                         ← diagrams and screenshots
@@ -80,9 +82,9 @@ Two reasons hold it up. Ideas contaminate each other: half-formed thinking about
 
 **`IDEA.md` is the living statement, in two parts.** The head says what the idea is, who it is for, and what has to be true for it to matter. An `## Open` block below it lists the open questions and the possible next moves.
 
-Rewrite the head when a session changed what the idea *is*. Refresh the `## Open` block every session without exception. That split gives a checkable bound: **the `## Open` block matches the last `NOTES.md` entry.** It also stops an inconclusive session churning the head for no change.
+Rewrite the head when a session changed what the idea *is*. Draft a refreshed `## Open` block every session without exception, and save it with the entry it matches. That split gives a checkable bound: **the `## Open` block matches the last `NOTES.md` entry.** It also stops an inconclusive session churning the head for no change.
 
-**`NOTES.md` is the log, and it is append-only.** One `## YYYY-MM-DD` heading per session, recording what was decided, what was rejected and why, and the open question the session stopped on. Leave earlier entries alone; a change of mind gets a new dated entry. The log is the record and `IDEA.md` is a cache of it, so rewrite `IDEA.md` from `NOTES.md` when the two disagree.
+**`NOTES.md` is the log, and it is append-only.** One `## YYYY-MM-DD` heading per saved session, recording what was decided, what was rejected and why, and the open question the session stopped on. Leave earlier entries alone; a change of mind gets a new dated entry. The log is the record and `IDEA.md` is a cache of it, so rewrite `IDEA.md` from `NOTES.md` when the two disagree.
 
 **`SOURCES.md` collects links**, one row per link with the date read and one line on what it settles. Create it on first use, not at capture. Check it before searching.
 
@@ -90,7 +92,7 @@ Rewrite the head when a session changed what the idea *is*. Refresh the `## Open
 
 Repair runs at two levels, and each mode repairs only what it can see.
 
-- **Rewrite a topic's router row whenever a mode has that folder open and touches it.** All five writing modes do this.
+- **Offer a topic's router row rewrite whenever a mode has that folder open and changed it**, in the same save offer as the entry that changed it. `capture` and `close` write their row without asking.
 - **Report an unregistered folder rather than opening it.** A folder missing from the router needs five fields that live inside it, and reading it would break the guard for a bookkeeping errand. So `status` names the folder and says to run `session` on it to register it.
 
 ### The slug is permanent
@@ -104,6 +106,26 @@ A slug is short, lowercase, kebab-case, and taken from the idea's core noun. **`
 This is a root swap, so it holds for every skill, including one added after this file was written. The repo root has no `docs/` directory and does not gain one.
 
 Filenames follow `<type>-<slug>-YYYY-MM-DD.md`, with the artifact's creation date at the end. Keep that date stable when the file is edited later.
+
+## Saving is a demand, not a default
+
+**The discussion is the deliverable. A file is what the user asks for when the discussion earned one.** Most sessions explore and stop there, and a repo of entries nobody wanted is worse than a thin one, because a later `status` run reads every row as something the user meant.
+
+So every write runs through one gate:
+
+1. **Compose the write anyway.** Draft the `NOTES.md` entry, the `## Open` block, and the router row in full.
+2. **Print the draft as a code block, under the absolute path it would land at.**
+3. **Ask save, edit, or drop.** Take a no for an answer, and write nothing.
+
+Composing first is what makes the yes cheap. An offer that asks "want me to save this?" with nothing attached gets declined for the wrong reason.
+
+**The gate covers every file, the router row included.** `INDEX.md` holds a summary and an open question, which are thinking rather than bookkeeping, so the row goes with the entry it describes. A session the user did not save did not touch the idea, so `Last touched` stays where it was.
+
+**`capture` and `close` are exempt, because in each the ask is the write.** "Write this down" and "I'm dropping this" are demands already made, and the file is the whole output of the mode. Turning either into an offer asks the user to confirm the thing they just requested.
+
+**The user can say "save that" at any point.** Write the entry then, and carry on. Offer a save unprompted only once mid-session, when the discussion settles something that would cost real work to reconstruct.
+
+**The cost, stated plainly.** `session` opens on a status report, and `status` crowns the coldest idea carrying an open question. Both read `NOTES.md`. Unsaved sessions leave those reads behind what the user actually thinks. The hand-off says so on every run that writes nothing, so a thin log never passes for a quiet month.
 
 ## Mode: `capture`
 
@@ -155,20 +177,23 @@ Print the single-idea report from [`status`](#mode-status) as the first thing th
 
 ### 5. Close the session
 
-Four writes, in order:
+Compose three writes, then offer them as one save:
 
-1. Append the dated `NOTES.md` entry. **Every session appends one**, three to six lines minimum, naming a decision, a rejection, or an open question. That entry is the spine the next session reads.
-2. Refresh `IDEA.md`'s `## Open` block, and rewrite its head when the idea itself changed.
-3. Rewrite the router row, including `Last touched`.
-4. Write a full session record to `topics/<slug>/docs/sessions/` **only when the user asks for one**.
+1. The dated `NOTES.md` entry, three to six lines minimum, naming a decision, a rejection, or an open question. That entry is the spine the next session reads.
+2. A refreshed `## Open` block for `IDEA.md`, plus a rewritten head when the idea itself changed.
+3. The router row, including `Last touched`.
 
-A `parked` or `closed` idea that gets a session returns to `active` under a new dated entry.
+Print all three under their paths and ask save, edit, or drop, as [Saving is a demand, not a default](#saving-is-a-demand-not-a-default) sets out. On a yes, write them in the order above. On a no, write nothing, and say so in the hand-off.
 
-**Done when** the log entry names a decision, a rejection, or an open question, the `## Open` block matches that entry, and the router row matches both. Then go to [Hand off](#hand-off).
+A full session record goes to `topics/<slug>/docs/sessions/` **only when the user asks for one**. Do not offer it.
+
+A `parked` or `closed` idea that gets a saved session returns to `active` under a new dated entry.
+
+**Done when** the user has seen the composed entry and answered. On a save, the entry names a decision, a rejection, or an open question, the `## Open` block matches that entry, and the router row matches both. On a drop, nothing in the folder changed. Then go to [Hand off](#hand-off).
 
 ## Mode: `status`
 
-Reports, and writes nothing but a router repair.
+Reports, and writes nothing at all.
 
 ### Cross-idea scope, no idea named
 
@@ -205,43 +230,44 @@ Read `IDEA.md`, the last two or three `NOTES.md` entries, and a **listing** of `
 
 ## The dispatch contract
 
-`research` and `validate` both send a question to a sibling skill. Three rules govern every dispatch:
+`research` and `validate` both send a question to a sibling skill. Four rules govern every dispatch:
 
-- **Pass the absolute write path** under `topics/<slug>/docs/…`. A sibling skill documents its own root, and left alone it writes to the working directory instead of the idea folder.
-- **Answer its save prompt yes.** These skills default to answering inline and writing nothing, and the fold-back needs the artifact.
+- **Let the sibling answer inline.** researchkit and validatekit both default to answering in the conversation and saving nothing, and that default is ideakit's too. Do not answer their save prompt on the user's behalf.
 - **Suppress the sibling's hand-off and print ideakit's own.** The dispatch is a sub-step, and two competing next-step lines help nobody.
+- **Offer the artifact after the answer, never before.** Ask once whether to keep it. On a yes, write the file yourself from the sibling's inline answer, at `topics/<slug>/docs/…`, keeping the sibling's own subpath and filename convention. Re-running the sibling to save would land the file in the working directory, because a sibling skill documents its own root and defers to no host. Asking before the dispatch asks before the user knows whether the answer was worth keeping.
+- **Fold back only what gets saved.** On a yes, offer the dated `NOTES.md` entry naming the question, the answer, and the artifact path, together with the `IDEA.md` and router updates. On a no, the answer stays in the conversation and the log stays as it was.
 
-**Then fold the answer back.** Write a dated `NOTES.md` entry naming the question, the answer, and the artifact path. Refresh `IDEA.md` and the router row. The idea's own log stays the one authoritative thread, so a later session reads one file and finds every answer.
+The idea's own log holds one authoritative thread of everything the user kept, so a later session reads one file and finds every saved answer.
 
 ## Mode: `research`
 
 Route to one slug first, then classify the question before acting.
 
-- **A tool, library, framework, or architecture question** goes to a research skill (**researchkit** when installed), with the write path set to `topics/<slug>/docs/research/`.
+- **A tool, library, framework, or architecture question** goes to a research skill (**researchkit** when installed), answering inline. Offer to keep it at `topics/<slug>/docs/research/` afterwards.
 - **A build-or-drop question** is not research. Redirect it to [`validate`](#mode-validate).
-- **A market, competitor, category, or customer-signal question** has no sibling owner, so ideakit runs it directly: who else does this, what the category is called, how incumbents price it, and what users publicly complain about. **Give every claim a source and a date.** Write the result to `topics/<slug>/docs/research/research-<slug>-YYYY-MM-DD.md`.
+- **A market, competitor, category, or customer-signal question** has no sibling owner, so ideakit runs it directly: who else does this, what the category is called, how incumbents price it, and what users publicly complain about. **Give every claim a source and a date.** Offer the result at `topics/<slug>/docs/research/research-<slug>-YYYY-MM-DD.md`.
 
 Without a research skill installed, run the comparison against primary sources directly and **say plainly that it is the short version**.
 
-**Done when** the artifact exists, the `NOTES.md` entry names the question and the answer, and `IDEA.md` and the router row match. Then go to [Hand off](#hand-off).
+**Done when** the user has seen the answer and answered the save offer. On a yes, the artifact exists, the `NOTES.md` entry names the question and the answer, and `IDEA.md` and the router row match. On a no, the folder is untouched. Then go to [Hand off](#hand-off).
 
 ## Mode: `validate`
 
-Route to one slug, then hand the idea to a validation skill (**validatekit** when installed), with the write path set to `topics/<slug>/docs/validation/`.
+Route to one slug, then hand the idea to a validation skill (**validatekit** when installed), answering inline. Offer to keep the write-up at `topics/<slug>/docs/validation/` afterwards.
 
-**Honor the sibling's side-project off-ramp rather than working around it.** It will fire often here, because most ideas in a personal ideas repo are not businesses, and an honest "this is a side project, not a company" is a real answer worth writing down.
+**Honor the sibling's side-project off-ramp rather than working around it.** It will fire often here, because most ideas in a personal ideas repo are not businesses, and an honest "this is a side project, not a company" is a real answer worth offering to write down.
 
-Fold the verdict, the wedge, and the assignment into `NOTES.md`. Update the router status when the verdict moves it.
+Offer the verdict, the wedge, and the assignment as one `NOTES.md` entry, with the router status change when the verdict moves it.
 
 Without a validation skill installed, run a short forcing-question set and a graded verdict, and **say plainly that it is the short version**.
 
-**Done when** the verdict, the wedge, and the assignment are in `NOTES.md`, and the router status matches the verdict. Then go to [Hand off](#hand-off).
+**Done when** the user has seen the verdict and answered the save offer. On a yes, the verdict, the wedge, and the assignment are in `NOTES.md`, and the router status matches the verdict. On a no, the folder is untouched. Then go to [Hand off](#hand-off).
 
 ## Mode: `close`
 
 Route to one slug. Ask which verdict applies: `building`, `parked`, or `closed`. **Require the reason**, and refuse to write a verdict without one.
 
-Then:
+Then write, without a save offer. The verdict and its reason are the demand, and the reason question already gave the user a place to stop.
 
 1. Write a dated verdict entry into `NOTES.md`, recording what was decided, what evidence decided it, and what would reopen it.
 2. Rewrite `IDEA.md` so the verdict sits at the top of its head.
@@ -256,7 +282,9 @@ Then:
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Name the entry written, the artifact saved, and the status set. Name what did not change too: a folder you reported and did not open, a dispatch that ran the short version, a verdict you refused to write without a reason.
+**What changed.** Name the entry written, the artifact saved, and the status set. Name what did not change too: a save the user declined, a folder you reported and did not open, a dispatch that ran the short version, a verdict you refused to write without a reason.
+
+**Say when a run wrote nothing.** State it in one line: this session leaves no record in the repo. Do not soften it, and do not imply the discussion was saved. Offer the save once more only if the user asks.
 
 **Where it landed.** Give the topic folder path. Give the artifact path when a mode wrote one. Give the repo path when this run created the repo.
 
@@ -269,15 +297,16 @@ _Write this section in the procedural register: one instruction per sentence, ac
 - Nothing is open → run `close`, and name which verdict fits.
 - The idea just closed → say there is no next step. Do not invent a follow-up.
 
-Then offer a commit of the ideas repo. Never run it without a yes.
+Then offer a commit of the ideas repo. Never run it without a yes. **Skip the commit offer on a run that wrote nothing.**
 
-**A `status` run closes differently.** Its whole output is a hand-off, and the dashboard already crowns the move. State that nothing changed, or name the one router row you repaired. Do not print the move twice, and do not offer a commit on a run that wrote nothing.
+**A `status` run closes differently.** Its whole output is a hand-off, and the dashboard already crowns the move. State that nothing changed. Do not print the move twice, and do not offer a commit.
 
 ## Notes
 
 - **The isolation guard beats every other rule here.** Resolve one slug, open one folder. `status` reports on every idea and opens none of them, which is the guard working rather than an exception to it.
+- **The user decides what gets kept.** Compose the write, show it, and wait. `capture` and `close` are the two exemptions, and there are no others.
 - **`capture` stops.** Its job is to lose nothing when an idea arrives at a bad moment. Turning it into a session is how the idea gets dropped instead.
 - **Never rename a slug.** Confirm it at creation and leave it alone. The router's `Idea` column is where a changed name goes.
 - **This repo ships no code.** ideakit never writes application code and never opens issues. An idea that becomes real work moves to a project repo and gets issues there.
 - **Never commit the ideas repo on its own.**
-- No writable filesystem (a browser-based agent)? Say so plainly, print the `NOTES.md` entry and any artifact as code blocks for the user to save, and give the paths they belong at. Do not report a write that did not happen. `status` still runs when the filesystem is readable.
+- No writable filesystem (a browser-based agent)? The save offer becomes a print. Say so plainly, print the `NOTES.md` entry and any artifact as code blocks for the user to save, and give the paths they belong at. Do not report a write that did not happen. `status` still runs when the filesystem is readable.

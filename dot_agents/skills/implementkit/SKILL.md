@@ -26,7 +26,7 @@ Two hard boundaries:
 ## Procedure
 
 ### 1. Take an explicit input
-Require the user to name what to build. The options are a plan file (`docs/plans/plan-<slug>-YYYY-MM-DD.md`), an issue (`#42`, or a URL/id `gh` can fetch), a freeform spec written in the prompt, or a **fix round**: a concrete list of review findings (e.g. the blockers from a review pass), each naming what's wrong and where. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it).
+Require the user to name what to build. The options are a plan file (`docs/plans/plan-<slug>-YYYY-MM-DD.md`), **optionally narrowed to one phase** ("implement phase 3 of `plan-sso-2026-07-23.md`"), an issue (`#42`, or a URL/id `gh` can fetch), a freeform spec written in the prompt, or a **fix round**: a concrete list of review findings (e.g. the blockers from a review pass), each naming what's wrong and where. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it).
 
 ### 2. Assess implementability, bounce if thin
 Before writing anything, judge whether the input is concrete enough to build without inventing the design. A hardened plan or a fleshed-out issue passes. A bare title, a one-line ask, or a spec with unresolved core decisions does **not**. Stop and tell the user to harden it first with grillkit (to interrogate the decisions) or plankit (to draft a proper plan), naming the specific gaps you hit. Don't paper over a thin spec with assumptions; a wrong guess here costs more than the bounce.
@@ -69,7 +69,26 @@ All must pass before you declare done. If a command genuinely doesn't exist (no 
 ### 6. Fix on red, bounded
 If the gate fails, try to fix your own output and re-run, but stay **bounded** to roughly three attempts. If it's still red after that, **stop**: never declare done on a failing gate, and never loop indefinitely. Report the failure, what you tried, and where you think it's stuck, and hand it back.
 
-### 7. Hand off to commitkit
+### 7. Stamp the plan, when the input was one
+Skip this step entirely unless the input was a plan file and the gate passed. Then mark what you built, so the plan says what is left.
+
+Append `(built YYYY-MM-DD)` to the heading of each phase you finished, using today's date:
+
+```markdown
+### Phase 2: auth (built 2026-08-20)
+### Phase 3: session refresh (#41) (built 2026-08-20)
+```
+
+Four rules keep the stamp honest:
+
+- **Stamp only the phases you actually built.** A run narrowed to one phase stamps that phase and leaves every other heading untouched. Never stamp a phase you skipped, and never stamp the whole plan because most of it is done.
+- **Stamp after the gate is green**, never before. The stamp is a claim that the work passed, so writing it on unproven code makes the plan lie about the exact thing it exists to record.
+- **Keep an existing `(#41)` and add yours after it.** The two annotations coexist: the number says where the phase is tracked, the stamp says it is done.
+- **Leave the edit unstaged**, like every other change in the run, so commitkit picks up the plan alongside the code that implements it.
+
+Stamp on every run, whatever the project's tracker is. A project filing GitHub issues gets a plan that carries both annotations, and one filing none gets a plan that is its own work list. Deciding which kind of project this is would be a judgment implementkit does not need and should not make.
+
+### 8. Hand off to commitkit
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
@@ -77,9 +96,12 @@ Leave every change **unstaged**. Do not `git add`, do not commit, do not draft a
 
 - the **mode** used and which precedence tier decided it,
 - the **files** created and changed,
-- the **gate result** (which commands ran and that they passed).
+- the **gate result** (which commands ran and that they passed),
+- the **phases stamped**, and which phases of that plan are still unbuilt.
 
 Then point the user to commitkit when installed, or say plainly that the next step is to group and commit the changes. Don't run it yourself.
+
+Name the next phase of the plan when one is left. Say the plan is fully built when none is.
 
 ## Notes
 

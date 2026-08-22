@@ -18,6 +18,20 @@ The user asks to commit ("commit this", "make a commit", "/commitkit", "commit m
 
 This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage the right files yourself, group the work into as many commits as it deserves, commit them, and report back a table of what you created, without stopping to ask at each step.
 
+## Draft mode
+
+**Entry condition, and both halves must hold**: the caller names draft mode, and the staged diff arrives in the prompt itself inside `<staged-diff>` tags with no tools available to you. A git tool such as a lazygit custom command drives this mode. It inlines this file, appends the diff and any supporting context, captures your stdout, and writes that text straight into its commit panel. Every word you emit that is not the commit message corrupts the commit.
+
+Draft mode replaces [Read the state](#1-read-the-state), [Group the work into multiple commits](#4-group-the-work-into-multiple-commits), [Commit each group](#5-commit-each-group), and [Hand off](#6-hand-off). [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message) apply unchanged, so the scope stays mandatory and the body stays required.
+
+- **Write exactly one commit message for the whole staged set.** The multiple-commits default does not apply here, because the caller owns the staging and you cannot restage anything.
+- **Emit the raw message and nothing else**: the subject line, one blank line, then the body. No preamble, no code fence, no summary table, no hand-off, no next move, no `Co-authored-by`, no tool advertising. The first character of your output is the first character of the subject.
+- **Read the whole payload for repo context.** It may carry `git log --oneline` output. Match the style of those subjects, per the repo-convention rule in [Notes](#notes).
+- **Expect a `[diff truncated]` marker.** Write the message from the visible part of the diff. Keep the truncation out of the commit.
+- **No diff, no output.** If the payload holds no diff, print nothing and stop.
+
+Draft mode outranks the codeblock fallback in [Notes](#notes). A code fence serves a human who copies the message by hand; a commit panel takes the message bare.
+
 ## Procedure
 
 ### 1. Read the state
