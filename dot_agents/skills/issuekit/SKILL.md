@@ -47,6 +47,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 ```
 
 - If `gh` is missing or unauthenticated, say so and point to `https://cli.github.com` / `gh auth login`. Don't work around it.
+- **Invoking issuekit answers the question of whether this project uses GitHub Issues.** Not every project tracks work here, and a skill that surveys a repo has to resolve that before it recommends anything. issuekit never does: someone asking to file, start, or close an issue has already said where the work lives. So `create` files issues without first checking whether the project files issues, and no mode ever declines on the grounds that the repo looks like it tracks work elsewhere.
 - **No shell or `gh` at all** (e.g. a browser-based agent)? You can't call `gh`. Instead do the reasoning from what the user provides and **print the exact `gh` commands** for them to run themselves: issue bodies as codeblocks, and `gh issue create …` / `gh issue close …` lines ready to paste.
 
 **Safety stance, for the whole skill.** Creating, closing, relabeling issues and editing PR bodies are outward-facing mutations. **Preview every mutation and get an OK before it runs, so nothing changes on GitHub unprompted.** Never merge PRs.

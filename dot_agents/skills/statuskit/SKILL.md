@@ -3,7 +3,7 @@ name: statuskit
 description: >-
   Survey a project read-only, covering the git working tree, GitHub issues and their declared priority, open PRs, and unfiled plans, into a one-screen dashboard that crowns one finish-first next move routed to the kit that does it, saved by default as a throwaway snapshot under docs/status/. Use when you sit down at a project and ask "what should I do next", "check project status", "what's next", "what's most important right now", "orient me", "write me a status file", or run "/statuskit". Add "just print it" or "no file" to skip the snapshot.
 license: MIT
-allowed-tools: Bash, Read, Write, Skill
+allowed-tools: Bash, Read, Write, Edit, Skill
 metadata:
   internal: false
 ---
@@ -12,7 +12,7 @@ metadata:
 
 The front door you open when you sit back down at a project and ask *"where is this thing, and what's my single best next move?"* statuskit surveys the whole project **read-only**, covering the git working tree, GitHub issues, open PRs, and unfiled plans, prints a one-screen **status dashboard**, then does the opinionated part: it ranks the possible next actions by a **finish-first** rule and crowns exactly **one** as the move to make, routing you to the kit (or plain command) that does it.
 
-It is a **read + advise** tool. It never commits, pushes, closes an issue, edits a PR, merges, relabels, or writes code, because every mutation happens inside the kit it hands you off to, under that kit's own guard. That zero-mutation stance is the point: statuskit is safe to run anytime, as often as you like, to re-orient.
+It is a **read + advise** tool. It never commits, pushes, closes an issue, edits a PR, merges, relabels, or writes code, because every mutation happens inside the kit it hands you off to, under that kit's own guard. Nothing it does reaches a remote, a branch, or a tracker, and that is the point: statuskit is safe to run anytime, as often as you like, to re-orient. It writes two local files and no more, the snapshot and (on approval) a one-line tracker declaration, both covered in [Notes](#notes).
 
 ## When this fires
 
@@ -91,6 +91,34 @@ Both appear in the dashboard as facts; neither becomes the #1 move.
 
 **statuskit crowns the review, never the merge.** That's what keeps the new rung from contradicting the rule above it: reviewing an unreviewed PR is real work with an observable finish, while pressing merge is the judgment call statuskit stays out of. The crowned move ends at *reviewed* and hands the merge decision back to you.
 
+## Resolving the tracker
+
+**Not every project manages its work in GitHub Issues, and `gh` working is not evidence that this one does.** A repo can have `gh` authenticated, Issues enabled, and forty open bug reports, while every planned change lives in Linear. Another can have zero issues because it was created yesterday. Those two want opposite advice, so statuskit resolves the question explicitly instead of inferring it from whether the API answered.
+
+Take the first rung that gives an answer:
+
+1. **The prompt.** The user said so ("we don't use GitHub issues", "file this in the tracker"). Explicit always wins.
+2. **The repo's agent-guide file** (`CLAUDE.md` or an equivalent) states where work is tracked. A sentence like *this project tracks work in Linear, not GitHub Issues* settles it in either direction.
+3. **Detection**, from the `gh issue list --state all` call [the plans survey](#2-survey-collecting-signals-read-only) already makes, so it costs nothing extra. Issues disabled on the repo, or an error, means **no tracker**. A non-empty array means **tracker in use**.
+4. **Unknown.** `gh` returns an empty array, so nothing distinguishes a day-one repo from a Jira shop.
+
+**Unknown routes like no-tracker and says so.** It never asserts a plan is unfiled, never crowns "go file issues", and names both paths in one line. It is the only ambiguous state, so it is the only one that triggers [the declaration offer](#the-declaration-offer).
+
+**Only statuskit resolves this.** It is the skill that must, because it crowns exactly one move. Every other skill either carries the one-line conclusion (issuekit, afkkit) or names both destinations without resolving anything (plankit, grillkit, implementkit). Keeping the derivation in one place is what stops four skills drifting into four slightly different answers.
+
+### The declaration offer
+
+When the reading is **unknown** and a user is there to answer, offer to append one sentence to the repo's agent-guide file so the next run resolves at rung 2 instead:
+
+> `This project tracks work in Linear, not GitHub Issues.` or `This project manages work in GitHub Issues.`
+
+Four bounds hold it inside statuskit's [mutation stance](#notes):
+
+- **Preview it and wait for an OK**, like any outward-facing change, even though this one is local.
+- **Write only to an agent-guide file that already exists**, preferring `CLAUDE.md` and otherwise whichever equivalent the repo keeps. **Never create one**, because a repo without such a file has deliberately not got one, and a status check is the wrong tool to invent it. With no such file, print the line for the user to place.
+- **Offer it once per run, as a runner-up**, never as the crowned move. A repeated prompt on the tool people run to orient is a nag, and it would outrank work they could actually finish.
+- **Skip it entirely in an unattended run.** There is nobody to approve it, and a declaration guessed at is worse than the ambiguity it replaces.
+
 ## Procedure
 
 ### 1. Preflight, degrading per source and never failing wholesale
@@ -99,6 +127,7 @@ statuskit is **git-first**: git signals always drive it, and GitHub signals enri
 
 - **Not a git repo** → say so; skip everything git-derived. If there's no repo yet, the move is "start with `plankit`."
 - **`gh` missing / unauthenticated / no remote** → drop to the **git-only ladder** below. This is a first-class mode, not an error, so name the actual gap once (`gh` is not installed, run `gh auth login`, or add a GitHub remote) and carry on.
+- **`gh` usable, but the project doesn't track work in GitHub Issues** → resolve it explicitly, per [Resolving the tracker](#resolving-the-tracker). This is a policy fact rather than a capability one, so it never falls out of a failing call, and the issue rungs and the Issues panel both turn on it.
 - **No plan docs** → skip the plans read entirely. The Plans panel is conditional even when plans do exist; see [the plans survey](#2-survey-collecting-signals-read-only).
 - **No shell at all** (e.g. a browser-based agent) → you can't run the survey; print the commands below for the user to run and reason from what they paste back.
 
@@ -129,8 +158,10 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 **plans (filesystem, where the list always runs and the unfiled check needs a tracker):**
 - list canonical `docs/plans/plan-<slug>-YYYY-MM-DD.md` files (or wherever the repo keeps plans, since an `rfcs/`, `specs/`, or documented location takes precedence). The list is free and always runs; it's what the ladder's plan rungs read.
 - **the unfiled set, computed only when the repo actually tracks work in GitHub issues.** Cross-check each plan against the issue list and keep the ones that never became an issue. Match over **`--state all`**, not the open-issues read the rest of the survey uses: `gh issue list --state all --json number,title --limit 200`, one call, spent only when plan docs exist. A plan that shipped months ago has a *closed* issue, so matching against open issues alone would report every finished plan as neglected, which is the failure mode that makes this panel worth suppressing in the first place.
-- **That same call is the tracker-in-use check, so it costs nothing extra.** An error (issues disabled on the repo) or an empty array means there is nothing for a plan to be unfiled *against*, so skip the comparison, print no Plans panel, and never report a plan as unfiled by default. Same when `gh` is unusable at all. Plenty of projects track work in Linear, Jira, a `TODO.md`, or somebody's head; a survey that announces "18 unfiled" on one of them is reporting its own blind spot as a finding, and pointing the user at `issuekit create` for a tracker they deliberately don't use.
+- **That same call is [rung 3 of the tracker resolution](#resolving-the-tracker), so it costs nothing extra.** An error (issues disabled on the repo) means no tracker; an empty array means unknown; a non-empty one means a tracker is in use. Only the last of those makes the unfiled comparison meaningful, so on the other two skip it and never report a plan as unfiled. Same when `gh` is unusable at all. Plenty of projects track work in Linear, Jira, a `TODO.md`, or somebody's head; a survey that announces "18 unfiled" on one of them is reporting its own blind spot as a finding, and pointing the user at `issuekit create` for a tracker they deliberately don't use.
 - **Match on the plan's slug and its title, and when the match is uncertain call it filed.** An issue whose title matches the plan's title, or whose body links the plan's path, or whose slug matches, is enough on its own. The asymmetry is deliberate: this panel only ever prints gaps, so a false negative costs one silent line and a false positive sends the user off to file a duplicate of work already tracked.
+- **the unbuilt set, which is what the plan rung ranks when there is no tracker.** Find phases by a heading beginning `Phase <n>`, matching the separator loosely (`### Phase 2: auth` and `### Phase 2 — auth` are the same shape, and real plan sets carry both). A phase is **built** when its heading carries a `(built YYYY-MM-DD)` stamp, which **implementkit** writes into the same trailing slot issuekit's `(#41)` occupies; the two coexist, so `### Phase 2: auth (#41) (built 2026-08-20)` is a tracked phase that shipped.
+- **A plan with no stamp anywhere makes no claim.** The stamp convention is opt-in per plan, so absence means unstamped rather than unbuilt, and reading it as unbuilt would report every plan written before the convention as outstanding work. Treat such a plan as a single unit and crown it whole, exactly as [the git-only ladder](#3-rank-and-crown-one-finish-first-move) already does. Once a plan carries one stamp it is authoritative, and its unstamped phases are genuinely unbuilt. A fully stamped plan is finished, so drop it.
 
 ### 3. Rank and crown one finish-first move
 
@@ -151,24 +182,29 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 
 | # | State | Move → |
 |---|-------|--------|
-| 0 | a **workable `critical`** issue that is open, unblocked, and not already the crowned move | drop what you're on: `issuekit start` if it's `ready`, resume it if it's `in-progress` |
+| 0 † | a **workable `critical`** issue that is open, unblocked, and not already the crowned move | drop what you're on: `issuekit start` if it's `ready`, resume it if it's `in-progress` |
 | 1 | your PR is red or change-requested | fix CI or address review with `mergekit fix` |
 | 2 | your PR that nobody is reviewing (highest priority, then `unblocks`, then most-recently-updated) | self-review it with `mergekit <N>`, or request a reviewer |
-| 3 | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume, or run `implementkit` |
+| 3 † | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume, or run `implementkit` |
 | 4 | orphaned work: uncommitted on the base branch or an untracked branch, or unpushed commits | run `commitkit`, or push |
 | 5 | a stash | restore it to finish the work, or drop it if obsolete |
 | 6 | an unmerged local feature branch | finish it, or clean it and its worktree up with `gitkit` |
-| 7 | stale-tracker signal fired | reconcile with `issuekit sync` |
-| 8 | a `ready` issue to start (highest priority, then `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
-| 9 | an unlabeled/other-status issue needing classification | classify it with `issuekit triage` |
-| 10 | an unassessed backlog, meaning open issues with no priority label | rank them with `issuekit triage` |
+| 7 † | stale-tracker signal fired | reconcile with `issuekit sync` |
+| 8 † | a `ready` issue to start (highest priority, then `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
+| 8b | **no tracker:** the next unbuilt phase of the newest plan | build it with `implementkit` |
+| 9 † | an unlabeled/other-status issue needing classification | classify it with `issuekit triage` |
+| 10 † | an unassessed backlog, meaning open issues with no priority label | rank them with `issuekit triage` |
 | 11 | an unfiled plan *(only when the tracker is in use)*, or no plans at all | `issuekit create`, or `plankit` |
+
+**† marks a rung that fires only when a tracker is in use.** Resolve that per [Resolving the tracker](#resolving-the-tracker) before ranking, because six of these twelve rungs turn on it. A project that tracks its work elsewhere falls straight past every one of them, which is exactly the hole rung 8b fills: without it the ladder runs out and crowns nothing, and "no next move" on a repo with unbuilt plans on disk is a survey failure rather than a finding. The PR and git rungs (1, 2, 4, 5, 6) never depend on it, since a branch and a pull request are the same facts whatever the tracker is.
+
+**Rung 8b is rung 8's trackerless twin, and it sits at the same height on purpose.** Both are start-something rungs, both mean the finishing rungs above came up empty, and both hand off the same way once the work is picked. It ranks by the plan's own order, meaning the lowest-numbered unbuilt phase of the newest plan, because a plan's phases are written in dependency order and skipping ahead is how a phase gets built on a prerequisite that does not exist yet.
 
 **Rung 0 is numbered zero because it isn't really a rung.** It's the [one documented override](#critical-is-the-one-thing-that-outranks-finish-first) of the finish-first spine, and numbering it inside the sequence would make it look like an ordinary state that merely happens to sort first. It fires rarely, it must name what it displaced, and everything below it is the actual ladder. If rung 0 is firing on most runs, `critical` has stopped meaning anything and the real move is `issuekit triage`.
 
 **Rung 10 ranks below every actionable rung and above "go plan something."** An unranked backlog is a genuine gap, since nothing above it can order itself properly, but it is still tracker hygiene rather than work, so it never outranks a thing the user could actually finish. It earns a rung at all because without one, a repo where nobody has set a single priority would silently rank on leverage forever and never be told why.
 
-**Rung 11's first half only exists when the unfiled set was computed.** A repo that doesn't track work in GitHub issues gives statuskit no way to tell a filed plan from an unfiled one, so it never asserts one is unfiled: the rung reduces to its second half, *no plans at all → `plankit`*. Ranking "file your plans" at a project that files its work somewhere else is worse than staying quiet, because it's a confident recommendation built on a read that never happened.
+**Rung 11's first half only exists when the unfiled set was computed**, meaning [the resolution](#resolving-the-tracker) came back *tracker in use*. A repo that tracks work elsewhere gives statuskit no way to tell a filed plan from an unfiled one, so it never asserts one is unfiled: the rung reduces to its second half, *no plans at all → `plankit`*. Ranking "file your plans" at a project that files its work somewhere else is worse than staying quiet, because it's a confident recommendation built on a read that never happened.
 
 **Rungs 1 and 2 are the same thought twice: your own PR is stuck on you.** A red PR is stuck loudly and an unreviewed one silently, and the silent kind is the one that sits for weeks, which is why it outranks resuming a half-built issue rather than trailing it: the code is already written and green, so it retires the most work for the least effort, which is the whole of finish-first. It's the one rung that breaks ties on leverage while asking you to *finish* rather than start, because there's no context to switch back into: reviewing a finished PR is the same work whichever one you pick, so the tiebreak may as well go to the one that frees the most.
 
@@ -176,14 +212,14 @@ When the owning kit isn't installed, name the **plain action** instead ("commit 
 
 ### 4. Output: the dashboard, then one crowned move
 
-Print a compact panel (one line per signal source, **empty panels suppressed**, and Plans suppressed unless it has a finding, below), then the ranked next-actions list with the **#1 move bolded** and its exact kit/command. Three tables carry the detail a bare count can't (the unblocked issue IDs, the PRs waiting for review, and the blocked issues with their blocker) because those are the three places a number sends you straight back to `gh` to find out *which*. They print in that order, and the last one sits below the Pull requests panel rather than under the Issues count line. Keep it to one screen:
+Print a compact panel (one line per signal source, **empty panels suppressed**, and Plans suppressed unless it has a finding, below), then the ranked next-actions list with the **#1 move bolded** and its exact kit/command. Tables carry the detail a bare count can't, because those are the places a number sends you straight back to `gh` or to a file to find out *which*. With a tracker in use they are the unblocked issue IDs, the PRs waiting for review, and the blocked issues with their blocker; without one the two issue tables have nothing to list and the unbuilt phases take their place. Never more than three print at once. They keep the order below, and blocked issues sit under the Pull requests panel rather than under the Issues count line. Keep it to one screen:
 
 ```
 # Project status · <repo> · <branch> · YYYY-MM-DD
 
 ## Working tree  <clean | N uncommitted · M unpushed · stash K>
 
-## Issues        in-progress N · ready N · in-review N · blocked N     (omit without gh)
+## Issues        in-progress N · ready N · in-review N · blocked N     (omit without gh, or without a tracker)
 
 Unblocked (N) · highest priority first
 | Issue | Priority | Unblocks | Status | Last active | Title |
@@ -207,7 +243,13 @@ Blocked issues (N)
 | #19 | high | #12 | <title> |
 | #23 | low | `blocked` label, no blocker named | <title> |
 
-## Plans         <M unfiled: plan-debugkit, plan-testkit>   (omit entirely unless M ≥ 1)
+## Plans         <M unfiled: plan-debugkit, plan-testkit>   (omit entirely unless there is a finding)
+
+Unbuilt phases (N) · plan order      (only when there is no tracker, and a plan carries stamps)
+| Plan | Phase | Title |
+|---|---|---|
+| plan-sso-login | 3 | <phase title> |
+| plan-sso-login | 4 | <phase title> |
 
 ## Next move
 **→ <the #1 action>.** Run `<kit / command>`.
@@ -222,13 +264,15 @@ Then:
 
 **A signal panel is one line.** Working tree, Issues, Pull requests, and Plans each put their heading and counts on the same line, with nothing following but a table. No paragraph, no parenthetical tracing a plan to the commit that shipped it, no clause explaining why a count matters: that reasoning is an argument for a move, so it belongs in the move, where the user can act on it. The entire value of the block is that four lines tell you where the project stands before you've started reading, and a panel that grows a second sentence has quietly become a report. `Next move` is the exception and the only one, because it's the block everything above exists to produce.
 
-**The three tables run in the order you can act on them, and blocked work goes last.** Unblocked leads, because it is the pick-up-now list. Waiting for review follows: that code is written and one review retires it. Blocked issues close the block, and they are the one table that leaves its panel, sitting under the Pull requests panel instead of under the Issues count line that counts them. The reason is that a reader scans from the top and stops when they find their next move, so every row they can act on must come before the first row they cannot. Call the table `Blocked issues (N)` in full: away from the Issues panel, a bare `Blocked (N)` reads as blocked PRs. This is the only table that detaches from its panel, and the only ordering exception in the block; nothing else moves.
+**The tables run in the order you can act on them, and blocked work goes last.** Unblocked leads, because it is the pick-up-now list. Waiting for review follows: that code is written and one review retires it. Blocked issues close the block, and they are the one table that leaves its panel, sitting under the Pull requests panel instead of under the Issues count line that counts them. The reason is that a reader scans from the top and stops when they find their next move, so every row they can act on must come before the first row they cannot. Call the table `Blocked issues (N)` in full: away from the Issues panel, a bare `Blocked (N)` reads as blocked PRs. This is the only table that detaches from its panel, and the only ordering exception in the block; nothing else moves.
+
+**`Unbuilt phases` sits under Plans and the panel order never changes.** Dropping the Issues panel already removes the two tables above it, so on a trackerless run the reader meets `Waiting for review` and then `Unbuilt phases`, which is the right order without moving anything: finishing a written PR outranks starting a phase. Promoting Plans up the block to sit where Issues used to would make the panel sequence depend on the repo, and comparing two days' snapshots is worth more than saving a reader one line of scanning.
 
 **An `in-review` issue appears once, on the Pull requests panel, and never in the Unblocked table.** Its next move is a review of a PR, so the row that names a person and a CI state says strictly more than a second row in a table of work you can start. Keep the `in-review` count on the Issues line, because the count is still a fact about the tracker. The work never falls off the dashboard when its PR isn't waiting for review either: a red PR ranks as the crowned move, and an approved one prints under `Surfaced, not queued`. An `in-review` issue with **no open PR at all** is the one case with nothing to point at, and that is tracker drift rather than a gap in the table, so say it in one line on the Issues panel (`in-review 7 · 1 with no open PR`) and route it to `issuekit triage`. Never repair it by putting the issue back in the Unblocked table, which would assert it is startable when somebody has already labelled it as being reviewed.
 
-**Plans is the one conditional panel, and it prints only when a plan doc never became an issue.** The other four report state that always exists: a tree is always in some condition, a repo always has some number of issues and PRs, and zero is a real reading of each. A plan count isn't like that. `21 filed · 0 unfiled` is a fact about a directory rather than a call to action, and it spends a line of the dashboard every single run to say nothing is wrong. So Plans is a **finding**, and a finding with nothing in it doesn't print: no plan docs, no tracker to compare them against, or every plan already filed all resolve to the same output, meaning no Plans line at all, and no mention of why. When it does print, every name on it is something to act on, which is what earns it the space.
+**Plans is the one conditional panel, and it prints only when it has a finding.** A finding is a plan doc that never became an issue, or, when there is no tracker to file into, a phase still unbuilt. Those are the same shape: work written down that nothing is carrying. The rule, the name, and the suppression all stay exactly as they were, and only what counts as a finding widens, because a trackerless project has no Issues panel and this is the only place its outstanding work can appear. The other four report state that always exists: a tree is always in some condition, a repo always has some number of issues and PRs, and zero is a real reading of each. A plan count isn't like that. `21 filed · 0 unfiled` is a fact about a directory rather than a call to action, and it spends a line of the dashboard every single run to say nothing is wrong. So Plans is a **finding**, and a finding with nothing in it doesn't print: no plan docs at all, every plan already filed, or every stamped phase already built all resolve to the same output, meaning no Plans line at all, and no mention of why. The one case that needs care is a tracker in use with plans that carry stamps, where both halves are live and the panel prints whichever it has. When it does print, every name on it is something to act on, which is what earns it the space.
 
-**Don't generalize that into "suppress the quiet panels."** Plans is conditional because its empty state is *unactionable*, not because it's boring: a clean working tree and an empty PR list are both things you actively want to see confirmed, and a dashboard whose panel set changes with the mood of the repo stops being comparable day to day. Plans is the exception, it stays the only one, and the same rule governs the snapshot file: no unfiled plan means no `## Plans` section in it either.
+**Don't generalize that into "suppress the quiet panels."** Plans is conditional because its empty state is *unactionable*, not because it's boring: a clean working tree and an empty PR list are both things you actively want to see confirmed, and a dashboard whose panel set changes with the mood of the repo stops being comparable day to day. Plans is the exception, it stays the only one, and the same rule governs the snapshot file: no finding means no `## Plans` section in it either.
 
 **The panel set is closed.** Working tree, Issues, Pull requests, Plans *(when it fires)*, and Next move are the dashboard, plus **at most one** repo-specific panel when the repo keeps a first-class queue the standard five genuinely can't see (an `IDEAS.md` backlog, an RFC index). It takes the same shape as the rest: a name, one line, sourced from a file the survey read. Anything you'd have to *run* to fill a panel is out of bounds, because statuskit surveys read-only, so a build, test, or lint result is not a signal it has, and inventing a `Health` panel from one is both a mutation risk and a claim the survey can't back. Without this rule every run improvises a different set and no two days' files compare.
 
@@ -293,9 +337,10 @@ Draw keys from a fixed vocabulary, never an improvised slug, or the key drifts r
 | an issue | `issue-12` |
 | a PR | `pr-34` |
 | a plan doc | `plan-<slug>`, the plan's own slug |
+| one phase of a plan | `plan-<slug>-phase-<n>` |
 | a local branch | `branch-issue-12-retry-budget` |
 | a stash entry | `stash-0` |
-| a ladder rung with no subject | one fixed slug per rung: `push`, `reconcile`, `triage`, `prioritize`, `repo-labels` |
+| a ladder rung with no subject | one fixed slug per rung: `push`, `reconcile`, `triage`, `prioritize`, `repo-labels`, `declare-tracker` |
 
 **A move that frees work says so, and a move somebody ranked says that first.** When a queued move carries a priority above `medium` or an `unblocks` count above zero, put both into its line: `**Start #12 (critical, unblocks 3)** · \`issuekit start 12\``. The checkbox list is where the user actually chooses, often hours after the tables scrolled past, and those two clauses are the whole argument for why this item outranks the one below it. Omit each clause when it says nothing: no `unblocks 0`, and no `medium` or blank, since the default and the absence are both what the reader already assumes. Priority leads the pair when both are present, matching the sort.
 
@@ -315,11 +360,12 @@ All three tables (unblocked, waiting for review, blocked issues) go into the fil
 
 ## Notes
 
-- **Zero mutation, always.** statuskit surveys and advises; it never changes git or GitHub state. If a recommendation needs a mutation, it routes to the kit that owns it, and that kit previews and gets approval on its own. The one thing it writes is the status snapshot, a gitignored scratch file that touches no git or tracker state, which is why writing it by default is still zero mutation.
+- **Nothing outward-facing ever changes.** statuskit surveys and advises; it never touches git or GitHub state. If a recommendation needs that kind of mutation, it routes to the kit that owns it, and that kit previews and gets approval on its own. Two local files are the whole of what statuskit writes: the status snapshot, a gitignored scratch file, written every run; and one declaration line in an existing agent-guide file, written only on approval and only when [the tracker reading is unknown](#the-declaration-offer). Neither reaches a remote, a branch, or a tracker, which is the property that makes statuskit safe to run at any time. State the boundary that way rather than as "zero mutation", because the snapshot was always a write and a headline the skill contradicts is worse than a narrower one it keeps.
 - **Route, don't launch.** Routing means *naming* the kit and its one-line command, because statuskit never invokes the kit for you; the user launches it. Naming "run `issuekit sync`" and then calling the kit yourself would restart mutation in the same breath as "orient me," breaking the read-only stance.
 - **Route, don't require.** Every recommendation degrades to a plain command when its kit isn't installed. statuskit is useful in a bare repo with only git.
 - **Hold the issuekit line.** Display issue counts, the unblocked set by ID, the blocked set with what each says it's waiting on, the ready/in-progress set, and each issue's declared priority; compute the one staleness boolean to rank "reconcile." Listing IDs is not crossing the line, because it's the same read printed usefully, and it saves a round trip to `gh` before acting on the crowned move. What stays on issuekit's side is *judgment* about the tracker: never render an itemized health verdict, and the moment you're explaining which issues are stale and why, that's issuekit `triage`/`sync` and statuskit should be pointing at it, not doing it.
 - **statuskit reads priority; it never assigns one.** Printing the label an issue carries is a fact read like any other, and sorting on it is what the label is *for*. Inferring a priority for an unranked issue is not, because it's the tracker judgment that belongs to issuekit `triage`, and it's the one place this survey could quietly manufacture the very signal it claims to be reporting. An unassessed issue stays unassessed in the dashboard, sorts below `low`, and gets routed rather than guessed at.
 - **gitkit owns the git facts.** The base branch, the branch-name convention, and where a worktree lives all come from gitkit, and statuskit reads them and reports. Keeping a second copy of any of them here is how a dashboard starts confidently describing a repo that no longer matches it.
+- **`Edit` is here for the declaration line, and for nothing else.** Appending one sentence to an existing agent-guide file is the only edit statuskit ever makes; the snapshot is a `Write`. Strip the tool on a host that enforces the field and [the declaration offer](#the-declaration-offer) degrades correctly on its own, printing the line for the user to place rather than failing.
 - **`Skill` is in the tool list for gitkit, and for nothing else.** It looks removable next to the route-don't-launch rule above, so it is worth stating: statuskit *calls* gitkit during the survey for the base ref, the branch-name pattern, and worktree paths. Every other kit it names in a move line is routed to, never invoked. Strip the tool and the survey silently starts guessing that the base branch is `main`.
 - **On-demand, no state.** Every run is a fresh read: statuskit keeps no `STATUS.md` at the repo root and no last-run cache, and it never *reads* a snapshot back to shortcut the survey. The one thing it takes from an existing file is which boxes were already ticked; the survey itself is always re-derived from git and GitHub. A `docs/status/` file is output for a human (or the next agent), not memory statuskit trusts.
