@@ -21,9 +21,72 @@ gui:
       - "#f9e2af"
   authorColors:
     "*": "#b4befe"
+  # Show how far the branch has drifted from its base, with the count.
+  showDivergenceFromBaseBranch: arrowAndNumber
+
+git:
+  commit:
+    autoWrapWidth: 72
+
+os:
+  # Matches EDITOR=nvim in .zshrc, and teaches lazygit the line-number flags.
+  editPreset: nvim
+
+# The `e` and `M` commands below hand the terminal to nvim. Without this, each
+# one ends on a "press enter to return to lazygit" step.
+promptToReturnFromSubprocess: false
+
 customCommands:
-  - key: "G" # Shift + g to trigger
-    context: "files"
-    description: "Generate AI Commit with Raycast"
-    # 1. Get staged diff, 2. copy to clipboard, 3. open Raycast deep link
-    command: 'git diff --cached -U4 | pbcopy && open "raycast://ai-commands/generate-git-commit"'
+  # Every entry calls ~/.local/bin/git-commitkit (chezmoi:
+  # private_dot_local/bin/executable_git-commitkit), which runs Claude on Haiku
+  # with the commitkit skill and writes the message to lazygit's own pending
+  # commit file. This replaced a command that piped the diff to pbcopy and opened
+  # a Raycast AI command; that left the terminal and ignored the commitkit
+  # convention the rest of the kits assume.
+  #
+  # The full path is deliberate. lazygit started from a GUI pane does not always
+  # inherit the PATH that .zshrc builds.
+
+  # Shift+G in the files panel opens the menu. lazygit rejects a `context` on a
+  # commandMenu parent ("not allowed to use both commandMenu and any of the other
+  # fields except key and description"), so the context sits on each entry and
+  # the key itself is global.
+  - key: "G"
+    description: "Commit message (commitkit)"
+    commandMenu:
+      - key: "g"
+        context: "files"
+        description: "Write a message, then press c to review it"
+        command: '"$HOME/.local/bin/git-commitkit"'
+        loadingText: "Writing commit message"
+        output: popup
+        outputTitle: "commitkit"
+
+      - key: "c"
+        context: "files"
+        description: "Write a message and commit it"
+        command: '"$HOME/.local/bin/git-commitkit" --commit'
+        loadingText: "Writing commit message"
+        output: popup
+        outputTitle: "commitkit"
+
+      - key: "e"
+        context: "files"
+        description: "Write a message and open it in nvim"
+        command: '"$HOME/.local/bin/git-commitkit" --edit'
+        output: terminal
+
+      - key: "x"
+        context: "files"
+        description: "Discard the pending message"
+        command: '"$HOME/.local/bin/git-commitkit" --clear'
+        output: none
+
+  # Reword lives on M, not G. lazygit binds G in the commits panel to
+  # openPullRequestInBrowser, and a built-in beats a custom command in the same
+  # context, so a G here would silently open a browser instead.
+  - key: "M"
+    context: "commits"
+    description: "Reword the last commit with commitkit"
+    command: '"$HOME/.local/bin/git-commitkit" --amend'
+    output: terminal
