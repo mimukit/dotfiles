@@ -37,6 +37,16 @@
 #                         is why the skill body is inlined from disk below.
 #   --system-prompt       Replaces the default Claude Code system prompt. Cheaper,
 #                         and it keeps harness instructions out of the message.
+#   MAX_THINKING_TOKENS=0 The whole latency story. Left on, Haiku spent 1200-4000
+#                         output tokens thinking about a six-line message and
+#                         took 15-45s. Off, it spends about 65 and takes under
+#                         two seconds, for half the cost. A commit message is a
+#                         summarising task, not a reasoning one. Set
+#                         COMMITKIT_THINKING=1 to put it back for a hard diff.
+#
+# Thinking off makes the model lean harder on the system prompt, so the mandatory
+# scope is restated there. Without that restatement it dropped the scope in one
+# sample out of three; with it, five out of five carried one.
 #
 # Exit codes: 0 wrote a message, 1 refused (nothing staged, bad output, no
 # claude). Never exits non-zero for a merely unusual diff.
@@ -61,17 +71,25 @@ note() { printf 'git-commitkit: %s\n' "$1" >&2; }
 
 usage() {
   cat >&2 <<'EOF'
-usage: git commitkit [--commit | --edit | --amend | --clear]
+usage: git commitkit [mode]
 
-  (no flag)  write the message to lazygit's pending-commit file, the clipboard,
-             and stdout. Press `c` in lazygit to open the panel pre-filled.
-  --commit   write the message and commit straight away
-  --edit     write the message and open $EDITOR on it, with the diff below
-  --amend    reword HEAD from its own diff, leaving staged work untouched
-  --clear    delete the pending-commit file
+generate, then act:
+  (no flag)        write the message to the pending-commit file, the clipboard
+                   and stdout. Press `c` in lazygit to open the panel filled in.
+  --commit         write the message and commit straight away
+  --edit           write the message and open $EDITOR on it, with the diff below
+  --amend          reword HEAD from its own diff, leaving staged work untouched
+  --menu           write the message, then print `value|label` lines for a
+                   lazygit menuFromCommand prompt
+
+act on a message already written:
+  --commit-pending commit the pending message as it stands
+  --edit-pending   open $EDITOR on the pending message, with the diff below
+  --clear          delete the pending-commit file
 
 env: COMMITKIT_MODEL (default haiku), COMMITKIT_MAX_BYTES (default 60000),
-     COMMITKIT_SKILL (path to a commitkit SKILL.md)
+     COMMITKIT_SKILL (path to a commitkit SKILL.md),
+     COMMITKIT_THINKING=1 (re-enable model thinking, slower but more considered)
 EOF
   exit 1
 }
@@ -82,6 +100,9 @@ while [ $# -gt 0 ]; do
     --commit) mode=commit ;;
     --edit) mode=edit ;;
     --amend) mode=amend ;;
+    --menu) mode=menu ;;
+    --commit-pending) mode=commit-pending ;;
+    --edit-pending) mode=edit-pending ;;
     --clear) mode=clear ;;
     -h|--help) usage ;;
     *) die "unknown option: $1" ;;
@@ -96,11 +117,31 @@ GIT_DIR_ABS=$(git rev-parse --absolute-git-dir)
 # .git/worktrees/<name>, which is exactly where that worktree's lazygit looks.
 pending_path() { printf '%s/%s' "$GIT_DIR_ABS" "$PENDING_FILE"; }
 
-if [ "$mode" = clear ]; then
-  rm -f "$(pending_path)"
-  note "cleared pending commit message"
-  exit 0
-fi
+# --- modes that need no model call ------------------------------------------
+#
+# lazygit's menu runs the generator inside a `prompts` entry, which finishes
+# before the custom command itself starts. By then the message is already on
+# disk, so the action the user picks must reuse it rather than pay for a second
+# call and hand back a different message than the one they just approved.
+
+case "$mode" in
+  clear)
+    rm -f "$(pending_path)"
+    note "cleared pending commit message"
+    exit 0
+    ;;
+  commit-pending|edit-pending)
+    [ -s "$(pending_path)" ] || die "no pending commit message"
+    if [ "$mode" = commit-pending ]; then
+      git commit -F "$(pending_path)" || die "git commit failed"
+    else
+      # -v puts the diff in the editor buffer for review; an empty buffer aborts.
+      git commit -v -e -F "$(pending_path)" || die "commit aborted"
+    fi
+    rm -f "$(pending_path)"
+    exit 0
+    ;;
+esac
 
 command -v claude >/dev/null 2>&1 || die "claude not found on PATH"
 
@@ -212,44 +253,71 @@ fi
 
 # --- run the model ----------------------------------------------------------
 
-raw=$(claude -p \
-  --model "$MODEL" \
-  --tools "" \
-  --setting-sources "" \
-  --no-session-persistence \
-  --system-prompt "You write git commit messages. Follow the commit message skill the user gives you. Output the commit message and nothing else." \
-  < "$prompt_file" 2>&1)
-status=$?
+SYSTEM_PROMPT="You write git commit messages and nothing else. Follow the commit message skill the user gives you.
 
-[ $status -eq 0 ] || die "claude failed (exit $status): ${raw:-no output}"
-[ -n "$raw" ] || die "claude returned nothing"
+Non-negotiable, even when the skill is long:
+- The scope is REQUIRED. Always write type(scope): summary, never a bare type: summary. When the change spans unrelated areas and fits no single one, use repo as the scope.
+- Output the raw message only. The first character of your output is the first character of the subject. No preamble, no code fence, no closing remark."
 
-# --- sanitise ---------------------------------------------------------------
-#
-# Draft mode already forbids all of this. The stripping is here because the
-# output goes straight into a commit, and a stray fence is cheaper to remove than
-# to notice after the fact.
+thinking_budget=0
+[ "${COMMITKIT_THINKING:-0}" = "1" ] && thinking_budget=""
 
-msg=$(printf '%s\n' "$raw" |
+generate() {
+  MAX_THINKING_TOKENS="$thinking_budget" claude -p \
+    --model "$MODEL" \
+    --tools "" \
+    --setting-sources "" \
+    --no-session-persistence \
+    --system-prompt "$SYSTEM_PROMPT" \
+    < "$prompt_file" 2>&1
+}
+
+# Draft mode already forbids a fence, a preamble and a footer. The stripping is
+# here because the output goes straight into a commit, and a stray fence is
+# cheaper to remove than to notice afterwards.
+sanitise() {
   sed -e '/^[[:space:]]*```/d' \
       -e '/^Co-authored-by:/Id' \
       -e '/^Generated with \[Claude Code\]/d' \
       -e '/^🤖/d' |
   awk 'NF {found=1} found {print}' |
-  awk '{lines[NR]=$0} END {last=NR; while (last>0 && lines[last] ~ /^[[:space:]]*$/) last--; for (i=1;i<=last;i++) print lines[i]}')
+  awk '{lines[NR]=$0} END {last=NR; while (last>0 && lines[last] ~ /^[[:space:]]*$/) last--; for (i=1;i<=last;i++) print lines[i]}'
+}
 
-[ -n "$msg" ] || die "nothing left after sanitising:"$'\n'"$raw"
-
-# --- validate ---------------------------------------------------------------
-#
 # The gate that keeps prose out of the commit panel. commitkit's draft mode says
 # "no diff, no output", but on an empty payload the model answers "No diff to
-# commit." instead of staying silent. Written to the pending file, that becomes a
-# subject line. Anything that is not `type(scope): summary` fails here, which
-# also catches refusals, apologies and preambles from a future model change.
+# commit." instead of staying silent, and that would become a subject line. The
+# scope group is mandatory here because commitkit makes it mandatory, so a bare
+# `feat: summary` is rejected too. Refusals, apologies and preambles all fail.
+#
+# The pattern lives in a variable on purpose. Written inline and unquoted, bash
+# strips the backslashes before the regex engine sees them, so `\(` becomes a
+# capture group instead of a literal paren and the test inverts: `feat(x): y`
+# fails and `feat: y` passes.
+readonly SUBJECT_RE='^[a-z]+\([a-zA-Z0-9._/-]+\)!?: .+'
+valid_subject() {
+  [[ $1 =~ $SUBJECT_RE ]]
+}
 
-subject=$(printf '%s\n' "$msg" | head -1)
-if ! [[ $subject =~ ^[a-z]+(\([a-zA-Z0-9._/-]+\))?!?:[[:space:]]+.+ ]]; then
+# One retry. Thinking is off, so a run costs under two seconds and the occasional
+# dropped scope is cheaper to re-roll than to hand back as an error.
+msg=""
+raw=""
+for attempt in 1 2; do
+  raw=$(generate)
+  status=$?
+  [ $status -eq 0 ] || die "claude failed (exit $status): ${raw:-no output}"
+  [ -n "$raw" ] || die "claude returned nothing"
+
+  msg=$(printf '%s\n' "$raw" | sanitise)
+  if [ -n "$msg" ] && valid_subject "$(printf '%s\n' "$msg" | head -1)"; then
+    break
+  fi
+  msg=""
+  [ "$attempt" = 1 ] && note "retrying, the first message had no conventional commit subject"
+done
+
+if [ -z "$msg" ]; then
   printf 'git-commitkit: the model did not return a conventional commit subject.\n' >&2
   printf '%s\n' "$raw" >&2
   exit 1
@@ -262,7 +330,22 @@ case "$mode" in
     printf '%s\n' "$msg" > "$(pending_path)"
     command -v pbcopy >/dev/null 2>&1 && printf '%s\n' "$msg" | pbcopy
     printf '%s\n' "$msg"
-    printf '\npress c in lazygit to open the panel with this message\n'
+    ;;
+  menu)
+    # Feeds lazygit's menuFromCommand prompt: `value|label` per line. The message
+    # is stored first, so every action below reads it back rather than
+    # regenerating. The message itself leads the menu as unselectable-in-practice
+    # rows, which is how the user sees what they are approving.
+    printf '%s\n' "$msg" > "$(pending_path)"
+    command -v pbcopy >/dev/null 2>&1 && printf '%s\n' "$msg" | pbcopy
+    while IFS= read -r line; do
+      printf 'review|  %s\n' "$line"
+    done <<< "$msg"
+    printf 'review| \n'
+    printf 'review|→ keep it, press c to open the commit panel\n'
+    printf 'commit|→ commit it now\n'
+    printf 'edit|→ open it in nvim\n'
+    printf 'discard|→ discard it\n'
     ;;
   commit)
     printf '%s\n' "$msg" | git commit -F - || die "git commit failed"
