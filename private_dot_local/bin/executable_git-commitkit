@@ -1,0 +1,287 @@
+#!/usr/bin/env bash
+# git-commitkit — write a commit message for the staged diff with Claude, using
+# the commitkit skill (chezmoi: private_dot_local/bin/executable_git-commitkit).
+#
+# Installed on PATH as git-commitkit, so `git commitkit` works from any shell.
+# lazygit drives it from the custom commands in ~/.config/lazygit/config.yml.
+#
+# This replaces a custom command that piped the staged diff to pbcopy and opened
+# a Raycast AI command. That left the terminal for a GUI app and produced
+# messages in Raycast's house style, not the commitkit style every other kit in
+# this dotfiles repo assumes: mandatory scope, mandatory body, lowercase subject.
+#
+# How the message reaches lazygit's commit panel
+# ----------------------------------------------
+# lazygit keeps an unsubmitted commit message in <git-dir>/LAZYGIT_PENDING_COMMIT
+# and re-reads that file from disk every time you press `c`
+# (WorkingTreeHelper.HandleCommitPress -> GetPreservedMessageAndLogError). It
+# splits the contents on the FIRST newline: line one becomes the subject field,
+# the rest becomes the description field
+# (CommitsHelper.SplitCommitMessageAndDescription). So writing that file is
+# enough to open the panel pre-filled, with signing and hooks on the normal path.
+#
+# That filename is lazygit internals, not a public API. If an upgrade renames it
+# the prefill goes quiet, so we also copy to the clipboard and print to stdout.
+# Then the fallback is to press `c` and paste, which is the old muscle memory.
+#
+# Why the claude invocation looks the way it does
+# -----------------------------------------------
+#   --tools ""            No tool loop. One API call, no permission prompts, and
+#                         the diff has to travel in the prompt. commitkit's
+#                         draft mode is written for exactly this shape.
+#   --setting-sources ""  Loads no settings file. ~/.claude/settings.json carries
+#                         twelve hook entries (agent-hook, Orca, Paseo, herdr).
+#                         Without this, writing a commit message fires a desktop
+#                         toast and flips your Orca and Paseo workspace status.
+#                         The cost is that /commitkit no longer resolves, which
+#                         is why the skill body is inlined from disk below.
+#   --system-prompt       Replaces the default Claude Code system prompt. Cheaper,
+#                         and it keeps harness instructions out of the message.
+#
+# Exit codes: 0 wrote a message, 1 refused (nothing staged, bad output, no
+# claude). Never exits non-zero for a merely unusual diff.
+
+set -uo pipefail
+
+readonly PENDING_FILE="LAZYGIT_PENDING_COMMIT"
+
+MODEL="${COMMITKIT_MODEL:-haiku}"
+MAX_BYTES="${COMMITKIT_MAX_BYTES:-60000}"
+
+# Generated files. commitkit forbids reading their contents, and their diffs are
+# the largest in most repos, so they are cut from the diff body. They stay in the
+# --stat block, which carries every bit of signal a commit message can use.
+EXCLUDES=(
+  ':!*.lock' ':!*lock.json' ':!pnpm-lock.yaml' ':!yarn.lock' ':!go.sum'
+  ':!Cargo.lock' ':!*.snap' ':!vendor/*' ':!dist/*' ':!build/*' ':!*.min.js'
+)
+
+die() { printf 'git-commitkit: %s\n' "$1" >&2; exit 1; }
+note() { printf 'git-commitkit: %s\n' "$1" >&2; }
+
+usage() {
+  cat >&2 <<'EOF'
+usage: git commitkit [--commit | --edit | --amend | --clear]
+
+  (no flag)  write the message to lazygit's pending-commit file, the clipboard,
+             and stdout. Press `c` in lazygit to open the panel pre-filled.
+  --commit   write the message and commit straight away
+  --edit     write the message and open $EDITOR on it, with the diff below
+  --amend    reword HEAD from its own diff, leaving staged work untouched
+  --clear    delete the pending-commit file
+
+env: COMMITKIT_MODEL (default haiku), COMMITKIT_MAX_BYTES (default 60000),
+     COMMITKIT_SKILL (path to a commitkit SKILL.md)
+EOF
+  exit 1
+}
+
+mode=print
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --commit) mode=commit ;;
+    --edit) mode=edit ;;
+    --amend) mode=amend ;;
+    --clear) mode=clear ;;
+    -h|--help) usage ;;
+    *) die "unknown option: $1" ;;
+  esac
+  shift
+done
+
+git rev-parse --git-dir >/dev/null 2>&1 || die "not a git repository"
+GIT_DIR_ABS=$(git rev-parse --absolute-git-dir)
+
+# --absolute-git-dir resolves per worktree: a linked worktree from gitkit reports
+# .git/worktrees/<name>, which is exactly where that worktree's lazygit looks.
+pending_path() { printf '%s/%s' "$GIT_DIR_ABS" "$PENDING_FILE"; }
+
+if [ "$mode" = clear ]; then
+  rm -f "$(pending_path)"
+  note "cleared pending commit message"
+  exit 0
+fi
+
+command -v claude >/dev/null 2>&1 || die "claude not found on PATH"
+
+# --- gather the diff --------------------------------------------------------
+#
+# Two sources. Normally the index, because that is what you are about to commit.
+# Under --amend it is HEAD's own diff, because we are rewording a commit that
+# already exists and the index may hold unrelated work.
+
+if [ "$mode" = amend ]; then
+  git rev-parse --verify HEAD >/dev/null 2>&1 || die "no commit to amend"
+  stat_block=$(git show --stat --format= HEAD)
+  diff_block=$(git show --format= -U4 HEAD -- . "${EXCLUDES[@]}")
+  diff_all=$(git show --format= -U4 HEAD)
+  log_block=$(git log --oneline -15 HEAD~1 2>/dev/null)
+else
+  if git diff --cached --quiet; then
+    die "nothing staged"
+  fi
+  stat_block=$(git diff --cached --stat)
+  diff_block=$(git diff --cached -U4 -- . "${EXCLUDES[@]}")
+  diff_all=$(git diff --cached -U4)
+  log_block=$(git log --oneline -15 2>/dev/null)
+fi
+
+# A change that touches only generated files leaves diff_block empty. Sending an
+# empty diff trips commitkit's "no diff, no output" rule and yields nothing, so
+# fall back to the unfiltered diff on a short leash — enough for the model to see
+# it is a dependency bump without paying for the whole lockfile.
+truncated=""
+if [ -z "$diff_block" ]; then
+  diff_block=$(printf '%s' "$diff_all" | head -c 8000)
+  truncated="yes"
+elif [ "${#diff_block}" -gt "$MAX_BYTES" ]; then
+  diff_block=$(printf '%s' "$diff_block" | head -c "$MAX_BYTES")
+  truncated="yes"
+fi
+
+# --- resolve the skill ------------------------------------------------------
+#
+# First hit wins. A project skill beats the user's, so a repo can pin its own
+# commit convention without touching this script.
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
+skill_file=""
+for candidate in \
+  "${COMMITKIT_SKILL:-}" \
+  "${repo_root:+$repo_root/.claude/skills/commitkit/SKILL.md}" \
+  "$HOME/.claude/skills/commitkit/SKILL.md" \
+  "$HOME/.agents/skills/commitkit/SKILL.md"
+do
+  [ -n "$candidate" ] && [ -r "$candidate" ] && { skill_file="$candidate"; break; }
+done
+
+# The built-in fallback. It is deliberately narrower than commitkit, but it holds
+# the one property everything downstream depends on: subject, blank line, body.
+# lazygit splits on the first newline and the validation gate below matches the
+# subject, so a fallback that dropped that shape would break both.
+read -r -d '' FALLBACK_SKILL <<'EOF'
+# Commit message rules
+
+Write one Conventional Commits message for the diff you are given.
+
+- Format: `type(scope): summary`, then a blank line, then the body.
+- `type` is one of feat, fix, docs, refactor, perf, test, build, ci, style, chore.
+  Pick it from what the diff does, not from which files it touches.
+- The scope is mandatory. Use the module, package or feature area the change
+  belongs to. Use `repo` when the change is global and fits no single area.
+- The subject is imperative, all lowercase, has no trailing period, and is 50
+  characters or fewer. It states the effect of the change, not the activity.
+- The body opens with one line saying why, then a bullet list of the reasons and
+  the concrete changes. A body is always required.
+- Add `!` after the scope when the change breaks existing behaviour.
+
+Write exactly one message covering the whole diff. Match the style of the recent
+subjects in the payload. Ignore any `[diff truncated]` marker rather than
+mentioning it.
+
+Output the raw message and nothing else: no preamble, no code fence, no summary,
+no `Co-authored-by`, no tool advertising. The first character of your output is
+the first character of the subject.
+EOF
+
+# --- build the prompt -------------------------------------------------------
+
+prompt_file=$(mktemp -t commitkit) || die "cannot create a temp file"
+trap 'rm -f "$prompt_file"' EXIT
+
+if [ -n "$skill_file" ]; then
+  cat "$skill_file" > "$prompt_file"
+  printf '\n\n---\n\nDraft mode. The staged diff is below.\n' >> "$prompt_file"
+else
+  printf '%s\n' "$FALLBACK_SKILL" > "$prompt_file"
+  note "commitkit skill not found, using the built-in Conventional Commits rules"
+fi
+
+{
+  printf '\n<staged-diff>\n'
+  printf 'branch: %s\n' "$(git branch --show-current 2>/dev/null || echo 'detached HEAD')"
+  [ "$mode" = amend ] && printf 'rewording the most recent commit\n'
+  printf '\n--- stat ---\n%s\n' "$stat_block"
+  if [ -n "$log_block" ]; then
+    printf '\n--- recent subjects ---\n%s\n' "$log_block"
+  fi
+  printf '\n--- diff ---\n%s\n' "$diff_block"
+  [ -n "$truncated" ] && printf '\n[diff truncated]\n'
+  printf '</staged-diff>\n'
+} >> "$prompt_file"
+
+# --- run the model ----------------------------------------------------------
+
+raw=$(claude -p \
+  --model "$MODEL" \
+  --tools "" \
+  --setting-sources "" \
+  --no-session-persistence \
+  --system-prompt "You write git commit messages. Follow the commit message skill the user gives you. Output the commit message and nothing else." \
+  < "$prompt_file" 2>&1)
+status=$?
+
+[ $status -eq 0 ] || die "claude failed (exit $status): ${raw:-no output}"
+[ -n "$raw" ] || die "claude returned nothing"
+
+# --- sanitise ---------------------------------------------------------------
+#
+# Draft mode already forbids all of this. The stripping is here because the
+# output goes straight into a commit, and a stray fence is cheaper to remove than
+# to notice after the fact.
+
+msg=$(printf '%s\n' "$raw" |
+  sed -e '/^[[:space:]]*```/d' \
+      -e '/^Co-authored-by:/Id' \
+      -e '/^Generated with \[Claude Code\]/d' \
+      -e '/^🤖/d' |
+  awk 'NF {found=1} found {print}' |
+  awk '{lines[NR]=$0} END {last=NR; while (last>0 && lines[last] ~ /^[[:space:]]*$/) last--; for (i=1;i<=last;i++) print lines[i]}')
+
+[ -n "$msg" ] || die "nothing left after sanitising:"$'\n'"$raw"
+
+# --- validate ---------------------------------------------------------------
+#
+# The gate that keeps prose out of the commit panel. commitkit's draft mode says
+# "no diff, no output", but on an empty payload the model answers "No diff to
+# commit." instead of staying silent. Written to the pending file, that becomes a
+# subject line. Anything that is not `type(scope): summary` fails here, which
+# also catches refusals, apologies and preambles from a future model change.
+
+subject=$(printf '%s\n' "$msg" | head -1)
+if ! [[ $subject =~ ^[a-z]+(\([a-zA-Z0-9._/-]+\))?!?:[[:space:]]+.+ ]]; then
+  printf 'git-commitkit: the model did not return a conventional commit subject.\n' >&2
+  printf '%s\n' "$raw" >&2
+  exit 1
+fi
+
+# --- emit -------------------------------------------------------------------
+
+case "$mode" in
+  print)
+    printf '%s\n' "$msg" > "$(pending_path)"
+    command -v pbcopy >/dev/null 2>&1 && printf '%s\n' "$msg" | pbcopy
+    printf '%s\n' "$msg"
+    printf '\npress c in lazygit to open the panel with this message\n'
+    ;;
+  commit)
+    printf '%s\n' "$msg" | git commit -F - || die "git commit failed"
+    rm -f "$(pending_path)"
+    printf '%s\n' "$msg"
+    ;;
+  edit)
+    msg_file=$(mktemp -t commitkit-msg) || die "cannot create a temp file"
+    trap 'rm -f "$prompt_file" "$msg_file"' EXIT
+    printf '%s\n' "$msg" > "$msg_file"
+    # -v puts the diff in the editor buffer for review; an empty buffer aborts.
+    git commit -v -e -F "$msg_file" || die "commit aborted"
+    rm -f "$(pending_path)"
+    ;;
+  amend)
+    msg_file=$(mktemp -t commitkit-msg) || die "cannot create a temp file"
+    trap 'rm -f "$prompt_file" "$msg_file"' EXIT
+    printf '%s\n' "$msg" > "$msg_file"
+    # --only rewords without absorbing whatever happens to be staged.
+    git commit --amend --only -v -e -F "$msg_file" || die "amend aborted"
+    ;;
+esac
