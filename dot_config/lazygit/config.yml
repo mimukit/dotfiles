@@ -32,9 +32,10 @@ os:
   # Matches EDITOR=nvim in .zshrc, and teaches lazygit the line-number flags.
   editPreset: nvim
 
-# The `E` and `M` commands below hand the terminal to nvim. Without this, each
-# one ends on a "press enter to return to lazygit" step.
-promptToReturnFromSubprocess: false
+# Left on. Every commitkit command below except `G` runs as a subprocess, and
+# this is what makes each one print what it did and wait. Turned off, a discard
+# and a failed signed commit both look identical to nothing happening.
+promptToReturnFromSubprocess: true
 
 customCommands:
   # Every entry calls ~/.local/bin/git-commitkit (chezmoi:
@@ -47,40 +48,39 @@ customCommands:
   # The full path is deliberate. lazygit started from a GUI pane does not always
   # inherit the PATH that .zshrc builds.
 
-  # Shift+G writes the message first, then asks what to do with it. The menu is
-  # the only modal in the flow and it appears once the work is done, so it shows
-  # the actual message instead of asking you to choose blind.
+  # Shift+G writes the message and stops. `output: none` plus `loadingText` is
+  # the only shape lazygit gives a spinner to: handler_creator.go wraps the final
+  # command in WithWaitingStatus, while a prompt's command runs bare. An earlier
+  # version put a menu on this key through a menuFromCommand prompt, which meant
+  # the generation happened inside the prompt and froze for two seconds with no
+  # indicator, so the menu is gone and the actions have their own keys.
   #
-  # The mechanism is a `menuFromCommand` prompt. lazygit runs the prompt's
-  # command, parses each output line into a menu entry, and only then runs the
-  # custom command with the chosen value in {{.Form.action}}. --menu stores the
-  # message before it prints, so every branch below reuses that one generation
-  # rather than paying for a second call and returning a different message.
-  #
-  # `output: terminal` is set because the edit branch hands the terminal to nvim.
-  # The other branches finish instantly, and promptToReturnFromSubprocess above
-  # keeps them from stopping on a "press enter" step.
+  # Press c straight after and lazygit's commit panel opens already filled in.
   - key: "G"
     context: "files"
     description: "Write a commit message (commitkit)"
-    prompts:
-      - type: menuFromCommand
-        title: "commitkit"
-        # A prompt's command is fork/exec'd, not run through a shell, so an
-        # unwrapped "$HOME/..." arrives as a literal path and fails to open.
-        # The custom command's own `command` below does go through a shell.
-        command: 'sh -c ''exec "$HOME/.local/bin/git-commitkit" --menu'''
-        filter: '(?P<action>[^|]*)\|(?P<label>.*)'
-        valueFormat: '{{.action}}'
-        labelFormat: '{{.label}}'
-        key: "action"
-    command: >-
-      case "{{.Form.action}}" in
-        commit) "$HOME/.local/bin/git-commitkit" --commit-pending ;;
-        edit) "$HOME/.local/bin/git-commitkit" --edit-pending ;;
-        discard) "$HOME/.local/bin/git-commitkit" --clear ;;
-        *) : ;;
-      esac
+    command: '"$HOME/.local/bin/git-commitkit"'
+    loadingText: "Writing commit message"
+    output: none
+
+  # The acting keys take the free shifted slots, since lazygit owns c, e and x in
+  # the files panel. They run as subprocesses so their output is readable.
+  - key: "<c-g>"
+    context: "files"
+    description: "Write a commit message and commit it (commitkit)"
+    command: '"$HOME/.local/bin/git-commitkit" --commit'
+    output: terminal
+
+  - key: "E"
+    context: "files"
+    description: "Write a commit message and open it in nvim (commitkit)"
+    command: '"$HOME/.local/bin/git-commitkit" --edit'
+    output: terminal
+
+  - key: "X"
+    context: "files"
+    description: "Discard the pending commit message (commitkit)"
+    command: '"$HOME/.local/bin/git-commitkit" --clear'
     output: terminal
 
   # Reword lives on M, not G. lazygit binds G in the commits panel to
