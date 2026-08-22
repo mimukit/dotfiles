@@ -14,8 +14,11 @@
 #
 # Scope — this owns OUR hooks only, three events:
 #   PreToolUse     rm-guard delete check
-#   Notification   desktop toast
+#   Notification   desktop toast, reason taken from the settings matcher
 #   Stop           desktop toast + worktree port cleanup
+#
+# A toast names the repo and branch, carries a reason, and focuses the pane that
+# sent it when you click it. See the notification helpers below feat_notify.
 #
 # Vendor hooks are deliberately NOT routed through here. Orca and herdr install
 # and maintain their own entries alongside ours, and both are careful about it:
@@ -26,7 +29,9 @@
 #
 # Design rules (all four are load-bearing — see the notes at each site)
 #   1. Only feat_rm_guard writes to stdout. Anything else leaking bytes would
-#      corrupt the permission decision the agent parses.
+#      corrupt the permission decision the agent parses. The notify_* helpers
+#      print their result, but every call site wraps them in $(...), so those
+#      bytes never reach the real stdout.
 #   2. rm-guard fails CLOSED; every other feature fails open and never breaks a
 #      turn. Hence no `set -e` — one dead feature must not abort the dispatcher.
 #   3. stdin is drained exactly once into $payload, then piped to each consumer.
@@ -79,7 +84,7 @@ feat_rm_guard() {
 }
 
 feat_notify() {
-  local message="$1" title var
+  local body="$1" title subtitle group focus var
   for var in $NOTIFY_SUPPRESS_VARS; do
     eval "[ -n \"\${$var:-}\" ]" && return 0
   done
@@ -88,7 +93,137 @@ feat_notify() {
     codex) title="Codex" ;;
     *) title="Claude Code" ;;
   esac
-  terminal-notifier -title "$title" -message "$message" >/dev/null 2>&1
+
+  subtitle=$(notify_subtitle)
+
+  # One live banner per session. terminal-notifier removes an older toast that
+  # carries the same group, so a Stop replaces the Notification it follows
+  # instead of stacking a second row in Notification Center.
+  group=$(payload_get '.session_id // ""')
+  [ -n "$group" ] || group="$PROJECT_DIR"
+
+  # Omit -execute entirely when nothing identifies the session. An empty string
+  # would still register a click handler that runs nothing.
+  focus=$(notify_focus_cmd)
+  if [ -n "$focus" ]; then
+    terminal-notifier -title "$title" -subtitle "$subtitle" -message "$body" \
+      -group "$group" -execute "$focus" >/dev/null 2>&1
+  else
+    terminal-notifier -title "$title" -subtitle "$subtitle" -message "$body" \
+      -group "$group" >/dev/null 2>&1
+  fi
+  return 0
+}
+
+# --- notification helpers ---------------------------------------------------
+#
+# Each helper prints its result and every call site wraps it in $(...), which is
+# what keeps design rule 1 true.
+
+# "chezmoi · main", or the directory name alone outside a git checkout.
+notify_subtitle() {
+  local repo branch
+  repo=$(basename "$PROJECT_DIR")
+  branch=$(git -C "$PROJECT_DIR" symbolic-ref --short HEAD 2>/dev/null)
+  printf '%s%s' "$repo" "${branch:+ · $branch}"
+}
+
+# Claude names the notification type in the settings matcher, and each entry
+# passes that name as $3. Codex hook entries take no matcher, so $REASON is
+# empty there and every Codex toast falls through to the generic text.
+notify_reason() {
+  case "$REASON" in
+    permission_prompt) printf 'Needs permission' ;;
+    idle_prompt) printf 'Waiting for you' ;;
+    agent_needs_input) printf 'Needs input' ;;
+    agent_completed) printf 'Agent finished' ;;
+    *) printf 'Awaiting your input' ;;
+  esac
+}
+
+# The agent's closing line, flattened to one line and cut to 80 characters.
+# Claude documents last_assistant_message as the cheap alternative to reading
+# transcript_path, which would mean parsing JSONL inside a 10s hook.
+notify_stop_body() {
+  local msg
+  msg=$(payload_get '.last_assistant_message // ""' |
+    tr '\n\t' '  ' | sed 's/  */ /g; s/^ //; s/ $//')
+  [ -n "$msg" ] || {
+    printf 'Task completed'
+    return 0
+  }
+  if [ "${#msg}" -gt 80 ]; then
+    printf '%.77s...' "$msg"
+  else
+    printf '%s' "$msg"
+  fi
+}
+
+# The macOS application to raise on click. TERM_PROGRAM names the terminal that
+# started the agent, and a hook inherits the agent's environment.
+notify_terminal_app() {
+  case "${TERM_PROGRAM:-}" in
+    ghostty | Ghostty) printf 'Ghostty' ;;
+    WezTerm) printf 'WezTerm' ;;
+    Apple_Terminal) printf 'Terminal' ;;
+    vscode) printf 'Code' ;;
+    *) printf 'iTerm' ;;
+  esac
+}
+
+# Prints the shell command terminal-notifier runs when you click the banner, or
+# nothing when the session gives no way back. terminal-notifier registers the
+# command and exits, so this costs the hook no wall time.
+notify_focus_cmd() {
+  local app sess win pane uuid line out
+  app=$(notify_terminal_app)
+
+  # tmux wins. $TMUX_PANE names the pane that started the agent, so the click
+  # lands on that pane even when the client currently shows another session.
+  if [ -n "${TMUX:-}" ] && [ -n "${TMUX_PANE:-}" ] &&
+    command -v tmux >/dev/null 2>&1; then
+    sess=$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}' 2>/dev/null)
+    win=$(tmux display-message -p -t "$TMUX_PANE" '#{window_index}' 2>/dev/null)
+    pane=$(tmux display-message -p -t "$TMUX_PANE" '#{pane_index}' 2>/dev/null)
+    if [ -n "$sess" ] && [ -n "$win" ] && [ -n "$pane" ]; then
+      # %q quotes each target, so a session name with a space survives the trip
+      # through terminal-notifier's shell. The \\; reaches tmux as a literal ;
+      # which is how tmux chains commands in one invocation.
+      printf 'tmux switch-client -t %q \\; select-window -t %q \\; select-pane -t %q; open -a %q' \
+        "$sess" "$sess:$win" "$sess:$win.$pane" "$app"
+      return 0
+    fi
+  fi
+
+  # Bare iTerm2. ITERM_SESSION_ID reads "w0t1p0:UUID" and iTerm2's AppleScript
+  # `id` property is the UUID half.
+  if [ -n "${ITERM_SESSION_ID:-}" ]; then
+    uuid=${ITERM_SESSION_ID#*:}
+    out=""
+    for line in \
+      'tell application "iTerm2"' \
+      'activate' \
+      'repeat with w in windows' \
+      'repeat with t in tabs of w' \
+      'repeat with s in sessions of t' \
+      "if id of s is \"$uuid\" then" \
+      'select w' \
+      'select t' \
+      'select s' \
+      'end if' \
+      'end repeat' \
+      'end repeat' \
+      'end repeat' \
+      'end tell'; do
+      out="$out -e $(printf '%q' "$line")"
+    done
+    printf 'osascript%s' "$out"
+    return 0
+  fi
+
+  # Nothing identifies the session, so raise the terminal and stop there. An
+  # unknown TERM_PROGRAM means we cannot even name an app, so print nothing.
+  [ -n "${TERM_PROGRAM:-}" ] && printf 'open -a %q' "$app"
   return 0
 }
 
@@ -112,10 +247,14 @@ usage() {
   cat <<'EOF'
 agent-hook — central hook dispatcher for Claude Code and Codex CLI
 
-  agent-hook <claude|codex> <Event>   dispatch a hook (payload JSON on stdin)
+  agent-hook <claude|codex> <Event> [reason]
+                                      dispatch a hook (payload JSON on stdin)
   agent-hook --help                   this message
 
 Handled events: PreToolUse, Notification, Stop.
+[reason] repeats the settings matcher on a Notification entry, one of
+permission_prompt, idle_prompt, agent_needs_input or agent_completed. Any other
+value, and any missing value, uses the generic text.
 Orca and herdr manage their own hook entries separately — by design.
 EOF
 }
@@ -131,6 +270,9 @@ esac
 
 AGENT="$1"
 EVENT="${2:-}"
+# Claude's Notification entries each carry one matcher and repeat its value
+# here. Every other event and every Codex entry leaves this empty.
+REASON="${3:-}"
 
 HAVE_JQ=""
 command -v jq >/dev/null 2>&1 && HAVE_JQ=1
@@ -147,10 +289,10 @@ case "$EVENT" in
     feat_rm_guard
     ;;
   Notification)
-    feat_notify "Awaiting your input"
+    feat_notify "$(notify_reason)"
     ;;
   Stop)
-    feat_notify "Task completed"
+    feat_notify "$(notify_stop_body)"
     feat_port_cleanup
     ;;
 esac

@@ -54,6 +54,47 @@
   "hooks": {
     "Notification": [
       {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.local/bin/agent-hook\" claude Notification permission_prompt",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.local/bin/agent-hook\" claude Notification idle_prompt",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "agent_needs_input",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.local/bin/agent-hook\" claude Notification agent_needs_input",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "agent_completed",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.local/bin/agent-hook\" claude Notification agent_completed",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "auth_success|elicitation_dialog|elicitation_url_dialog|elicitation_complete|elicitation_response",
         "hooks": [
           {
             "type": "command",
