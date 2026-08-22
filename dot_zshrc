@@ -212,7 +212,7 @@ alias upz='zellij --layout upx attach --create system-updates'
 alias uva='source .venv/bin/activate'
 alias v='nvim'
 alias lv="NVIM_APPNAME=lazyvim nvim"
-alias vconf='cd "$(chezmoi source-path ~/.config/nvim)" && nvim && cd - && chezmoi apply'
+alias vconf='cd "$(chezmoi source-path ~/.config/nvim)" && nvim && cd -'
 alias vim='nvim'
 alias wr='wrangler'
 alias x='exit'
