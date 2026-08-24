@@ -3,6 +3,7 @@ name: paseokit
 description: >-
   Push the git worktrees your workflow actually creates into Paseo's workspace registry, and reap the rows whose directories are gone, because Paseo discovers nothing on its own and prunes nothing on its own. Use when the user says "paseokit", "sync my worktrees to paseo", "my paseo sidebar is missing worktrees", "paseo doesn't show my worktree", "clean up my paseo workspaces", "my paseo sidebar is full of dead entries", or "where should paseo put new worktrees".
 license: MIT
+disable-model-invocation: true
 allowed-tools: Bash, Read, Skill
 metadata:
   internal: false

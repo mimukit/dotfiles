@@ -1,7 +1,7 @@
 ---
 name: afkkit
 description: >-
-  Run a groomed `ready` GitHub issue through the whole build span unattended, covering worktree, implement, commit, review, fix, QA plan, and open PR, so one issue reaches a reviewable PR with no human at the keyboard. Use when the user says "afkkit", "run issue #N unattended", "work the ready issues while I'm away", "autopilot this issue", "take this issue to a PR without me", or wants the middle of the kit workflow driven end to end on its own.
+  Run a groomed `ready` GitHub issue through the whole build span unattended, covering worktree, implement, commit, review, fix, QA plan, and open PR, so one issue reaches a reviewable PR with no human at the keyboard. Use when the user says "run issue #N unattended" or "work the ready issues while I'm away". It starts from a groomed issue; planning and grooming stay attended.
 license: MIT
 allowed-tools: Bash, Read, Task, Agent, Skill
 metadata:

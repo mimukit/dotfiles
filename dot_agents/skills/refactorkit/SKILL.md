@@ -1,7 +1,7 @@
 ---
 name: refactorkit
 description: >-
-  Survey an existing codebase for the structural change worth making, whether shallow interfaces, adapter sprawl, poor locality, or untested coupling, then rank the candidates, crown one, and write it up as a reviewable proposal. Use when the user says "where should I refactor", "what's wrong with this codebase's structure", "find refactoring opportunities", "this code is hard to change", "improve our architecture", "audit the module boundaries", or "/refactorkit". It proposes and never edits code.
+  Survey an existing codebase for the structural change worth making, then rank the candidates, crown one, and write it up as a reviewable proposal. Use when the user says "where should I refactor", "this code is hard to change", or "audit the module boundaries". It proposes and never edits code.
 license: MIT
 allowed-tools: Bash, Read, Grep, Glob, Write, Task, Agent
 metadata:

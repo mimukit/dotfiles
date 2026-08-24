@@ -1,7 +1,7 @@
 ---
 name: mergekit
 description: >-
-  Take an open GitHub PR and make it merge-ready on your machine, with a worktree, a base-branch sync, the project running, and a review pack of everything you need to judge it, then merge it once you say so, or service review feedback on a PR you authored. Use when you review the PRs an agent opened overnight, say "pull PR #34 down so I can test it", "check out this PR for QA", "get this PR merge-ready", "merge PR #34", "address the review comments on my PR", "my PR is red, fix the CI", or run "/mergekit".
+  Take an open GitHub PR and make it merge-ready on your machine (worktree, base-branch sync, project running, review pack), then merge it once you say so, or service review feedback on a PR you authored. Use when you say "pull PR #34 down so I can test it", "merge PR #34", "address the review comments on my PR", or "my PR is red, fix the CI".
 license: MIT
 allowed-tools: Bash, Read, Write, Skill
 metadata:

@@ -17,7 +17,7 @@
       "skillPath": "skills/commitkit/SKILL.md",
       "skillFolderHash": "72a7fa18c0b11ec02157bc35bf524ecffd58eaff",
       "installedAt": "2026-07-12T07:54:50.328Z",
-      "updatedAt": "2026-08-22T09:29:12.632Z"
+      "updatedAt": "2026-08-24T11:55:24.050Z"
     },
     "humankit": {
       "source": "mimukit/skills",
@@ -26,7 +26,7 @@
       "skillPath": "skills/humankit/SKILL.md",
       "skillFolderHash": "11f89d025e318e343af453a6ccfc7f2dc794d777",
       "installedAt": "2026-07-12T07:54:50.330Z",
-      "updatedAt": "2026-08-22T09:29:12.637Z"
+      "updatedAt": "2026-08-24T11:55:24.054Z"
     },
     "prkit": {
       "source": "mimukit/skills",
@@ -35,7 +35,7 @@
       "skillPath": "skills/prkit/SKILL.md",
       "skillFolderHash": "eb2fc31c2cfa635c7cdfd40d80ec1ddb370af07e",
       "installedAt": "2026-07-12T07:54:50.331Z",
-      "updatedAt": "2026-08-22T09:29:12.642Z"
+      "updatedAt": "2026-08-24T11:55:24.058Z"
     },
     "qakit": {
       "source": "mimukit/skills",
@@ -44,7 +44,7 @@
       "skillPath": "skills/qakit/SKILL.md",
       "skillFolderHash": "c5f449b9484b0385198db621f1de5f44657740ab",
       "installedAt": "2026-07-12T12:37:16.350Z",
-      "updatedAt": "2026-08-22T09:29:12.643Z"
+      "updatedAt": "2026-08-24T11:55:24.060Z"
     },
     "grillkit": {
       "source": "mimukit/skills",
@@ -53,7 +53,7 @@
       "skillPath": "skills/grillkit/SKILL.md",
       "skillFolderHash": "a8fee999e98c1b2bb7d86008cc6d073c3a98457a",
       "installedAt": "2026-07-13T06:59:02.760Z",
-      "updatedAt": "2026-08-22T09:29:12.636Z"
+      "updatedAt": "2026-08-24T11:55:24.053Z"
     },
     "handoffkit": {
       "source": "mimukit/skills",
@@ -62,61 +62,61 @@
       "skillPath": "skills/handoffkit/SKILL.md",
       "skillFolderHash": "cec4a682df844c12f52d0665bfe17605310c7fdc",
       "installedAt": "2026-07-13T07:42:45.053Z",
-      "updatedAt": "2026-08-22T09:29:12.636Z"
+      "updatedAt": "2026-08-24T11:55:24.054Z"
     },
     "issuekit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/issuekit/SKILL.md",
-      "skillFolderHash": "c697ada5e43523f7598269c2ab753ffab3a377bc",
+      "skillFolderHash": "d56e27eea128563dedde4a9ee6245a8a2159a469",
       "installedAt": "2026-07-21T14:04:01.631Z",
-      "updatedAt": "2026-08-22T09:29:12.639Z"
+      "updatedAt": "2026-08-24T11:55:24.056Z"
     },
     "repokit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/repokit/SKILL.md",
-      "skillFolderHash": "896df83af9d49f0dca8f7e577b9b8d7afbcd30f8",
+      "skillFolderHash": "0b426d27bbf5eb522912db09ffd735b6e56d259c",
       "installedAt": "2026-07-21T14:04:01.632Z",
-      "updatedAt": "2026-08-22T09:29:12.645Z"
+      "updatedAt": "2026-08-24T11:55:24.061Z"
     },
     "implementkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/implementkit/SKILL.md",
-      "skillFolderHash": "0801da6a434fcd5fed4b35a445c0f301291b8800",
+      "skillFolderHash": "543eb2163d10cef0783824b9864d835ad45ff957",
       "installedAt": "2026-07-21T16:56:49.553Z",
-      "updatedAt": "2026-08-22T09:29:12.638Z"
+      "updatedAt": "2026-08-24T11:55:24.055Z"
     },
     "plankit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/plankit/SKILL.md",
-      "skillFolderHash": "9f1da6e1c02300bfd1906813f21d6cc7a52c2a4c",
+      "skillFolderHash": "01a7f14a8c4d1017ed1caa8142732e73ec3f764a",
       "installedAt": "2026-07-21T16:56:49.554Z",
-      "updatedAt": "2026-08-22T09:29:12.641Z"
+      "updatedAt": "2026-08-24T11:55:24.058Z"
     },
     "orcakit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/orcakit/SKILL.md",
-      "skillFolderHash": "5d6ad8e417c3d775484e81156a921d31ea2a425e",
+      "skillFolderHash": "09bd58cfab89d76df251a8a3bce1a9c07c8748ea",
       "installedAt": "2026-07-21T21:07:41.889Z",
-      "updatedAt": "2026-08-22T09:29:12.640Z"
+      "updatedAt": "2026-08-24T11:55:24.057Z"
     },
     "reviewkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/reviewkit/SKILL.md",
-      "skillFolderHash": "6d0098a6ac198bfbb6874001b527bd00cea350ee",
+      "skillFolderHash": "98e3e8e8008040cd9b0a769553f06f0e3f395e66",
       "installedAt": "2026-07-21T21:07:41.893Z",
-      "updatedAt": "2026-08-22T09:29:12.645Z"
+      "updatedAt": "2026-08-24T11:55:24.062Z"
     },
     "verifykit": {
       "source": "mimukit/skills",
@@ -125,7 +125,7 @@
       "skillPath": "skills/verifykit/SKILL.md",
       "skillFolderHash": "e0b72ede20cebe14bea84646d2bbbaa7273d7a9f",
       "installedAt": "2026-07-22T06:52:46.677Z",
-      "updatedAt": "2026-08-22T09:29:12.648Z"
+      "updatedAt": "2026-08-24T11:55:24.065Z"
     },
     "researchkit": {
       "source": "mimukit/skills",
@@ -134,52 +134,52 @@
       "skillPath": "skills/researchkit/SKILL.md",
       "skillFolderHash": "802cc27fa911a34db53a661bd36cdf6c72c20631",
       "installedAt": "2026-07-22T08:06:47.096Z",
-      "updatedAt": "2026-08-22T09:29:12.645Z"
+      "updatedAt": "2026-08-24T11:55:24.062Z"
     },
     "skillkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/skillkit/SKILL.md",
-      "skillFolderHash": "8b90c85b1c3101f7377423b7f17793b7c16e2068",
+      "skillFolderHash": "b297a65fd264a997b9d11a474bdbdaad4679186b",
       "installedAt": "2026-07-22T08:06:47.098Z",
-      "updatedAt": "2026-08-22T09:29:12.646Z"
+      "updatedAt": "2026-08-24T11:55:24.062Z"
     },
     "domainkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/domainkit/SKILL.md",
-      "skillFolderHash": "49bf462a8fa0e34fb48d2adec2be65037779e863",
+      "skillFolderHash": "d2ccbf5df9fabcff7ca9481118c1fa485cc7c1fb",
       "installedAt": "2026-07-22T09:29:46.121Z",
-      "updatedAt": "2026-08-22T09:29:12.634Z"
+      "updatedAt": "2026-08-24T11:55:24.052Z"
     },
     "statuskit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/statuskit/SKILL.md",
-      "skillFolderHash": "8f0fc12b05a4d2581e1e47e16a0d8428d6cdd704",
+      "skillFolderHash": "ec77f704f39b4bd0c2f0465493947b36ad06e1c4",
       "installedAt": "2026-07-23T06:48:41.413Z",
-      "updatedAt": "2026-08-22T09:29:12.646Z"
+      "updatedAt": "2026-08-24T11:55:24.063Z"
     },
     "afkkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/afkkit/SKILL.md",
-      "skillFolderHash": "83dfaf4d0a31733baf2ebfb4d4329b85a43ecc39",
+      "skillFolderHash": "ccf5429f20dccbf329d651d74027bbd1e7c4964f",
       "installedAt": "2026-07-24T15:41:33.523Z",
-      "updatedAt": "2026-08-22T09:29:12.621Z"
+      "updatedAt": "2026-08-24T11:55:24.040Z"
     },
     "validatekit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/validatekit/SKILL.md",
-      "skillFolderHash": "e40a70b8efe00f38da365459c95e7ce188f67cce",
+      "skillFolderHash": "963883fc48e01d0f13a1246a1e1c4be5279c0a5c",
       "installedAt": "2026-07-31T11:06:27.275Z",
-      "updatedAt": "2026-08-22T09:29:12.648Z"
+      "updatedAt": "2026-08-24T11:55:24.064Z"
     },
     "gitkit": {
       "source": "mimukit/skills",
@@ -188,25 +188,25 @@
       "skillPath": "skills/gitkit/SKILL.md",
       "skillFolderHash": "4ec8dc2c3ff921012b5a8a081cb593dd4ae41beb",
       "installedAt": "2026-08-01T19:51:05.378Z",
-      "updatedAt": "2026-08-22T09:29:12.635Z"
+      "updatedAt": "2026-08-24T11:55:24.052Z"
     },
     "mergekit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/mergekit/SKILL.md",
-      "skillFolderHash": "2972313c2cabd3b5bf4eecde0b22b48c4287c2b5",
+      "skillFolderHash": "2e9d3752ff4778afd9a88f87bc9c6eb240187f84",
       "installedAt": "2026-08-01T19:51:05.382Z",
-      "updatedAt": "2026-08-22T09:29:12.639Z"
+      "updatedAt": "2026-08-24T11:55:24.056Z"
     },
     "wikikit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/wikikit/SKILL.md",
-      "skillFolderHash": "bbc0f9182d428da0a3660ec9dc6358348f1c1511",
+      "skillFolderHash": "5449e29c7c522d8efc79b87a0fee8358837214d2",
       "installedAt": "2026-08-06T06:56:44.017Z",
-      "updatedAt": "2026-08-22T09:29:12.649Z"
+      "updatedAt": "2026-08-24T11:55:24.066Z"
     },
     "designkit": {
       "source": "mimukit/skills",
@@ -215,7 +215,7 @@
       "skillPath": "skills/designkit/SKILL.md",
       "skillFolderHash": "d89426cbf6443cc45f800767175099a5fe3a53af",
       "installedAt": "2026-08-06T18:08:04.941Z",
-      "updatedAt": "2026-08-22T09:29:12.634Z"
+      "updatedAt": "2026-08-24T11:55:24.051Z"
     },
     "uikit": {
       "source": "mimukit/skills",
@@ -224,34 +224,34 @@
       "skillPath": "skills/uikit/SKILL.md",
       "skillFolderHash": "f3ca7a70d9d163753aaa7bdf0a31e78ef8c15058",
       "installedAt": "2026-08-06T18:08:04.951Z",
-      "updatedAt": "2026-08-22T09:29:12.648Z"
+      "updatedAt": "2026-08-24T11:55:24.064Z"
     },
     "prototypekit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/prototypekit/SKILL.md",
-      "skillFolderHash": "f727709640cf6ca6469a4ea1d78402270c4fce8a",
+      "skillFolderHash": "170c44f06b3a26ad643d94e1fe9101cb96f8a40c",
       "installedAt": "2026-08-07T11:31:59.708Z",
-      "updatedAt": "2026-08-22T09:29:12.643Z"
+      "updatedAt": "2026-08-24T11:55:24.059Z"
     },
     "promptkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/promptkit/SKILL.md",
-      "skillFolderHash": "53424f9c95c89561eb9ac09df571bee6badd8bbf",
+      "skillFolderHash": "513f04d190828875ea0b2e803ae2a8cbaeded896",
       "installedAt": "2026-08-07T14:56:01.492Z",
-      "updatedAt": "2026-08-22T09:29:12.642Z"
+      "updatedAt": "2026-08-24T11:55:24.059Z"
     },
     "refactorkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/refactorkit/SKILL.md",
-      "skillFolderHash": "a0ea44ac81931690c6b88aaea4272430f3a9f37d",
+      "skillFolderHash": "e6d5fe16e1675c1f6de622fb45285732c4f6a6bb",
       "installedAt": "2026-08-09T07:15:47.259Z",
-      "updatedAt": "2026-08-22T09:29:12.644Z"
+      "updatedAt": "2026-08-24T11:55:24.060Z"
     },
     "debugkit": {
       "source": "mimukit/skills",
@@ -260,61 +260,61 @@
       "skillPath": "skills/debugkit/SKILL.md",
       "skillFolderHash": "50f0ebe64095b0344bd117d1f34466f222c7b416",
       "installedAt": "2026-08-17T08:01:12.766Z",
-      "updatedAt": "2026-08-22T09:29:12.633Z"
+      "updatedAt": "2026-08-24T11:55:24.050Z"
     },
     "tutorkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/tutorkit/SKILL.md",
-      "skillFolderHash": "cdf130b7c41365ffba8352a49942fd7770f1cc0d",
+      "skillFolderHash": "65e8ba427776e541af922fc8202217a20956bb4d",
       "installedAt": "2026-08-18T08:54:12.488Z",
-      "updatedAt": "2026-08-22T09:29:12.647Z"
+      "updatedAt": "2026-08-24T11:55:24.064Z"
     },
     "paseokit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/paseokit/SKILL.md",
-      "skillFolderHash": "a0296a18449ddaf765fa375c9d8d4b167c104411",
+      "skillFolderHash": "b41c0f931d75a2e26306aec477699e5daa4ae47a",
       "installedAt": "2026-08-19T08:08:19.234Z",
-      "updatedAt": "2026-08-22T09:29:12.641Z"
+      "updatedAt": "2026-08-24T11:55:24.057Z"
     },
     "releasekit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/releasekit/SKILL.md",
-      "skillFolderHash": "09b8d51d8f053c2ad7a65c681f5d3cec38a7eda2",
+      "skillFolderHash": "f400f7adebb35c87c17b3197cacc26e5df58da06",
       "installedAt": "2026-08-19T08:08:19.238Z",
-      "updatedAt": "2026-08-22T09:29:12.644Z"
+      "updatedAt": "2026-08-24T11:55:24.061Z"
     },
     "testkit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/testkit/SKILL.md",
-      "skillFolderHash": "087c41391dd68c7b6e8bb6ba4269ea7f87d8ba27",
+      "skillFolderHash": "a575af0ee0483db3198f36e4cc18b274ac5383e5",
       "installedAt": "2026-08-19T08:08:19.241Z",
-      "updatedAt": "2026-08-22T09:29:12.647Z"
+      "updatedAt": "2026-08-24T11:55:24.063Z"
     },
     "ideakit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/ideakit/SKILL.md",
-      "skillFolderHash": "7a2e72c55941341fd04ef90d339ae6ee8ac1f396",
+      "skillFolderHash": "4f995c9bf02adacaa546181298eb5378ddc65a5a",
       "installedAt": "2026-08-19T18:29:28.666Z",
-      "updatedAt": "2026-08-22T09:29:12.637Z"
+      "updatedAt": "2026-08-24T11:55:24.055Z"
     },
     "namekit": {
       "source": "mimukit/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mimukit/skills.git",
       "skillPath": "skills/namekit/SKILL.md",
-      "skillFolderHash": "9e1ca324493388ec7396d6a19d90bc29fdab26e9",
+      "skillFolderHash": "1a657de9497b2fb788b49adcc8b57622ace50a80",
       "installedAt": "2026-08-22T06:36:36.823Z",
-      "updatedAt": "2026-08-22T09:29:12.640Z"
+      "updatedAt": "2026-08-24T11:55:24.057Z"
     }
   },
   "dismissed": {

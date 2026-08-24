@@ -1,7 +1,7 @@
 ---
 name: implementkit
 description: >-
-  Implement a plan, spec, or issue into working code (no commit, that's commitkit's job), picking straight-through vs TDD mode by precedence (prompt → CLAUDE.md → repo habit → ask), then running the repo's test + build/typecheck gate before declaring done. Use when the user says "implement this plan", "build this issue", "write the code for plan-<slug>-YYYY-MM-DD.md", "implement #42", "do this TDD", "apply these review findings", or hands off a hardened spec to be turned into code, even if they don't name a mode.
+  Implement a plan, spec, or issue into working code, picking straight-through vs TDD mode by precedence (prompt → CLAUDE.md → repo habit → ask), then running the repo's test + build gate before declaring done. Use when the user says "implement this plan", "implement #42", "do this TDD", or "apply these review findings". It stops before the commit and runs attended; the unattended issue-to-PR span is afkkit's.
 license: MIT
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write, Skill
 metadata:

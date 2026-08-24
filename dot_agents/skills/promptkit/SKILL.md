@@ -3,6 +3,7 @@ name: promptkit
 description: >-
   Sharpen the prompt before you send it, whether the one-shot instruction you're about to hand a coding agent or the system prompt your application ships. Use when the user says "optimize this prompt", "what's wrong with this prompt", "write or rewrite the system prompt my app ships", or "/promptkit".
 license: MIT
+disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion
 metadata:
   internal: false

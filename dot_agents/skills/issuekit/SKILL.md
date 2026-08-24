@@ -1,7 +1,7 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle with five modes: create issues from a plan or description (kept independent for parallel worktree work), start a `ready` issue into its own worktree, close one out once its PR merges, sync PR↔issue links after merge, and triage the tracker for lifecycle and priority gaps. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "wrap up #42 now the PR merged", "sync my issues", "triage the backlog", "prioritize my issues", "set the priority on #42", "issuekit", or wants issues opened, started, landed, reconciled, ranked, or reviewed with the gh CLI.
+  Own the GitHub issue lifecycle in five modes: create issues from a plan or description, start a `ready` issue into its own worktree, close one out once its PR merges, sync PR↔issue links after merge, and triage the tracker for lifecycle and priority gaps. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "sync my issues", "triage the backlog", or "set the priority on #42". It runs the tracker only; it writes no plan and no code.
 license: MIT
 allowed-tools: Bash, Read, Edit, Write, Skill
 metadata:

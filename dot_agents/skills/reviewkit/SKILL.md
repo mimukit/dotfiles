@@ -1,7 +1,7 @@
 ---
 name: reviewkit
 description: >-
-  Review AI-agent-implemented code specifically, in four ordered passes for convention-fit, agent-slop signatures, requirement-completeness, then correctness, against the working tree or the branch diff, findings ranked by severity and backed by quoted evidence. Use when the user says "review this code", "review my changes", "review this diff", "check the agent's work", "/reviewkit", or wants a self-review of AI-written changes before commit or PR, even if they don't name the passes.
+  Review AI-agent-implemented code specifically, in four ordered passes (convention-fit, agent-slop signatures, requirement-completeness, correctness) against the working tree or the branch diff, findings ranked by severity and backed by quoted evidence. Use when the user says "review this code", "review my changes", or "check the agent's work" before commit or PR.
 license: MIT
 allowed-tools: Read, Bash, Grep, Glob, Write, Task, Agent, Skill
 metadata:

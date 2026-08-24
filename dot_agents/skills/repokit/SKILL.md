@@ -3,6 +3,7 @@ name: repokit
 description: >-
   Set up a GitHub repo's metadata through the gh CLI: an inferred one-line About description + topics from the repo's own contents, and the issuekit lifecycle and priority labels. Use when the user says "repokit", "set the repo description", "add topics/tags", "write an About blurb for this repo", "provision the workflow labels", "set up this repo's labels", "add priority labels", or "configure this repo's metadata", meaning anything about a repo's About panel or its label vocabulary.
 license: MIT
+disable-model-invocation: true
 allowed-tools: Bash, Read
 metadata:
   internal: false

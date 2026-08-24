@@ -3,6 +3,7 @@ name: tutorkit
 description: >-
   Teach a topic across many sessions, with one learning repo holding a folder per topic, lessons pitched at what you already know, and spaced retrieval that makes it stick. Use when the user says "teach me X", "tutor me on X", "I want to learn X", "explain how X works", "quiz me on what I learned", "what's due for review", "test me", "am I ready", "exam me on X", "place me on X", "where am I with my learning", "what am I studying", "learning status", "show my progress", or runs "/tutorkit". Tuned for software engineering topics and works for any other.
 license: MIT
+disable-model-invocation: true
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, AskUserQuestion, Task, Agent
 metadata:
   internal: false

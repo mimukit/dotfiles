@@ -3,6 +3,7 @@ name: validatekit
 description: >-
   Pressure-test a SaaS or startup idea before you build it, with a few forcing questions, an optional market and competitor scan, an honest verdict graded on the evidence you can actually produce, the narrowest wedge worth testing, and one real-world assignment. Use when the user says "validate my idea", "is this worth building", "should I build this", "pressure-test my startup idea", "will anyone pay for this", or runs "/validatekit", and proactively whenever someone describes a new product or business idea and wants to know whether to build it.
 license: MIT
+disable-model-invocation: true
 allowed-tools: Read, Write, WebSearch, AskUserQuestion, Task, Agent
 metadata:
   internal: false

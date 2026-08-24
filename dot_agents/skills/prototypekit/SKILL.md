@@ -1,7 +1,7 @@
 ---
 name: prototypekit
 description: >-
-  Build throwaway code that answers a question, whether an interactive state model you can drive, a script that measures one thing, or competing UI mocks to choose between, then fold the answer into the decision and delete the code. Use when the user says "prototype this", "spike this", "throwaway explore X", "does this state model hold up", "will this design survive <hard case>", "is this library fast enough", "do these two actually interop", "show me a few options for this screen", "mock up three versions", or "/prototypekit". Not a demo generator and never production code.
+  Build throwaway code that answers a question, whether an interactive state model you can drive, a script that measures one thing, or competing UI mocks to choose between, then fold the answer into the decision and delete the code. Use when the user says "prototype this", "spike this", "does this state model hold up", "is this library fast enough", or "mock up three versions". Not a demo generator and never production code.
 license: MIT
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 metadata:

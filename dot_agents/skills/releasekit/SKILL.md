@@ -3,6 +3,7 @@ name: releasekit
 description: >-
   Cut a release from the Conventional Commits a repo already writes: derive the semver bump and a changelog from the commit range, bump the manifest, tag it, and publish a GitHub release, all behind a mandatory preview. Use when the user says "cut a release", "tag a version", "release this", "what's the next version", "generate a changelog", "ship v2", or "/releasekit". It never publishes to a package registry and never moves a published tag.
 license: MIT
+disable-model-invocation: true
 allowed-tools: Bash, Read, Write, Edit, AskUserQuestion, Skill
 metadata:
   internal: false

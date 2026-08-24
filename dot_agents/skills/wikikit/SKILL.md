@@ -1,7 +1,7 @@
 ---
 name: wikikit
 description: >-
-  Generate and maintain a project's reader-facing documentation in-repo, covering getting-started, how-to guides, architecture overview, and runbooks, with every command verified against the code, in four modes: init, update, audit, and an opt-in publish that mirrors the set to the GitHub wiki. Use when the user says "write docs for this project", "document this repo", "update the docs", "our docs are stale", "write a runbook", "write a getting-started guide", "architecture overview", "sync the docs to the GitHub wiki", or "/wikikit". Not an agent handoff, and not the glossary or ADRs.
+  Generate and maintain a project's reader-facing documentation in-repo (getting-started, how-to guides, architecture overview, runbooks), every command verified against the code, in four modes: init, update, audit, and an opt-in publish that mirrors the set to the GitHub wiki. Use when the user says "write docs for this project", "update the docs", "our docs are stale", or "sync the docs to the GitHub wiki". Not an agent handoff, and not the glossary or ADRs.
 license: MIT
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 metadata:

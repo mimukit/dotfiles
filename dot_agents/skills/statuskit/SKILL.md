@@ -1,7 +1,7 @@
 ---
 name: statuskit
 description: >-
-  Survey a project read-only, covering the git working tree, GitHub issues and their declared priority, open PRs, and unfiled plans, into a one-screen dashboard that crowns one finish-first next move routed to the kit that does it, saved by default as a throwaway snapshot under docs/status/. Use when you sit down at a project and ask "what should I do next", "check project status", "what's next", "what's most important right now", "orient me", "write me a status file", or run "/statuskit". Add "just print it" or "no file" to skip the snapshot.
+  Survey a project read-only (working tree, issues and their priority, open PRs, unfiled plans) into a one-screen dashboard that crowns one finish-first next move routed to the kit that does it, saved by default as a throwaway snapshot under docs/status/. Use when you sit down at a project and ask "what should I do next" or "check project status"; add "no file" to skip the snapshot. It reads and recommends only; the crowned kit does the work.
 license: MIT
 allowed-tools: Bash, Read, Write, Edit, Skill
 metadata:

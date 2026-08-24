@@ -3,6 +3,7 @@ name: namekit
 description: >-
   Name a project to a naming convention you already use, then prove the name is free on the domain, npm, and GitHub before you commit to it. Use when the user says "name this project", "what should I call this", "give me project name ideas", "come up with a name for X", "is <name> taken", "check if this name is available", or "/namekit".
 license: MIT
+disable-model-invocation: true
 allowed-tools: Bash, Read, Write, AskUserQuestion, WebSearch, WebFetch
 metadata:
   internal: false

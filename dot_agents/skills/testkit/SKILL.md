@@ -1,7 +1,7 @@
 ---
 name: testkit
 description: >-
-  Retrofit an automated test suite onto a working codebase that has none: rank the untested surface, crown a slice, stand up a runner, and write tests that were each watched to fail before they were kept. Use when the user says "write tests for this", "this project has no tests", "add test coverage", "retrofit tests onto this repo", "set up testing here", "what should I test first", "our test coverage is terrible", or "/testkit". It never fixes the bugs it finds and never restructures code to make it testable.
+  Retrofit an automated test suite onto a working codebase that has none: rank the untested surface, crown a slice, stand up a runner, and write tests that were each watched to fail before they were kept. Use when the user says "this project has no tests", "add test coverage", or "what should I test first". It never fixes the bugs it finds and never restructures code to make it testable.
 license: MIT
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write, AskUserQuestion
 metadata:

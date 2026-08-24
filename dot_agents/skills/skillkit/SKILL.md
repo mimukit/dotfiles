@@ -3,6 +3,7 @@ name: skillkit
 description: >-
   Create a new AI agent skill from scratch, with kit-convention naming, drafting, live testing, and publishing included. Use when the user wants to author, scaffold, or draft a new skill, runs "/skillkit", or says something like "help me make a skill for X". Interviews for intent, proposes on-brand kit names, drafts a conventions-compliant SKILL.md.
 license: MIT
+disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Bash, AskUserQuestion, WebSearch, WebFetch
 metadata:
   internal: false

@@ -1,7 +1,7 @@
 ---
 name: plankit
 description: >-
-  Turn a rough feature or change into a structured plan document (docs/plans/plan-<slug>-YYYY-MM-DD.md) before any code: brainstorm the approach, settle the big decisions, and write a plan that can be hardened and turned into issues. Use when the user says "plan this feature", "brainstorm a plan/PRD/spec", "write a plan doc", "help me think through this change before building", or runs "/plankit", the front of the plan → grill → file workflow.
+  Turn a rough feature or change into a structured plan document (docs/plans/plan-<slug>-YYYY-MM-DD.md) before any code: brainstorm the approach, settle the big decisions, and write a plan that can be hardened and turned into issues. Use when the user says "plan this feature" or "brainstorm a plan/PRD/spec", the front of the plan → grill → file workflow. It stops at the plan document; it files no issues and writes no code.
 license: MIT
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
 metadata:

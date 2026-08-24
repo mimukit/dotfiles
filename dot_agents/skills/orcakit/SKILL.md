@@ -3,6 +3,7 @@ name: orcakit
 description: >-
   Keep the Orca desktop app's workspace list honest about the git worktrees your workflow actually creates: link each one to its issue, keep its status current, and clean out the ones whose work already merged. Use when the user says "orcakit", "clean up my orca workspaces", "my Orca sidebar is full of finished work", "which workspaces are stale", "link my worktrees to their issues", "remove the workspaces for merged issues", or "where should Orca put new worktrees".
 license: MIT
+disable-model-invocation: true
 allowed-tools: Bash, Read, Skill
 metadata:
   internal: false
