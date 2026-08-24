@@ -20,8 +20,9 @@
 # The first build put local and public addresses in one list, so `ip` could not
 # draw anything until the network answered. It now opens on a two-row menu:
 #
-#     menu ── local ── iface     local rows need no network and draw at once
-#          └─ public ─ lookup    public rows wait on ipinfo.io
+#     menu ── local ── iface       local rows need no network and draw at once
+#          └─ public ─┬ lookup     public rows wait on a provider
+#                     └ compare
 #
 # `l` and `enter` walk down that tree, `h` and `esc` walk back up. Opening the
 # menu starts a background fetch of the public address, so the answer is usually
@@ -56,11 +57,27 @@
 # Internal modes, called only by the picker: --view NAME [ARG], --copy VALUE,
 # --open, --warm NAME.
 #
-# Two services, on purpose
-#   ipinfo.io  fills the Public view. One request covers the address, org, city
-#              and timezone.
-#   ipwho.is   fills the Lookup view. It carries the ASN, the reverse domain and
-#              the UTC offset that ipinfo's free tier leaves out.
+# Four providers, and why both a chain and a switch
+# --------------------------------------------------
+# The Public view can be filled by any provider in PROVIDERS. That list is also
+# the fallback chain: read_public walks it and stops at the first service that
+# returns an address, so one outage costs a few hundred milliseconds instead of
+# an empty view.
+#
+# A chain alone is not enough. Asked about the same address in the same minute,
+# ipinfo.io and ipapi.is placed it about 70 km apart, and ident.me named a
+# different city. Every one of those replies was HTTP 200, so no failover rule
+# can catch it. `s` cycles the provider and the border label always names the
+# service that answered, including after a silent fallback. The Compare view,
+# reached with `d` on the Location or Coordinates row, shows all four at once.
+#
+# ipwho.is also fills the Lookup view. It carries the ASN, the reverse domain
+# and the UTC offset that ipinfo's free tier leaves out. Because the Lookup and
+# the provider chain share one cache file, falling back to it usually costs no
+# request at all.
+#
+# Set IP_CLI_PROVIDER to start on something other than ipinfo.io. There is no
+# config file on purpose: this is a one-line preference, not a settings screen.
 #
 # IPv6 is probed against v6.ident.me, not ipinfo.io. On a v4-only network
 # `curl -6 https://ipinfo.io/ip` answered with the *v4* address and exit 0, so
@@ -125,6 +142,150 @@ init_cache() {
 	trap 'rm -rf "$CACHE"' EXIT
 }
 
+# --------------------------------------------------------------- providers ---
+
+# Tried in this order, so the list is also the fallback chain. Every entry is
+# keyless, answers over HTTPS, and honours -4. All four were measured 10 times
+# from this machine and all four returned 10/10.
+#
+#   ipinfo.io   the original. The only one that returns a reverse hostname.
+#   ipquery.io  a different vendor with the same coverage. Median 0.47s.
+#   ipwho.is    already fetched for the Lookup view, so it shares that cache
+#               file and a fallback to it usually costs no request.
+#   cloudflare  last resort. Not JSON, and no city or ISP, but the fastest thing
+#               measured at 0.18s, and it answers when the rest are blocked.
+#
+# Deliberately absent:
+#   ipwhois.app  same vendor as ipwho.is, down to the cdn.ipwhois.io flag URLs.
+#                It would fail at the same moment and add nothing to a chain.
+#   ip-api.com   the richest free field set tested, and it refuses HTTPS without
+#                a paid key. Its own reply says "SSL unavailable for this
+#                endpoint". Not worth sending the query in clear text.
+#   ipapi.co     answered 403 behind a Cloudflare bot challenge, browser user
+#                agent included.
+#   ipapi.is     no city and no timezone without a key. Its risk flags are worth
+#                a view of their own, but they are not geolocation.
+PROVIDERS=(ipinfo ipquery ipwho cloudflare)
+
+provider_host() { # the name the border label shows
+	case $1 in
+		ipinfo) printf 'ipinfo.io' ;;
+		ipquery) printf 'ipquery.io' ;;
+		ipwho) printf 'ipwho.is' ;;
+		cloudflare) printf 'cloudflare' ;;
+	esac
+}
+
+provider_url() {
+	case $1 in
+		ipinfo) printf 'https://ipinfo.io/json' ;;
+		ipquery) printf 'https://api.ipquery.io/?format=json' ;;
+		ipwho) printf 'https://ipwho.is/' ;;
+		cloudflare) printf 'https://www.cloudflare.com/cdn-cgi/trace' ;;
+	esac
+}
+
+provider_file() {
+	case $1 in
+		ipinfo) printf 'ipinfo.json' ;;
+		ipquery) printf 'ipquery.json' ;;
+		ipwho) printf 'ipwhois.json' ;; # shared with the Lookup view
+		cloudflare) printf 'cloudflare.txt' ;;
+	esac
+}
+
+provider_valid() {
+	local id
+	for id in "${PROVIDERS[@]}"; do
+		[[ $id == "$1" ]] && return 0
+	done
+	return 1
+}
+
+# The wanted provider first, then the rest in table order. `s` moves the wanted
+# one; the chain still runs from wherever it lands.
+provider_ring() { # provider_ring <wanted>
+	local id
+	printf '%s\n' "$1"
+	for id in "${PROVIDERS[@]}"; do
+		[[ $id == "$1" ]] || printf '%s\n' "$id"
+	done
+}
+
+provider_next() { # provider_next <current>
+	local i n=${#PROVIDERS[@]}
+	for ((i = 0; i < n; i++)); do
+		if [[ ${PROVIDERS[i]} == "$1" ]]; then
+			printf '%s' "${PROVIDERS[(i + 1) % n]}"
+			return 0
+		fi
+	done
+	printf '%s' "${PROVIDERS[0]}"
+}
+
+PROVIDER=${IP_CLI_PROVIDER:-ipinfo}
+PROVIDER_USED=''
+provider_valid "$PROVIDER" ||
+	die "IP_CLI_PROVIDER: no such provider '$PROVIDER' (choose from: ${PROVIDERS[*]})"
+
+# Read a provider's body on stdin, write the eight fields the Public view wants,
+# US-separated, in one fixed order: address, reverse host, org, city, region,
+# country, coordinates, timezone. A provider that cannot fill a field writes an
+# empty one, and rounds coordinates to four places so the Compare view lines up.
+#
+# An empty address means the provider failed. That one rule also catches
+# ipwho.is answering 200 with {"success":false} under a rate limit, which curl
+# -f cannot see.
+provider_parse() { # provider_parse <id>  < body
+	case $1 in
+		ipinfo)
+			jq -r '
+				[.ip, .hostname, .org, .city, .region, .country, .loc, .timezone]
+				| map(. // "" | tostring) | join("\u001f")
+			' 2>/dev/null
+			;;
+		ipquery)
+			jq -r '
+				def r: if . == null then "" else (. * 10000 | round) / 10000 end;
+				[ .ip,
+				  "",
+				  (if .isp.asn then "\(.isp.asn) \(.isp.org // "")" else .isp.isp end),
+				  .location.city,
+				  .location.state,
+				  .location.country_code,
+				  (if .location.latitude then "\(.location.latitude | r),\(.location.longitude | r)" else "" end),
+				  .location.timezone ]
+				| map(. // "" | tostring) | join("\u001f")
+			' 2>/dev/null
+			;;
+		ipwho)
+			jq -r '
+				def r: if . == null then "" else (. * 10000 | round) / 10000 end;
+				if .success == false then "" else
+				[ .ip,
+				  .connection.domain,
+				  (if .connection.asn then "AS\(.connection.asn) \(.connection.org // "")" else .connection.isp end),
+				  .city,
+				  .region,
+				  .country_code,
+				  (if .latitude then "\(.latitude | r),\(.longitude | r)" else "" end),
+				  .timezone.id ]
+				| map(. // "" | tostring) | join("\u001f")
+				end
+			' 2>/dev/null
+			;;
+		cloudflare)
+			# key=value lines, not JSON. Only ip and loc are useful here, so the
+			# other six fields go out empty: five separators, the country, two more.
+			awk -F= '
+				$1 == "ip" { ip = $2 }
+				$1 == "loc" { cc = $2 }
+				END { if (ip != "") printf "%s\037\037\037\037\037%s\037\037\n", ip, cc }
+			'
+			;;
+	esac
+}
+
 # ---------------------------------------------------------------- fetching ---
 
 # --retry-all-errors is the flag that matters. Plain --retry treats a reset
@@ -147,14 +308,27 @@ fetch_url() { # fetch_url <cache file> <url> [extra curl args...]
 	fi
 }
 
-fetch_ipinfo() {
-	fetch_url "$CACHE/ipinfo.json" https://ipinfo.io/json -4
-	cat "$CACHE/ipinfo.json"
+fetch_provider() { # fetch_provider <id>
+	local file
+	file=$CACHE/$(provider_file "$1")
+	# Every provider is pinned to -4. On a dual-stack network an unpinned request
+	# comes back with the v6 address, and the view would then contradict its own
+	# IPv4 row. Measured: cloudflare, seeip and ipwhois.app all did exactly that.
+	fetch_url "$file" "$(provider_url "$1")" -4
+	cat "$file"
 }
 
 fetch_detail() {
-	fetch_url "$CACHE/ipwhois.json" https://ipwho.is/
+	fetch_url "$CACHE/ipwhois.json" https://ipwho.is/ -4
 	cat "$CACHE/ipwhois.json"
+}
+
+clear_public_cache() {
+	local id
+	for id in "${PROVIDERS[@]}"; do
+		rm -f "$CACHE/$(provider_file "$id")"
+	done
+	rm -f "$CACHE/v6.txt" "$CACHE/ipwhois.json"
 }
 
 # Absent v6 is a real answer, so cache on the file existing, not on its size.
@@ -171,33 +345,55 @@ fetch_v6() {
 }
 
 # Fetch ahead of the view that needs it, detached so nothing waits on it.
-warm() { # warm <public|lookup>
+warm() { # warm <public|rest|lookup>
 	("$SELF" --warm "$1" >/dev/null 2>&1 &) || :
 }
 
 cmd_warm() {
+	local id
 	init_cache
 	case ${1:-public} in
 		public)
-			fetch_ipinfo >/dev/null 2>&1 || :
+			read_public >/dev/null 2>&1 || :
 			fetch_v6 >/dev/null 2>&1 || :
+			;;
+		# The providers the chain did not need. Entering the Public view starts
+		# this, so `s` and the Compare view answer from cache instead of paying
+		# three round trips at the moment they are pressed. One process, not
+		# three: fetch_url returns at once for anything already cached.
+		rest)
+			for id in "${PROVIDERS[@]}"; do
+				fetch_provider "$id" >/dev/null 2>&1 || :
+			done
 			;;
 		lookup) fetch_detail >/dev/null 2>&1 || : ;;
 	esac
 }
 
-# One jq pass, not one per field, so the view draws on a single parse.
-read_ipinfo() {
+reset_public() {
 	PUBLIC4='' REVERSE='' ORG='' CITY='' REGION='' COUNTRY='' COORDS='' TIMEZONE=''
-	local json
-	json=$(fetch_ipinfo)
-	[[ -n $json ]] || return 0
-	IFS=$US read -r PUBLIC4 REVERSE ORG CITY REGION COUNTRY COORDS TIMEZONE < <(
-		printf '%s' "$json" | jq -r '
-			[.ip, .hostname, .org, .city, .region, .country, .loc, .timezone]
-			| map(. // "" | tostring) | join("\u001f")
-		' 2>/dev/null
-	) || return 0
+}
+
+# Walk the ring from the wanted provider and stop at the first one that returns
+# an address. One jq pass per attempt, not one per field, so a view draws on a
+# single parse. PROVIDER_USED names the winner and stays empty when every
+# provider failed. Callers show it, because after a fallback the rows no longer
+# come from the service the user asked for.
+read_public() { # read_public [wanted]
+	local wanted=${1:-$PROVIDER} id
+	PROVIDER_USED=''
+	for id in $(provider_ring "$wanted"); do
+		reset_public
+		IFS=$US read -r PUBLIC4 REVERSE ORG CITY REGION COUNTRY COORDS TIMEZONE < <(
+			fetch_provider "$id" | provider_parse "$id"
+		) || :
+		if [[ -n $PUBLIC4 ]]; then
+			PROVIDER_USED=$id
+			return 0
+		fi
+	done
+	reset_public
+	return 0
 }
 
 # ------------------------------------------------------------------ system ---
@@ -254,23 +450,35 @@ netmask_prefix() {
 
 # -------------------------------------------------------------------- rows ---
 
-# Every row is three tab fields: what fzf shows, what `y` copies, and the view
-# that `l` opens. A row fills one of the last two, never both. cmd_pick appends
-# a fourth, the row number, so it can put the cursor back after a refresh.
-emit() { # emit <emoji> <label> <value> [note]
-	local emoji=$1 label=$2 value=${3:-} note=${4:-}
+# Every row is four tab fields: what fzf shows, what `y` copies, the view `l`
+# opens, and the view `d` opens. A row fills the copy field or the `l` field,
+# never both. `d` is per row rather than per view so the Location row can reach
+# Compare while its neighbours still reach Lookup. cmd_pick appends a fifth
+# field, the row number, so it can put the cursor back after a refresh.
+emit() { # emit <emoji> <label> <value> [note] [detail view]
+	local emoji=$1 label=$2 value=${3:-} note=${4:-} detail=${5:-}
 	if [[ -z $value ]]; then
-		printf '%s  %-11s %s%s%s\t\t\n' "$emoji" "$label" "$DIM" "${note:-unavailable}" "$RESET"
+		printf '%s  %-11s %s%s%s\t\t\t%s\n' \
+			"$emoji" "$label" "$DIM" "${note:-unavailable}" "$RESET" "$detail"
 	elif [[ -n $note ]]; then
-		printf '%s  %-11s %-20s %s%s%s\t%s\t\n' \
-			"$emoji" "$label" "$value" "$DIM" "$note" "$RESET" "$value"
+		printf '%s  %-11s %-20s %s%s%s\t%s\t\t%s\n' \
+			"$emoji" "$label" "$value" "$DIM" "$note" "$RESET" "$value" "$detail"
 	else
-		printf '%s  %-11s %s\t%s\t\n' "$emoji" "$label" "$value" "$value"
+		printf '%s  %-11s %s\t%s\t\t%s\n' "$emoji" "$label" "$value" "$value" "$detail"
 	fi
 }
 
 emit_branch() { # emit_branch <emoji> <label> <blurb> <view>
-	printf '%s  %-11s %s%s%s\t\t%s\n' "$1" "$2" "$DIM" "$3" "$RESET" "$4"
+	printf '%s  %-11s %s%s%s\t\t%s\t\n' "$1" "$2" "$DIM" "$3" "$RESET" "$4"
+}
+
+# Compare rows read the other way round from emit: the place is what you look
+# at, the coordinates are what you copy. Two providers naming the same city can
+# still be tens of kilometres apart, and the number is what settles it.
+# The copy value is explicit rather than taken from the note, so every row in
+# the view keeps the same two columns whether or not the provider had an answer.
+emit_compare() { # emit_compare <provider> <place> <note> <copy>
+	printf '📍  %-11s %-26s %s%s%s\t%s\t\t\n' "$1" "$2" "$DIM" "$3" "$RESET" "$4"
 }
 
 rows_menu() {
@@ -293,7 +501,7 @@ rows_local() {
 			icon='🔗'
 			note=''
 		fi
-		emit "$icon" "$(friendly_name "$iface")" "$addr" "$note"
+		emit "$icon" "$(friendly_name "$iface")" "$addr" "$note" iface
 	done
 	gateway=$(default_gateway)
 	[[ -n $gateway ]] && emit '🚪' 'Router' "$gateway"
@@ -301,17 +509,18 @@ rows_local() {
 	return 0
 }
 
-rows_public() {
+rows_public() { # rows_public [provider]
 	init_cache
 	warm lookup
-	read_ipinfo
+	warm rest
+	read_public "${1:-$PROVIDER}"
 	local v6 where
 	v6=$(fetch_v6)
 
 	if [[ -n $PUBLIC4 ]]; then
-		emit '🌐' 'IPv4' "$PUBLIC4"
+		emit '🌐' 'IPv4' "$PUBLIC4" '' lookup
 	else
-		emit '🌐' 'IPv4' '' 'no answer from ipinfo.io. press r to retry'
+		emit '🌐' 'IPv4' '' 'no provider answered. press r to retry'
 	fi
 	if [[ -n $v6 ]]; then
 		emit '🌐' 'IPv6' "$v6"
@@ -319,16 +528,47 @@ rows_public() {
 		emit '🌐' 'IPv6' '' 'none on this network'
 	fi
 
-	[[ -n $REVERSE ]] && emit '📡' 'Hostname' "$REVERSE"
-	[[ -n $ORG ]] && emit '🏢' 'ISP' "$ORG"
+	[[ -n $REVERSE ]] && emit '📡' 'Hostname' "$REVERSE" '' lookup
+	[[ -n $ORG ]] && emit '🏢' 'ISP' "$ORG" '' lookup
 
 	where=$CITY
 	[[ -n $REGION && $REGION != "$CITY" ]] && where="${where:+$where, }$REGION"
 	[[ -n $COUNTRY ]] && where="${where:+$where, }$COUNTRY"
-	[[ -n $where ]] && emit '📍' 'Location' "$where"
+	# The two rows the providers disagree about get `d` into Compare instead of
+	# into Lookup. Lookup deepens one opinion; Compare weighs four of them.
+	[[ -n $where ]] && emit '📍' 'Location' "$where" '' compare
 
-	[[ -n $COORDS ]] && emit '🧭' 'Coordinates' "$COORDS"
-	[[ -n $TIMEZONE ]] && emit '🕐' 'Timezone' "$TIMEZONE"
+	[[ -n $COORDS ]] && emit '🧭' 'Coordinates' "$COORDS" '' compare
+	[[ -n $TIMEZONE ]] && emit '🕐' 'Timezone' "$TIMEZONE" '' lookup
+	return 0
+}
+
+# The reason `s` exists. Asked about one address in one minute, ipinfo.io and
+# ipapi.is placed it about 70 km apart and ident.me named a different city, and
+# every reply was HTTP 200. A fallback chain cannot catch that, because nothing
+# failed. This puts the providers side by side and lets the reader judge.
+rows_compare() {
+	init_cache
+	local id place
+	for id in "${PROVIDERS[@]}"; do
+		# read_public falls back, so a row is only this provider's own answer
+		# when it won the ring it started.
+		read_public "$id"
+		if [[ $PROVIDER_USED != "$id" ]]; then
+			emit_compare "$(provider_host "$id")" 'no answer' '' ''
+			continue
+		fi
+		place=$CITY
+		[[ -n $REGION && $REGION != "$CITY" ]] && place="${place:+$place, }$REGION"
+		[[ -n $COUNTRY ]] && place="${place:+$place, }$COUNTRY"
+		if [[ -n $COORDS ]]; then
+			emit_compare "$(provider_host "$id")" "${place:-unknown}" "$COORDS" "$COORDS"
+		else
+			# cloudflare lands here: it knows the country and nothing finer, so
+			# `y` falls back to copying the place rather than a missing number.
+			emit_compare "$(provider_host "$id")" "${place:-unknown}" 'no coordinates' "$place"
+		fi
+	done
 	return 0
 }
 
@@ -416,7 +656,8 @@ cmd_view() { # cmd_view <view> [arg]
 	case $1 in
 		menu) rows_menu ;;
 		local) rows_local ;;
-		public) rows_public ;;
+		public) rows_public "${2:-}" ;;
+		compare) rows_compare ;;
 		lookup) rows_lookup ;;
 		iface) rows_iface "${2:-}" ;;
 		*) die "unknown view: $1" ;;
@@ -425,29 +666,36 @@ cmd_view() { # cmd_view <view> [arg]
 
 # ------------------------------------------------------------------ chrome ---
 
-label_of() {
+# The Public label carries the provider name, and that is not decoration. Once
+# a fallback chain exists, the rows on screen may come from a service the user
+# never chose, and nothing else on screen would say so.
+label_of() { # label_of <view> [provider]
 	case $1 in
 		menu) printf ' 🌐  network ' ;;
 		local) printf ' 🏠  local ' ;;
-		public) printf ' 🌍  public ' ;;
+		public) printf ' 🌍  public · %s ' "$(provider_host "${2:-$PROVIDER}")" ;;
+		compare) printf ' 🧭  compare ' ;;
 		lookup) printf ' 🔎  lookup ' ;;
 		iface) printf ' 📶  interface ' ;;
 	esac
 }
 
+# " · " rather than four spaces: the Public footer gained a key and the wide
+# form ran to 89 columns, past an 80-column terminal.
 footer_of() {
 	case $1 in
-		menu) printf '  j k  move    l  open    q  quit' ;;
-		local) printf '  j k  move    y  copy    d  interface    h  back' ;;
-		public) printf '  j k  move    y  copy    d  lookup    o  browser    r  refresh    h  back' ;;
-		lookup) printf '  j k  move    y  copy    o  browser    r  refresh    h  back' ;;
-		iface) printf '  j k  move    y  copy    h  back' ;;
+		menu) printf '  j k move · l open · q quit' ;;
+		local) printf '  j k move · y copy · d interface · h back' ;;
+		public) printf '  j k move · y copy · s provider · d more · o browser · r refresh · h back' ;;
+		compare) printf '  j k move · y copy · r refresh · h back' ;;
+		lookup) printf '  j k move · y copy · o browser · r refresh · h back' ;;
+		iface) printf '  j k move · y copy · h back' ;;
 	esac
 }
 
 parent_of() {
 	case $1 in
-		lookup) printf 'public' ;;
+		lookup | compare) printf 'public' ;;
 		iface) printf 'local' ;;
 		local | public) printf 'menu' ;;
 		*) printf '' ;;
@@ -470,7 +718,7 @@ cmd_copy() {
 
 cmd_open() {
 	init_cache
-	read_ipinfo
+	read_public
 	if [[ -z $PUBLIC4 ]]; then
 		printf '  no public IP to look up\n'
 		return 0
@@ -487,13 +735,25 @@ cmd_pick() {
 	warm public
 
 	local view=menu arg='' pos=1 back_pos=1 note=''
-	local quoted out key line copy target idx rc up
+	local quoted out key line copy target detail idx rc up
 	quoted=$(shq "$SELF")
 
 	while true; do
+		# Resolve the provider before fzf, not inside rows_public. bash expands
+		# --border-label while cmd_view is still running in the pipeline, so the
+		# label cannot learn the winner from the renderer. Doing it here also
+		# makes the render itself a cache hit.
+		if [[ $view == public ]]; then
+			read_public "$PROVIDER"
+			arg=$PROVIDER_USED
+			if [[ -n $PROVIDER_USED && $PROVIDER_USED != "$PROVIDER" ]]; then
+				note="  $(provider_host "$PROVIDER") did not answer, showing $(provider_host "$PROVIDER_USED")"
+			fi
+		fi
+
 		rc=0
 		out=$(cmd_view "$view" "$arg" |
-			awk -F'\t' -v OFS='\t' '{ print $1, $2, $3, NR }' |
+			awk -F'\t' -v OFS='\t' '{ print $1, $2, $3, $4, NR }' |
 			fzf \
 				--delimiter=$'\t' \
 				--with-nth=1 \
@@ -507,11 +767,11 @@ cmd_pick() {
 				--height='~85%' \
 				--min-height=6 \
 				--border=rounded \
-				--border-label="$(label_of "$view")" \
+				--border-label="$(label_of "$view" "$arg")" \
 				--border-label-pos=3 \
 				--footer="${note:-$(footer_of "$view")}" \
 				--pointer='▸' \
-				--expect='enter,l,d,h,esc,r,q' \
+				--expect='enter,l,d,s,h,esc,r,q' \
 				--bind="start:pos($pos)" \
 				--bind='j:down' \
 				--bind='k:up' \
@@ -531,7 +791,8 @@ cmd_pick() {
 		line=${out#*$'\n'}
 		copy=$(printf '%s' "$line" | cut -f2)
 		target=$(printf '%s' "$line" | cut -f3)
-		idx=$(printf '%s' "$line" | cut -f4)
+		detail=$(printf '%s' "$line" | cut -f4)
+		idx=$(printf '%s' "$line" | cut -f5)
 		[[ -n $idx ]] || idx=1
 
 		case $key in
@@ -560,31 +821,29 @@ cmd_pick() {
 				;;
 			d)
 				pos=$idx
-				case $view in
-					public)
-						back_pos=$idx
-						view=lookup
-						pos=1
-						;;
-					local)
-						if [[ -n $copy ]]; then
-							back_pos=$idx
-							view=iface
-							arg=$copy
-							pos=1
-						else
-							note='  that row has no interface'
-						fi
-						;;
-					*) note='  nothing more to show here' ;;
-				esac
+				if [[ -n $detail ]]; then
+					back_pos=$idx
+					view=$detail
+					# iface reads it, lookup and compare ignore it.
+					arg=$copy
+					pos=1
+				else
+					note='  nothing more to show here'
+				fi
+				;;
+			s)
+				pos=$idx
+				if [[ $view == public ]]; then
+					PROVIDER=$(provider_next "$PROVIDER")
+					note="  provider: $(provider_host "$PROVIDER")"
+				else
+					note='  s picks the provider, in the public view'
+				fi
 				;;
 			r)
 				pos=$idx
 				case $view in
-					public | lookup)
-						rm -f "$CACHE/ipinfo.json" "$CACHE/ipwhois.json" "$CACHE/v6.txt"
-						;;
+					public | compare | lookup) clear_public_cache ;;
 					local | iface) rm -f "$CACHE/ifnames.tsv" ;;
 				esac
 				;;
@@ -610,8 +869,15 @@ usage() {
 		  j k      move            g G   top, bottom
 		  l        open a view     h     back
 		  enter    copy and quit   y     copy and stay
-		  d        more detail     o     open ipinfo.io in the browser
+		  d        more detail     s     next provider
+		  o        open ipinfo.io in the browser
 		  r        refetch         q     quit
+
+		The public view is filled by the first of these that answers:
+		  ipinfo.io, ipquery.io, ipwho.is, cloudflare
+		The border label names the one that did. Press s to move to the next, or
+		set IP_CLI_PROVIDER to start on one. Press d on the Location row to see
+		all four answers at once, which is worth doing: they disagree.
 
 		With stdout on a pipe and no options, prints the public IPv4.
 	EOF
@@ -626,16 +892,16 @@ main() {
 			else
 				require curl jq
 				init_cache
-				read_ipinfo
-				[[ -n $PUBLIC4 ]] || die 'could not reach ipinfo.io'
+				read_public
+				[[ -n $PUBLIC4 ]] || die 'no provider answered'
 				printf '%s\n' "$PUBLIC4"
 			fi
 			;;
 		-4 | --public)
 			require curl jq
 			init_cache
-			read_ipinfo
-			[[ -n $PUBLIC4 ]] || die 'could not reach ipinfo.io'
+			read_public
+			[[ -n $PUBLIC4 ]] || die 'no provider answered'
 			printf '%s\n' "$PUBLIC4"
 			;;
 		-6 | --public6)
