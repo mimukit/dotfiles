@@ -1,0 +1,683 @@
+#!/usr/bin/env bash
+# ip — one keyboard-driven view of every address this machine has
+# (chezmoi: private_dot_local/bin/executable_ip).
+#
+# Replaces the alias `ip='curl -s https://ipinfo.io/json | jq'`, which printed a
+# JSON blob you then had to select with the mouse, and `ipw`, which printed a
+# second blob from a second service. Both are folded in here.
+#
+# Why a script and not a packaged CLI
+# -----------------------------------
+# No published tool covers the four things wanted at once: copy a value, show
+# the local addresses, look the public IP up in more depth, and reach all of it
+# from the keyboard. The `ipinfo` CLI does the lookup half and nothing else, so
+# it would still need this wrapper, plus a formula in setup_scripts. The repo
+# already solves this exact shape with fzf in .zshrc (`kp`, `mk`, `ms`, `tl`),
+# and fzf, jq and curl are all installed already.
+#
+# Views, not one long list
+# ------------------------
+# The first build put local and public addresses in one list, so `ip` could not
+# draw anything until the network answered. It now opens on a two-row menu:
+#
+#     menu ── local ── iface     local rows need no network and draw at once
+#          └─ public ─ lookup    public rows wait on ipinfo.io
+#
+# `l` and `enter` walk down that tree, `h` and `esc` walk back up. Opening the
+# menu starts a background fetch of the public address, so the answer is usually
+# waiting by the time you press `l` on Public. Entering the Public view starts
+# the deeper ipwho.is lookup the same way, ahead of `d`.
+#
+# One fzf process per view, on purpose
+# ------------------------------------
+# A view change exits fzf and starts it again, driven by the loop in cmd_pick.
+# The obvious alternative, one long-lived fzf whose list a `reload` binding
+# swaps, was built first and looked wrong: --height='~85%' measures the list
+# once at startup and never grows, so every view after the two-row menu was
+# clipped to two rows, and fzf has no change-height action to fix it from a
+# binding. Restarting re-measures, so each view is exactly as tall as its own
+# content. --expect reports which key ended the run and the loop routes on it.
+#
+# Keys that do not change the view (`y`, `o`) stay as in-process bindings, so
+# the common case of copying a value never redraws the box.
+#
+# Keys are single letters, vim style, which needs --no-input. Without it fzf
+# treats every printable key as search input and `j` types a `j`.
+#
+# Modes
+#   ip            the picker
+#   ip -4 | -6    print the public IPv4 / IPv6 and exit
+#   ip -l         print the local IPv4 on the default route interface
+#   ip -j         print the full ipwho.is lookup as JSON
+#   ip -h         usage
+# With stdout on a pipe and no flag, prints the public IPv4, so `ip | pbcopy`
+# and `curl --interface $(ip -l)` behave the way the old alias never could.
+#
+# Internal modes, called only by the picker: --view NAME [ARG], --copy VALUE,
+# --open, --warm NAME.
+#
+# Two services, on purpose
+#   ipinfo.io  fills the Public view. One request covers the address, org, city
+#              and timezone.
+#   ipwho.is   fills the Lookup view. It carries the ASN, the reverse domain and
+#              the UTC offset that ipinfo's free tier leaves out.
+#
+# IPv6 is probed against v6.ident.me, not ipinfo.io. On a v4-only network
+# `curl -6 https://ipinfo.io/ip` answered with the *v4* address and exit 0, so
+# it cannot prove v6 reachability. v6.ident.me is v6-only and fails with exit 7,
+# which is the answer we need. The empty result is cached, so a refresh does not
+# pay the timeout twice.
+#
+# Cache contract
+#   The picker creates one temp dir and exports IP_CLI_CACHE. Every process it
+#   spawns re-enters this script, sees that variable, and reuses the same dir
+#   instead of refetching. Only the process that created the dir removes it, on
+#   EXIT. That is also what makes a view change cheap: the second visit to the
+#   Public view reads the file the first visit wrote.
+
+set -euo pipefail
+
+SELF=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)/$(basename -- "${BASH_SOURCE[0]}")
+CACHE=
+
+# fzf runs every binding with stdout on a pipe, so `test -t 1` is false in
+# exactly the places that do want colour. Key off NO_COLOR alone and let --ansi
+# render the escapes.
+if [[ -z ${NO_COLOR:-} ]]; then
+	DIM=$'\033[2m'
+	RESET=$'\033[0m'
+else
+	DIM=''
+	RESET=''
+fi
+
+# Field separator for the one-pass jq read below. Tab cannot be used: it is an
+# IFS whitespace character, so bash collapses a run of them and an empty field
+# in the middle would shift every field after it by one.
+readonly US=$'\x1f'
+
+die() {
+	printf 'ip: %s\n' "$1" >&2
+	exit 1
+}
+
+require() {
+	local tool
+	for tool in "$@"; do
+		command -v "$tool" >/dev/null 2>&1 || die "$tool is not installed"
+	done
+}
+
+# Single-quote a string for the shell fzf runs a binding under.
+shq() {
+	printf "'%s'" "${1//\'/\'\\\'\'}"
+}
+
+# Reuse the picker's cache dir when it spawned us; otherwise own a fresh one.
+init_cache() {
+	[[ -n $CACHE ]] && return 0
+	if [[ -n ${IP_CLI_CACHE:-} && -d ${IP_CLI_CACHE:-} ]]; then
+		CACHE=$IP_CLI_CACHE
+		return 0
+	fi
+	CACHE=$(mktemp -d "${TMPDIR:-/tmp}/ip-cli.XXXXXX")
+	export IP_CLI_CACHE=$CACHE
+	trap 'rm -rf "$CACHE"' EXIT
+}
+
+# ---------------------------------------------------------------- fetching ---
+
+# --retry-all-errors is the flag that matters. Plain --retry treats a reset
+# connection as fatal, and on a phone hotspot roughly one request in three came
+# back as curl 56 (Recv failure). Two retries turned most of those into answers.
+# Write through a temp file: a warm fetch and an on-demand fetch can run at the
+# same time, and a half-written cache file would parse as a failed lookup.
+fetch_url() { # fetch_url <cache file> <url> [extra curl args...]
+	local file=$1 url=$2 tmp
+	shift 2
+	[[ -s $file ]] && return 0
+	tmp=$file.$$
+	if curl -fsS --connect-timeout 3 --max-time 5 \
+		--retry 2 --retry-delay 1 --retry-all-errors \
+		"$@" "$url" >"$tmp" 2>/dev/null && [[ -s $tmp ]]; then
+		mv -f "$tmp" "$file"
+	else
+		rm -f "$tmp"
+		[[ -e $file ]] || : >"$file"
+	fi
+}
+
+fetch_ipinfo() {
+	fetch_url "$CACHE/ipinfo.json" https://ipinfo.io/json -4
+	cat "$CACHE/ipinfo.json"
+}
+
+fetch_detail() {
+	fetch_url "$CACHE/ipwhois.json" https://ipwho.is/
+	cat "$CACHE/ipwhois.json"
+}
+
+# Absent v6 is a real answer, so cache on the file existing, not on its size.
+# Otherwise every visit on a v4-only network pays the connect timeout again.
+# No retry either: a v4-only network fails the connect outright, and that
+# verdict does not change on a second try.
+fetch_v6() {
+	local file=$CACHE/v6.txt
+	if [[ ! -f $file ]]; then
+		curl -6 -fsS --connect-timeout 2 --max-time 4 https://v6.ident.me \
+			>"$file" 2>/dev/null || : >"$file"
+	fi
+	tr -d '[:space:]' <"$file"
+}
+
+# Fetch ahead of the view that needs it, detached so nothing waits on it.
+warm() { # warm <public|lookup>
+	("$SELF" --warm "$1" >/dev/null 2>&1 &) || :
+}
+
+cmd_warm() {
+	init_cache
+	case ${1:-public} in
+		public)
+			fetch_ipinfo >/dev/null 2>&1 || :
+			fetch_v6 >/dev/null 2>&1 || :
+			;;
+		lookup) fetch_detail >/dev/null 2>&1 || : ;;
+	esac
+}
+
+# One jq pass, not one per field, so the view draws on a single parse.
+read_ipinfo() {
+	PUBLIC4='' REVERSE='' ORG='' CITY='' REGION='' COUNTRY='' COORDS='' TIMEZONE=''
+	local json
+	json=$(fetch_ipinfo)
+	[[ -n $json ]] || return 0
+	IFS=$US read -r PUBLIC4 REVERSE ORG CITY REGION COUNTRY COORDS TIMEZONE < <(
+		printf '%s' "$json" | jq -r '
+			[.ip, .hostname, .org, .city, .region, .country, .loc, .timezone]
+			| map(. // "" | tostring) | join("\u001f")
+		' 2>/dev/null
+	) || return 0
+}
+
+# ------------------------------------------------------------------ system ---
+
+default_interface() {
+	route -n get default 2>/dev/null | awk '/interface:/ { print $2; exit }' || :
+}
+
+default_gateway() {
+	route -n get default 2>/dev/null | awk '/gateway:/ { print $2; exit }' || :
+}
+
+# `en0` means nothing at a glance; networksetup knows it as Wi-Fi. VPN services
+# report an empty Device, so tunnels keep their raw interface name.
+friendly_name() {
+	local file=$CACHE/ifnames.tsv name
+	if [[ ! -f $file ]]; then
+		networksetup -listnetworkserviceorder 2>/dev/null | awk '
+			/^\(Hardware Port:/ {
+				dev = $NF; sub(/\)$/, "", dev)
+				if (name != "" && dev ~ /^[a-z]/) print dev "\t" name
+				name = ""; next
+			}
+			/^\(/ { name = substr($0, index($0, ") ") + 2); sub(/\*$/, "", name) }
+		' >"$file" 2>/dev/null || : >"$file"
+	fi
+	name=$(awk -F'\t' -v want="$1" '$1 == want { print $2; exit }' "$file" 2>/dev/null) || :
+	printf '%s' "${name:-$1}"
+}
+
+local_address() {
+	ifconfig "$1" inet 2>/dev/null | awk '/inet /{ print $2; exit }' || :
+}
+
+# ifconfig reports the mask as 0xffffff00. Nobody reads it that way.
+netmask_dotted() {
+	local h=${1#0x}
+	[[ ${#h} -eq 8 ]] || { printf '%s' "$1"; return 0; }
+	printf '%d.%d.%d.%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}" "0x${h:6:2}"
+}
+
+netmask_prefix() {
+	local h=${1#0x} n=0 i c
+	[[ ${#h} -eq 8 ]] || return 0
+	for ((i = 0; i < ${#h}; i++)); do
+		c=$((16#${h:i:1}))
+		while ((c)); do
+			((n += c & 1))
+			((c >>= 1))
+		done
+	done
+	printf '%d' "$n"
+}
+
+# -------------------------------------------------------------------- rows ---
+
+# Every row is three tab fields: what fzf shows, what `y` copies, and the view
+# that `l` opens. A row fills one of the last two, never both. cmd_pick appends
+# a fourth, the row number, so it can put the cursor back after a refresh.
+emit() { # emit <emoji> <label> <value> [note]
+	local emoji=$1 label=$2 value=${3:-} note=${4:-}
+	if [[ -z $value ]]; then
+		printf '%s  %-11s %s%s%s\t\t\n' "$emoji" "$label" "$DIM" "${note:-unavailable}" "$RESET"
+	elif [[ -n $note ]]; then
+		printf '%s  %-11s %-20s %s%s%s\t%s\t\n' \
+			"$emoji" "$label" "$value" "$DIM" "$note" "$RESET" "$value"
+	else
+		printf '%s  %-11s %s\t%s\t\n' "$emoji" "$label" "$value" "$value"
+	fi
+}
+
+emit_branch() { # emit_branch <emoji> <label> <blurb> <view>
+	printf '%s  %-11s %s%s%s\t\t%s\n' "$1" "$2" "$DIM" "$3" "$RESET" "$4"
+}
+
+rows_menu() {
+	emit_branch '🏠' 'Local' 'this machine and the router' 'local'
+	emit_branch '🌍' 'Public' 'the address the internet sees' 'public'
+}
+
+rows_local() {
+	init_cache
+	local default_if iface addr icon note gateway
+	default_if=$(default_interface)
+	for iface in $(ifconfig -l 2>/dev/null); do
+		[[ $iface == lo0 ]] && continue
+		addr=$(local_address "$iface")
+		[[ -n $addr ]] || continue
+		if [[ $iface == "$default_if" ]]; then
+			icon='📶'
+			note='default route'
+		else
+			icon='🔗'
+			note=''
+		fi
+		emit "$icon" "$(friendly_name "$iface")" "$addr" "$note"
+	done
+	gateway=$(default_gateway)
+	[[ -n $gateway ]] && emit '🚪' 'Router' "$gateway"
+	emit '💻' 'Hostname' "$(hostname)"
+	return 0
+}
+
+rows_public() {
+	init_cache
+	warm lookup
+	read_ipinfo
+	local v6 where
+	v6=$(fetch_v6)
+
+	if [[ -n $PUBLIC4 ]]; then
+		emit '🌐' 'IPv4' "$PUBLIC4"
+	else
+		emit '🌐' 'IPv4' '' 'no answer from ipinfo.io. press r to retry'
+	fi
+	if [[ -n $v6 ]]; then
+		emit '🌐' 'IPv6' "$v6"
+	else
+		emit '🌐' 'IPv6' '' 'none on this network'
+	fi
+
+	[[ -n $REVERSE ]] && emit '📡' 'Hostname' "$REVERSE"
+	[[ -n $ORG ]] && emit '🏢' 'ISP' "$ORG"
+
+	where=$CITY
+	[[ -n $REGION && $REGION != "$CITY" ]] && where="${where:+$where, }$REGION"
+	[[ -n $COUNTRY ]] && where="${where:+$where, }$COUNTRY"
+	[[ -n $where ]] && emit '📍' 'Location' "$where"
+
+	[[ -n $COORDS ]] && emit '🧭' 'Coordinates' "$COORDS"
+	[[ -n $TIMEZONE ]] && emit '🕐' 'Timezone' "$TIMEZONE"
+	return 0
+}
+
+# Raw ipwho.is JSON carries a flag image and a readme URL. Pull the fields worth
+# reading, one per row, so `y` copies any single one of them.
+rows_lookup() {
+	init_cache
+	local json failure emoji label value
+	json=$(fetch_detail)
+	if [[ -z $json ]]; then
+		emit '❗' 'Lookup' '' 'no answer from ipwho.is. press r to retry'
+		return 0
+	fi
+	# ipwho.is answers 200 with {"success":false} when it rate limits, so curl -f
+	# does not catch it. Without this the view would come back empty.
+	failure=$(printf '%s' "$json" |
+		jq -r 'if .success == false then (.message // "lookup refused") else empty end' 2>/dev/null) || :
+	if [[ -n $failure ]]; then
+		emit '❗' 'Lookup' '' "ipwho.is: $failure"
+		return 0
+	fi
+
+	while IFS=$'\t' read -r emoji label value; do
+		[[ -n $value ]] || continue
+		emit "$emoji" "$label" "$value"
+	done < <(printf '%s' "$json" | jq -r '
+		[
+			["🌐", "IPv4",        .ip],
+			["🏢", "ASN",         (if .connection.asn then "AS\(.connection.asn)" else null end)],
+			["🏢", "Org",         .connection.org],
+			["🏢", "ISP",         .connection.isp],
+			["📡", "Domain",      .connection.domain],
+			["📍", "City",        .city],
+			["📍", "Region",      .region],
+			["📍", "Country",     (if .country then "\(.flag.emoji // "") \(.country) (\(.country_code))" else null end)],
+			["📍", "Capital",     .capital],
+			["📮", "Postal",      .postal],
+			["🧭", "Coordinates", (if .latitude then "\(.latitude), \(.longitude)" else null end)],
+			["🕐", "Timezone",    (if .timezone.id then "\(.timezone.id) UTC\(.timezone.utc)" else null end)],
+			["📞", "Calling",     (if .calling_code then "+\(.calling_code)" else null end)]
+		]
+		| map(select(.[2] != null and .[2] != ""))
+		| .[] | "\(.[0])\t\(.[1])\t\(.[2] | tostring)"
+	' 2>/dev/null)
+	return 0
+}
+
+rows_iface() { # rows_iface <address>
+	init_cache
+	local addr=${1:-} iface found='' info mask v6 status mtu mac bcast prefix
+	for iface in $(ifconfig -l 2>/dev/null); do
+		[[ -n $addr && $(local_address "$iface") == "$addr" ]] || continue
+		found=$iface
+		break
+	done
+	if [[ -z $found ]]; then
+		emit '❗' 'Interface' '' 'that row is not an interface address'
+		return 0
+	fi
+
+	info=$(ifconfig "$found" 2>/dev/null) || :
+	mask=$(printf '%s' "$info" | awk '/inet /{ print $4; exit }')
+	bcast=$(printf '%s' "$info" | awk '/inet /{ for (i = 1; i < NF; i++) if ($i == "broadcast") print $(i + 1); exit }')
+	mac=$(printf '%s' "$info" | awk '/^\tether /{ print $2; exit }')
+	status=$(printf '%s' "$info" | awk '/status:/{ print $2; exit }')
+	mtu=$(printf '%s' "$info" | awk 'NR == 1 { for (i = 1; i < NF; i++) if ($i == "mtu") print $(i + 1); exit }')
+	v6=$(printf '%s' "$info" | awk '/inet6 / && !/fe80:/{ print $2; exit }')
+
+	emit '📶' 'Interface' "$found"
+	emit '📇' 'Name' "$(friendly_name "$found")"
+	emit '🌐' 'IPv4' "$addr"
+	if [[ -n $mask ]]; then
+		prefix=$(netmask_prefix "$mask")
+		emit '🔢' 'Netmask' "$(netmask_dotted "$mask")" "${prefix:+/$prefix}"
+	fi
+	[[ -n $bcast ]] && emit '📢' 'Broadcast' "$bcast"
+	[[ -n $v6 ]] && emit '🌐' 'IPv6' "$v6"
+	[[ -n $mac ]] && emit '🔑' 'MAC' "$mac"
+	[[ -n $mtu ]] && emit '📦' 'MTU' "$mtu"
+	[[ -n $status ]] && emit '🚦' 'Status' "$status"
+	return 0
+}
+
+cmd_view() { # cmd_view <view> [arg]
+	case $1 in
+		menu) rows_menu ;;
+		local) rows_local ;;
+		public) rows_public ;;
+		lookup) rows_lookup ;;
+		iface) rows_iface "${2:-}" ;;
+		*) die "unknown view: $1" ;;
+	esac
+}
+
+# ------------------------------------------------------------------ chrome ---
+
+label_of() {
+	case $1 in
+		menu) printf ' 🌐  network ' ;;
+		local) printf ' 🏠  local ' ;;
+		public) printf ' 🌍  public ' ;;
+		lookup) printf ' 🔎  lookup ' ;;
+		iface) printf ' 📶  interface ' ;;
+	esac
+}
+
+footer_of() {
+	case $1 in
+		menu) printf '  j k  move    l  open    q  quit' ;;
+		local) printf '  j k  move    y  copy    d  interface    h  back' ;;
+		public) printf '  j k  move    y  copy    d  lookup    o  browser    r  refresh    h  back' ;;
+		lookup) printf '  j k  move    y  copy    o  browser    r  refresh    h  back' ;;
+		iface) printf '  j k  move    y  copy    h  back' ;;
+	esac
+}
+
+parent_of() {
+	case $1 in
+		lookup) printf 'public' ;;
+		iface) printf 'local' ;;
+		local | public) printf 'menu' ;;
+		*) printf '' ;;
+	esac
+}
+
+# ----------------------------------------------------------------- actions ---
+
+cmd_copy() {
+	local value=${1:-}
+	if [[ -z $value ]]; then
+		printf '  nothing to copy on that row\n'
+		return 0
+	fi
+	printf '%s' "$value" | pbcopy
+	# No escapes here: this same output becomes the fzf footer under `y`, and the
+	# footer is plain text.
+	printf '  copied %s\n' "$value"
+}
+
+cmd_open() {
+	init_cache
+	read_ipinfo
+	if [[ -z $PUBLIC4 ]]; then
+		printf '  no public IP to look up\n'
+		return 0
+	fi
+	open "https://ipinfo.io/$PUBLIC4" >/dev/null 2>&1 || :
+	printf '  opened ipinfo.io/%s in the browser\n' "$PUBLIC4"
+}
+
+# ------------------------------------------------------------------ picker ---
+
+cmd_pick() {
+	require fzf jq curl
+	init_cache
+	warm public
+
+	local view=menu arg='' pos=1 back_pos=1 note=''
+	local quoted out key line copy target idx rc up
+	quoted=$(shq "$SELF")
+
+	while true; do
+		rc=0
+		out=$(cmd_view "$view" "$arg" |
+			awk -F'\t' -v OFS='\t' '{ print $1, $2, $3, NR }' |
+			fzf \
+				--delimiter=$'\t' \
+				--with-nth=1 \
+				--ansi \
+				--no-sort \
+				--no-multi \
+				--no-input \
+				--cycle \
+				--info=hidden \
+				--layout=reverse \
+				--height='~85%' \
+				--min-height=6 \
+				--border=rounded \
+				--border-label="$(label_of "$view")" \
+				--border-label-pos=3 \
+				--footer="${note:-$(footer_of "$view")}" \
+				--pointer='▸' \
+				--expect='enter,l,d,h,esc,r,q' \
+				--bind="start:pos($pos)" \
+				--bind='j:down' \
+				--bind='k:up' \
+				--bind='g:first' \
+				--bind='G:last' \
+				--bind='ctrl-d:half-page-down' \
+				--bind='ctrl-u:half-page-up' \
+				--bind="y:transform-footer($quoted --copy {2})" \
+				--bind="o:transform-footer($quoted --open)" \
+				--bind='ctrl-c:abort') || rc=$?
+
+		# 130 is ctrl-c, 1 is an empty list. Both mean stop.
+		[[ $rc -eq 0 && -n $out ]] || return 0
+
+		note=''
+		key=${out%%$'\n'*}
+		line=${out#*$'\n'}
+		copy=$(printf '%s' "$line" | cut -f2)
+		target=$(printf '%s' "$line" | cut -f3)
+		idx=$(printf '%s' "$line" | cut -f4)
+		[[ -n $idx ]] || idx=1
+
+		case $key in
+			q) return 0 ;;
+			h | esc)
+				up=$(parent_of "$view")
+				[[ -n $up ]] || return 0
+				view=$up
+				arg=''
+				pos=$back_pos
+				back_pos=1
+				;;
+			enter | l)
+				if [[ -n $target ]]; then
+					back_pos=$idx
+					view=$target
+					arg=''
+					pos=1
+				elif [[ -n $copy ]]; then
+					cmd_copy "$copy"
+					return 0
+				else
+					note='  nothing to copy on that row'
+					pos=$idx
+				fi
+				;;
+			d)
+				pos=$idx
+				case $view in
+					public)
+						back_pos=$idx
+						view=lookup
+						pos=1
+						;;
+					local)
+						if [[ -n $copy ]]; then
+							back_pos=$idx
+							view=iface
+							arg=$copy
+							pos=1
+						else
+							note='  that row has no interface'
+						fi
+						;;
+					*) note='  nothing more to show here' ;;
+				esac
+				;;
+			r)
+				pos=$idx
+				case $view in
+					public | lookup)
+						rm -f "$CACHE/ipinfo.json" "$CACHE/ipwhois.json" "$CACHE/v6.txt"
+						;;
+					local | iface) rm -f "$CACHE/ifnames.tsv" ;;
+				esac
+				;;
+			*) return 0 ;;
+		esac
+	done
+}
+
+# -------------------------------------------------------------------- cli ----
+
+usage() {
+	cat <<-'EOF'
+		usage: ip [options]
+
+		  (no options)     open the picker
+		  -4, --public     print the public IPv4
+		  -6, --public6    print the public IPv6, or exit 1 when there is none
+		  -l, --local      print the local IPv4 on the default route interface
+		  -j, --json       print the full ipwho.is lookup as JSON
+		  -h, --help       print this message
+
+		In the picker:
+		  j k      move            g G   top, bottom
+		  l        open a view     h     back
+		  enter    copy and quit   y     copy and stay
+		  d        more detail     o     open ipinfo.io in the browser
+		  r        refetch         q     quit
+
+		With stdout on a pipe and no options, prints the public IPv4.
+	EOF
+}
+
+main() {
+	local iface addr v6 json
+	case ${1:-} in
+		'')
+			if [[ -t 1 ]]; then
+				cmd_pick
+			else
+				require curl jq
+				init_cache
+				read_ipinfo
+				[[ -n $PUBLIC4 ]] || die 'could not reach ipinfo.io'
+				printf '%s\n' "$PUBLIC4"
+			fi
+			;;
+		-4 | --public)
+			require curl jq
+			init_cache
+			read_ipinfo
+			[[ -n $PUBLIC4 ]] || die 'could not reach ipinfo.io'
+			printf '%s\n' "$PUBLIC4"
+			;;
+		-6 | --public6)
+			require curl
+			init_cache
+			v6=$(fetch_v6)
+			[[ -n $v6 ]] || die 'no IPv6 address on this network'
+			printf '%s\n' "$v6"
+			;;
+		-l | --local)
+			iface=$(default_interface)
+			[[ -n $iface ]] || die 'no default route'
+			addr=$(local_address "$iface")
+			[[ -n $addr ]] || die "no IPv4 address on $iface"
+			printf '%s\n' "$addr"
+			;;
+		-j | --json)
+			require curl jq
+			init_cache
+			json=$(fetch_detail)
+			[[ -n $json ]] || die 'could not reach ipwho.is'
+			printf '%s' "$json" | jq .
+			;;
+		-h | --help) usage ;;
+		--view)
+			shift
+			cmd_view "$@"
+			;;
+		--warm)
+			shift
+			cmd_warm "${1:-public}"
+			;;
+		--copy)
+			shift
+			cmd_copy "${1:-}"
+			;;
+		--open) cmd_open ;;
+		*)
+			usage >&2
+			exit 2
+			;;
+	esac
+}
+
+main "$@"
