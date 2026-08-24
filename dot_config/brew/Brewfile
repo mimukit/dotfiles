@@ -4,7 +4,7 @@ tap "gromgit/brewtils", trusted: true
 tap "infisical/get-cli", trusted: true
 tap "peterldowns/tap", trusted: true
 tap "shobhit99/tap"
-tap "stablyai/orca"
+tap "stablyai/orca", trusted: { casks: ["orca"] }
 # Run your GitHub Actions locally
 brew "act"
 # Display directories as trees (with optional color/HTML output)
@@ -321,8 +321,6 @@ cask "obs"
 cask "onyx"
 # Replacement for Docker Desktop
 cask "orbstack"
-# IDE for orchestrating AI coding agents across terminals and worktrees
-cask "stablyai/orca/orca", trusted: true
 # Self-hosted daemon for AI coding agents
 cask "paseo"
 # Utility to uninstall apps and remove leftover files from old/uninstalled apps
