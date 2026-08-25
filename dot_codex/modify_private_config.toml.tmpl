@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+#
+# chezmoi modify_ script for Codex's config file.
+#
+# ~/.codex/config.toml holds our preferences and, in the same file, state that
+# belongs to this machine and to one build of ChatGPT.app:
+#
+#   us        model, model_reasoning_effort, plugins, tui, features, desktop
+#   Codex     marketplaces (cache paths + last_updated), projects (a trust
+#             decision per absolute directory), hooks.state (a trusted_hash per
+#             hook entry), tui.model_availability_nux
+#   ChatGPT   notify, mcp_servers, shell_environment_policy — all absolute paths
+#     .app    into the app bundle, one pinned to the build number
+#
+# Codex rewrites its share whenever you trust a directory, open a project or
+# take an app upgrade, so tracking the file whole put a diff in the source after
+# every session. The trust list also carried a readable index of every project
+# on this machine into the repository.
+#
+# So chezmoi hands us the target's CURRENT bytes on stdin, and whatever we print
+# to stdout becomes the new file. We overlay the keys in the payload and leave
+# every other key exactly where we found it.
+#
+# The key policy lives in private_dot_local/bin/executable_codex_settings_export.sh,
+# which is what generates that payload. This script applies, it does not decide.
+#
+# Formatting: tomlkit parses TOML into a style-preserving tree, so key order,
+# quote style and blank lines survive and an apply that changes nothing produces
+# the same bytes back. That is what keeps `chezmoi status` quiet instead of
+# fighting Codex over layout on every apply. `dasel` was tried first and
+# rejected: it round-trips without losing data, but alphabetises every table and
+# rewrites double quotes as single, which would rewrite this file on every run.
+#
+# Do NOT `chezmoi add ~/.codex/config.toml`. That bypasses this script and puts a
+# plain config.toml back in the source next to it, which then wins. Edit
+# .chezmoitemplates/codex-config.toml instead.
+
+# Deliberately no `set -e`: a failure here must fall through to the passthrough
+# below, never abort mid-stream and truncate the config file.
+set -uo pipefail
+
+PAYLOAD=$(
+  cat <<'CODEX_PAYLOAD_EOF'
+{{ includeTemplate "codex-config.toml" }}
+CODEX_PAYLOAD_EOF
+)
+
+# Buffer stdin to a file rather than a variable so the failure path can replay it
+# byte-for-byte (command substitution would eat trailing newlines).
+current=$(mktemp)
+payload=$(mktemp)
+trap 'rm -f "$current" "$payload"' EXIT
+cat >"$current"
+printf '%s\n' "$PAYLOAD" >"$payload"
+
+if [ ! -s "$current" ]; then
+  # Fresh machine: Codex has never written a config, so there is no machine
+  # state to preserve. Emit the payload as-is.
+  printf '%s\n' "$PAYLOAD"
+  exit 0
+fi
+
+# Recursive overlay: our value wins at a leaf, and two tables merge rather than
+# replace, so `desktop` keeps the keys we do not declare. Keys present in the
+# target but absent from the payload are never deleted — a preference missing
+# from the payload means the exporter has not seen it yet, not that you want it
+# gone.
+MERGE=$(
+  cat <<'PY'
+import sys, tomlkit
+
+with open(sys.argv[1]) as f:
+    current = tomlkit.parse(f.read())
+with open(sys.argv[2]) as f:
+    payload = tomlkit.parse(f.read())
+
+def merge(dst, src):
+    for key, value in src.items():
+        if key in dst and hasattr(dst[key], "items") and hasattr(value, "items"):
+            merge(dst[key], value)
+        else:
+            dst[key] = value
+
+merge(current, payload)
+sys.stdout.write(tomlkit.dumps(current))
+PY
+)
+
+# Codex ends the file with a newline and tomlkit preserves it, but command
+# substitution strips trailing newlines, so print it back. Orca's script uses a
+# bare `printf '%s'` for the opposite reason: Orca writes no trailing newline.
+if merged=$(uv run --quiet --with tomlkit python -c "$MERGE" "$current" "$payload" 2>/dev/null) &&
+  [ -n "$merged" ]; then
+  printf '%s\n' "$merged"
+  exit 0
+fi
+
+# Merge failed — uv missing, no network for a cold tomlkit fetch, or the file is
+# not valid TOML. Our stdout IS the file, so emit the original untouched rather
+# than damaging it.
+echo "chezmoi: ~/.codex/config.toml merge failed (uv missing or invalid TOML); leaving the file unchanged" >&2
+cat "$current"

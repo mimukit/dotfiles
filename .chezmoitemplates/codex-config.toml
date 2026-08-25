@@ -1,0 +1,59 @@
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[tui]
+status_line = ["model-with-reasoning", "project-name", "git-branch", "run-state", "context-used", "five-hour-limit", "weekly-limit", "used-tokens", "fast-mode", "task-progress"]
+status_line_use_colors = true
+
+[features]
+hooks = true
+js_repl = false
+
+[desktop]
+conversationDetailMode = "STEPS_COMMANDS"
+ambient-suggestions-enabled = true
+appearanceLightCodeThemeId = "codex"
+dock-icon-preference = "app-default"
+hotkey-window-projectless-default-enabled = true
+followUpQueueMode = "queue"
+
+[desktop.appearanceLightChromeTheme]
+accent = "#0169cc"
+contrast = 45
+ink = "#0d0d0d"
+opaqueWindows = false
+surface = "#ffffff"
+
+[desktop.appearanceLightChromeTheme.fonts]
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#00a240"
+diffRemoved = "#e02e2a"
+skill = "#751ed9"
+
+[desktop.open-in-target-preferences]
+global = "sublimeText"

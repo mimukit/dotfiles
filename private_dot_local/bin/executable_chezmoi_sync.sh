@@ -71,6 +71,12 @@ RE_ADD_PATHS=(
   "$HOME/.config/btop/btop.conf"
   # Codex (~/.codex): stable config files only. Secrets (auth.json), history,
   # logs, caches, sqlite DBs, sessions and other runtime state are excluded.
+  #
+  # ~/.codex/config.toml is deliberately absent, for the same reason
+  # ~/.claude/settings.json is. It is managed by a modify_ script, and
+  # `chezmoi re-add` silently skips modify_ entries, so listing it here would
+  # look like it was covered while doing nothing. The extract step below handles
+  # it instead.
   "$HOME/.codex/hooks.json"
   "$HOME/.codex/rules/default.rules"
   "$HOME/.codex/AGENTS.md"
@@ -146,6 +152,22 @@ if [ -x "$CLAUDE_EXPORT" ]; then
     "$CLAUDE_EXPORT" --dry-run
   else
     "$CLAUDE_EXPORT"
+  fi
+fi
+
+# Codex writes its trust list, marketplace cache paths and hook hashes into the
+# same config file as its preferences, and rewrites them whenever you trust a
+# directory or take an app upgrade. It is managed by a modify_ script that merges
+# our keys in and passes that state through, which `chezmoi re-add` cannot
+# capture because it skips modify_ entries. This pulls our slice back out
+# instead. It no-ops when Codex has never written a config.
+CODEX_EXPORT="$HOME/.local/bin/codex_settings_export.sh"
+if [ -x "$CODEX_EXPORT" ]; then
+  echo -e "${CYAN}⏳ extract  Codex config${RESET}"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    "$CODEX_EXPORT" --dry-run
+  else
+    "$CODEX_EXPORT"
   fi
 fi
 
