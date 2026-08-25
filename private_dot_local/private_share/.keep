@@ -1,0 +1,10 @@
+# Placeholder so git carries this directory.
+#
+# chezmoi does not apply a source file whose name starts with a dot, but it does
+# create the directory that holds it. That is the only reason this file exists.
+#
+# ~/.local/share must be 0700. .chezmoiexternal.toml clones zinit into
+# .local/share/zinit/zinit.git, and chezmoi creates the parent directories of an
+# external at its default 0755. Without this entry, every `chezmoi apply` would
+# relax ~/.local/share from 0700 to 0755. The private_ prefix here declares the
+# mode we actually want.

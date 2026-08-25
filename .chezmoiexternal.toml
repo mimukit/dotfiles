@@ -1,0 +1,28 @@
+# Third-party repositories chezmoi clones, so a new machine needs no manual
+# clone step. Before this file, zinit was cloned by an `if [ ! -d ]` block in
+# .zshrc and tpm by hand from tmux.sh.
+#
+# type = "git-repo" makes chezmoi run `git clone` once, then `git pull` when the
+# refresh period lapses. Both tools also update themselves (`zinit self-update`,
+# and tpm's own `git pull`), and that is not the two-writer problem this repo
+# hits elsewhere: chezmoi drives the same git repository the tool does, so a pull
+# after a self-update either fast-forwards or does nothing.
+#
+# Clones are full, not shallow. `zinit self-update` needs the history.
+#
+# Deliberately absent: the yazi flavors under ~/.config/yazi/flavors. `ya pkg`
+# owns those files and rewrites them in place, pinned by rev and hash in
+# .config/yazi/package.toml, which chezmoi does track. An external there would
+# put a second writer on the same files and bring back the "has changed since
+# chezmoi last wrote it" prompt that .chezmoiignore already documents. Restore
+# them on a new machine with `ya pkg install`.
+
+[".local/share/zinit/zinit.git"]
+type = "git-repo"
+url = "https://github.com/zdharma-continuum/zinit.git"
+refreshPeriod = "168h"
+
+[".tmux/plugins/tpm"]
+type = "git-repo"
+url = "https://github.com/tmux-plugins/tpm.git"
+refreshPeriod = "168h"

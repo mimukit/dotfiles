@@ -32,17 +32,20 @@ export FZF_DEFAULT_OPTS=" \
 --color=selected-bg:#45475a \
 --multi"
 
-# Set the directory we want to store zinit and plugins
+# Set the directory we want to store zinit and plugins.
+# chezmoi clones zinit itself; see .chezmoiexternal.toml. This file no longer
+# clones it. Guard the source so a shell opened before the first `chezmoi apply`
+# still starts, without the plugins.
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
-# Download Zinit, if it's not there yet
-if [ ! -d "$ZINIT_HOME" ]; then
-   mkdir -p "$(dirname $ZINIT_HOME)"
-   git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+if [[ -r "${ZINIT_HOME}/zinit.zsh" ]]; then
+  source "${ZINIT_HOME}/zinit.zsh"
+else
+  print -u2 "zinit is missing at ${ZINIT_HOME}. Run: chezmoi apply"
+  # Swallow the plugin lines below, rather than printing "command not found"
+  # once per plugin.
+  zinit() { : }
 fi
-
-# Source/Load zinit
-source "${ZINIT_HOME}/zinit.zsh"
 
 # Add in zsh plugins.
 # An `ice` modifier applies to the next command only, so repeat it per plugin.

@@ -1,0 +1,30 @@
+# chezmoi's own configuration. `chezmoi init` renders this to
+# ~/.config/chezmoi/chezmoi.toml. Before this file existed there was no config
+# at all, so `chezmoi doctor` reported "config-file: not found" and there was
+# nowhere to put a value that differs per machine.
+#
+# Re-render it after editing:  chezmoi init
+
+[data]
+# Identity. Same person on every machine, so these are static rather than
+# prompted. They exist so tracked files can stop hardcoding them: the target for
+# that is private_dot_gitconfig, which still writes the name, the email and two
+# absolute /Users/mukit paths literally.
+name = "Mukitul Islam Mukit"
+email = "hellomukit@gmail.com"
+
+# Home directory, for templates that need an absolute path. Prefer this over
+# writing /Users/mukit, which breaks under a different username.
+home = {{ .chezmoi.homeDir | quote }}
+
+[git]
+# Never commit or push on apply. This repo's history is written by hand, and the
+# modify_ scripts make a bad auto-commit hard to read after the fact.
+autoCommit = false
+autoPush = false
+
+[merge]
+# chezmoi's built-in default is vimdiff. `vim` is only an alias for nvim in
+# .zshrc, and chezmoi does not see shell aliases, so name nvim directly.
+command = "nvim"
+args = ["-d", "{{ "{{ .Destination }}" }}", "{{ "{{ .Source }}" }}", "{{ "{{ .Target }}" }}"]
