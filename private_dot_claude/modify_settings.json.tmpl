@@ -53,10 +53,26 @@ current=$(mktemp)
 trap 'rm -f "$current"' EXIT
 cat >"$current"
 
+# Expand the __HOME__ token the exporter wrote. Both paths below need this: the
+# merge path feeds the expanded payload to jq, and the fresh-machine path emits
+# it directly. Emitting the payload raw would write literal __HOME__ strings into
+# a new machine's settings file, and the permissions naming the statusline script
+# would then match nothing.
+JQ_EXPAND='def expand: walk(if type == "string" and (index("__HOME__") != null)
+                            then (split("__HOME__") | join($home)) else . end);'
+
 if [ ! -s "$current" ]; then
   # Fresh machine: Claude Code has never written a settings file, so there are
-  # no vendor entries to preserve. Emit the payload as-is.
-  printf '%s\n' "$PAYLOAD"
+  # no vendor entries to preserve. Emit the payload with the token expanded.
+  if fresh=$(jq --indent 2 -n --argjson payload "$PAYLOAD" --arg home "$HOME" \
+    "$JQ_EXPAND"' $payload | expand' 2>/dev/null) && [ -n "$fresh" ]; then
+    printf '%s\n' "$fresh"
+  else
+    # jq missing on a machine with no settings file. Better a payload carrying
+    # the raw token than no settings at all; a later apply with jq present fixes
+    # it, because the merge path rewrites these keys.
+    printf '%s\n' "$PAYLOAD"
+  fi
   exit 0
 fi
 
@@ -71,9 +87,19 @@ fi
 #                  `permissions` keep their key order and gain our values, while
 #                  arrays such as permissions.allow are replaced whole. Any
 #                  top-level key we do not declare passes through untouched.
-JQ_PROGRAM='
+#
+#   __HOME__       the exporter stores this machine's home directory as a token
+#                  so the payload survives a different username. Claude Code
+#                  embeds the path inside a larger permission string, as in
+#                  `Bash(bash /Users/mukit/.claude/statusline.sh)`, so this
+#                  expands the token anywhere in a string rather than only at
+#                  the start the way Orca's narrower version does. split/join is
+#                  literal, so a home directory holding a regex metacharacter
+#                  cannot corrupt the merge.
+JQ_PROGRAM="$JQ_EXPAND"'
   def is_ours: ((.hooks // []) | any((.command // "") | index($marker) != null));
-  ($payload.hooks // {}) as $mine
+  ($payload | expand) as $payload
+  | ($payload.hooks // {}) as $mine
   | (.hooks // {}) as $cur
   | (reduce (($cur | keys_unsorted) + ($mine | keys_unsorted))[] as $e
       ([]; if index($e) then . else . + [$e] end)) as $events
@@ -84,7 +110,7 @@ JQ_PROGRAM='
   | .hooks = ($hooks | with_entries(select(.value | length > 0)))
 '
 
-if merged=$(jq --indent 2 --argjson payload "$PAYLOAD" --arg marker "$MARKER" \
+if merged=$(jq --indent 2 --argjson payload "$PAYLOAD" --arg marker "$MARKER" --arg home "$HOME" \
   "$JQ_PROGRAM" "$current" 2>/dev/null) && [ -n "$merged" ]; then
   printf '%s\n' "$merged"
   exit 0

@@ -86,15 +86,29 @@ if [ "$DRY_RUN" -eq 1 ]; then
   echo -e "${YELLOW}ℹ️ Dry run: showing changes only, writing nothing.${RESET}"
 fi
 
-# Drop vendor hook entries, then drop any event left with nothing in it.
-# shellcheck disable=SC2016  # $marker is a jq variable, bound with --arg below.
+# Drop vendor hook entries, then drop any event left with nothing in it, then
+# replace this machine's home directory with a portable __HOME__ token.
+#
+# The token is the same idea as the one in orca_settings_export.sh, but wider.
+# Orca stores whole-path values, so its expansion tests `startswith("__HOME__")`.
+# Claude Code writes the path inside a larger string, as in
+# `Bash(bash /Users/mukit/.claude/statusline.sh)`, so a prefix test never fires
+# and the swap has to work anywhere in the string. Keep this in step with the
+# matching `expand` in private_dot_claude/modify_settings.json.tmpl.
+#
+# split/join, not gsub: the 1-argument form of split is literal, so a home
+# directory containing a regex metacharacter cannot corrupt the payload.
+# shellcheck disable=SC2016  # $marker and $home are jq variables, bound with --arg below.
 JQ_PROGRAM='
   def is_ours: ((.hooks // []) | any((.command // "") | index($marker) != null));
-  .hooks |= (with_entries(.value |= map(select(is_ours)))
-             | with_entries(select(.value | length > 0)))
+  def tokenize: walk(if type == "string" and (index($home) != null)
+                     then (split($home) | join("__HOME__")) else . end);
+  (.hooks |= (with_entries(.value |= map(select(is_ours)))
+              | with_entries(select(.value | length > 0))))
+  | tokenize
 '
 
-if ! rendered=$(jq --indent 2 --arg marker "$MARKER" "$JQ_PROGRAM" "$CLAUDE_SETTINGS" 2>/dev/null); then
+if ! rendered=$(jq --indent 2 --arg marker "$MARKER" --arg home "$HOME" "$JQ_PROGRAM" "$CLAUDE_SETTINGS" 2>/dev/null); then
   echo -e "${RED}❌ Could not parse $CLAUDE_SETTINGS as JSON.${RESET}" >&2
   exit 1
 fi
