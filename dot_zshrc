@@ -50,6 +50,9 @@ fi
 # Add in zsh plugins.
 # An `ice` modifier applies to the next command only, so repeat it per plugin.
 # zsh-vi-mode also enables vi mode, so this file never calls `bindkey -v`.
+# Init at source time, not at the first prompt. The lazy init redraws the
+# command line and makes tmuxinator's send-keys commands print twice.
+ZVM_INIT_MODE=sourcing
 zinit ice depth=1; zinit light jeffreytse/zsh-vi-mode
 zinit ice depth=1; zinit light zsh-users/zsh-completions
 zinit ice depth=1; zinit light zsh-users/zsh-autosuggestions
@@ -70,25 +73,12 @@ unset _zcompdump_fresh
 
 zinit cdreplay -q
 
-# fzf-tab requires compinit first. It owns the TAB key; see zvm_after_init below.
+# fzf-tab requires compinit first. It owns the TAB key; see the keybindings
+# block after the shell integrations.
 zinit ice depth=1; zinit light Aloxaf/fzf-tab
 
 # zsh-syntax-highlighting must load last, after every plugin that wraps a widget.
 zinit ice depth=1; zinit light zsh-users/zsh-syntax-highlighting
-
-# Keybindings.
-# zsh-vi-mode resets the keymaps at the first prompt, after this file ends.
-# Every binding must live in zvm_after_init to survive that reset.
-function zvm_after_init() {
-  bindkey '^p' history-search-backward
-  bindkey '^n' history-search-forward
-
-  (( ${+widgets[fzf-tab-complete]} ))   && bindkey '^I' fzf-tab-complete
-  (( ${+widgets[autosuggest-accept]} )) && bindkey '^y' autosuggest-accept
-  (( ${+widgets[fzf-file-widget]} ))    && bindkey '^t' fzf-file-widget
-  (( ${+widgets[fzf-history-widget]} )) && bindkey '^r' fzf-history-widget
-  (( ${+widgets[atuin-search]} ))       && bindkey '^f' atuin-search
-}
 
 # History
 HISTSIZE=5000
@@ -126,6 +116,18 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
    export MISE_IGNORED_CONFIG_PATHS="$HOME/.local/share/chezmoi"
    eval "$(mise activate zsh)"
 fi
+
+# Keybindings.
+# zsh-vi-mode inits at source time (ZVM_INIT_MODE=sourcing above), so it does
+# not reset the keymaps at the first prompt. Plain bindkey calls stick, as long
+# as they run after every plugin and integration that defines a widget.
+bindkey '^p' history-search-backward
+bindkey '^n' history-search-forward
+(( ${+widgets[fzf-tab-complete]} ))   && bindkey '^I' fzf-tab-complete
+(( ${+widgets[autosuggest-accept]} )) && bindkey '^y' autosuggest-accept
+(( ${+widgets[fzf-file-widget]} ))    && bindkey '^t' fzf-file-widget
+(( ${+widgets[fzf-history-widget]} )) && bindkey '^r' fzf-history-widget
+(( ${+widgets[atuin-search]} ))       && bindkey '^f' atuin-search
 
 # Alias list
 alias ...='cd ../..'
