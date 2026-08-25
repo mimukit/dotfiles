@@ -84,7 +84,11 @@ echo -e "${CYAN}🔍 Comparing installed packages with Brewfile...${RESET}"
 
 # Use temporary files for comm (more portable than process substitution)
 TMP_DIR=$(mktemp -d)
-trap "rm -rf '$TMP_DIR'" EXIT INT TERM
+# Single quotes on purpose: $TMP_DIR must expand when the trap fires, not when
+# it is installed. Double quotes would bake in whatever the variable held at
+# install time, so a later reassignment would leave the real directory behind.
+# shellcheck disable=SC2064  # the expansion is deferred deliberately
+trap 'rm -rf "$TMP_DIR"' EXIT INT TERM
 
 echo "$INSTALLED_FORMULAE" > "$TMP_DIR/installed_formulae.txt"
 echo "$BREWFILE_FORMULAE" > "$TMP_DIR/brewfile_formulae.txt"

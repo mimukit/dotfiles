@@ -243,6 +243,8 @@ apply_cd() {
   case "$d" in
     *'*'*|*'?'*|*'['*|-) CD_UNKNOWN=1; return ;;
   esac
+  # shellcheck disable=SC2088  # a literal ~ is the pattern being matched here,
+  # not a path we expect the shell to have expanded. The body does the expansion.
   case "$d" in
     '~') d=$HOME ;;
     '~/'*) d=$HOME/${d#\~/} ;;
@@ -331,6 +333,8 @@ decide_target() {
   # the path it actually names, not as `"/"`.
   unquote "$target"; target=$UNQUOTED
 
+  # shellcheck disable=SC2088  # a literal ~ is the pattern being matched here,
+  # not a path we expect the shell to have expanded. The body does the expansion.
   case "$target" in
     /|/\*|/.\*|'~'|'~/'|'$HOME'|'${HOME}'|'$HOME/')
       D_DEC=deny; D_REASON="refuses to delete home or root: $target"; return ;;
@@ -344,6 +348,8 @@ decide_target() {
     *'$'*|*'`'*)
       if expand_vars "$target" "$cwd"; then
         target=$EXPANDED
+        # shellcheck disable=SC2088  # a literal ~ is the pattern being matched here,
+        # not a path we expect the shell to have expanded. The body does the expansion.
         case "$target" in
           /|/\*|/.\*|'~'|'~/')
             D_DEC=deny; D_REASON="refuses to delete home or root: $1"; return ;;
@@ -357,6 +363,8 @@ decide_target() {
   case "$target" in *'*'*|*'?'*|*'['*) globby=1 ;; *) globby=0 ;; esac
 
   t=$target
+  # shellcheck disable=SC2088  # a literal ~ is the pattern being matched here,
+  # not a path we expect the shell to have expanded. The body does the expansion.
   case "$t" in
     '~') t=$HOME ;;
     '~/'*) t=$HOME/${t#\~/} ;;
