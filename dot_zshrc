@@ -19,7 +19,11 @@ path_prepend() {
 export EDITOR=nvim
 export XDG_CONFIG_HOME="$HOME/.config"
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
-export GITHUB_TOKEN=$(gh auth token)
+# No GITHUB_TOKEN here. Exporting `gh auth token` handed a live credential to
+# every child process, including npm lifecycle scripts and agent subprocesses.
+# `gh`, and anything that shells out to it, reads the keychain on its own.
+# If one tool genuinely needs the variable, set it for that command alone:
+#   GITHUB_TOKEN=$(gh auth token) the-command
 export FZF_DEFAULT_OPTS=" \
 --prompt=\"⚡Select Option → \" --height=~50% --layout=reverse --border --exit-0 \
 --color=spinner:#f5e0dc,hl:#f38ba8,border:#fab387 \
@@ -166,7 +170,6 @@ alias gc='git commit --verbose'
 alias gco='git checkout'
 alias gg='lazygit'
 alias gitclean='git remote prune origin'
-alias gitcleanmerged='git\ branch\ --merged\ main\ \|\ grep\ -v\ \"^\\\*\ main\"\ \|\ xargs\ -n\ 1\ -r\ git\ branch\ -d'
 alias glo='git log --oneline --decorate'
 alias gp='git push'
 alias gst='git status'
@@ -222,6 +225,15 @@ alias zl='session=$(zj ls -n -s | fzf --prompt="⚡Zellij Session → "); [[ -n 
 alias zll='layout=$(ls ~/.config/zellij/layouts | grep -v / | sed "s/\.[^.]*$//" | fzf --prompt="⚡Zellij Layout → "); [[ -n $layout ]] && zj --layout "$layout" attach --create "$layout"'
 alias zn='zellij attach --create default'
 alias zsrc='source ~/.zshrc'
+
+# Functions.
+# Anything holding a pipe or a quoted pattern belongs here, not in the alias
+# list. `alias` prints its body backslash-escaped, so re-adding that output to
+# this file turns the whole command into one word. gitcleanmerged was broken
+# that way and reported "command not found: git branch --merged main | ...".
+gitcleanmerged() {
+  git branch --merged main | grep -v '^\* main' | xargs -n 1 -r git branch -d
+}
 
 # Alias for macos only
 if [[ "$OSTYPE" == "darwin"* ]]; then
