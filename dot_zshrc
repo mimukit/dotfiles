@@ -175,7 +175,6 @@ alias gwa='git worktree add'
 alias gwls='git worktree list'
 alias gwr='git worktree remove'
 alias h='herdr'
-alias iconup='bash ~/setup_scripts/update_app_icons.sh'
 # ip and ipw are now ~/.local/bin/ip (chezmoi: private_dot_local/bin/executable_ip).
 # Run `ip` for the picker, `ip -j` for what ipw used to print, `ip -h` for the rest.
 alias kp='pids=$({ echo PORT PID COMMAND; lsof -nP -iTCP -sTCP:LISTEN +c 0 2>/dev/null | awk -v c=: "NR>1 { n=split(\$9,a,c); k=a[n] FS \$2; if (seen[k]++ == 0) print a[n], \$2, \$1 }" | sort -n; } | column -t | fzf --multi --header-lines=1 --prompt="⚡Kill Port → " | awk "{print \$2}" | sort -u); [[ -n $pids ]] && echo $pids | xargs kill -9'

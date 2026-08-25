@@ -6,7 +6,7 @@ layout {
         pane split_direction="vertical" {
             pane split_direction="horizontal" {
             pane command="zsh" close_on_exit=false {
-                args "-c" "brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all && sh ~/setup_scripts/update_app_icons.sh"
+                args "-c" "brew update && brew outdated --cask --greedy --verbose && brew upgrade --greedy --verbose && brew cleanup --prune=all"
             }
             pane size="30%" command="zsh" close_on_exit=true {
                 args "-c" "atuin sync"
