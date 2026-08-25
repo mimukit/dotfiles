@@ -26,7 +26,9 @@ Two hard boundaries:
 ## Procedure
 
 ### 1. Take an explicit input
-Require the user to name what to build. The options are a plan file (`docs/plans/plan-<slug>-YYYY-MM-DD.md`), **optionally narrowed to one phase** ("implement phase 3 of `plan-sso-2026-07-23.md`"), an issue (`#42`, or a URL/id `gh` can fetch), a freeform spec written in the prompt, or a **fix round**: a concrete list of review findings (e.g. the blockers from a review pass), each naming what's wrong and where. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it).
+Require the user to name what to build. The options are a plan file (`docs/plans/plan-<slug>-YYYY-MM-DD.md`), an issue (`#42`, or a URL/id `gh` can fetch), a freeform spec written in the prompt, or a **fix round**: a concrete list of review findings (e.g. the blockers from a review pass), each naming what's wrong and where. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it).
+
+**A plan or an issue may be narrowed to one phase** ("implement phase 3 of `plan-sso-2026-07-23.md`", "implement phase 2 of #42"). Both carry their phases as headings, so a narrowed run builds that phase and leaves the rest alone. Read the whole document either way: the phases above the named one say what the code may already assume, and the ones below say what it must not.
 
 ### 2. Assess implementability, bounce if thin
 Before writing anything, judge whether the input is concrete enough to build without inventing the design. A hardened plan or a fleshed-out issue passes. A bare title, a one-line ask, or a spec with unresolved core decisions does **not**. Stop and tell the user to harden it first with grillkit (to interrogate the decisions) or plankit (to draft a proper plan), naming the specific gaps you hit. Don't paper over a thin spec with assumptions; a wrong guess here costs more than the bounce.

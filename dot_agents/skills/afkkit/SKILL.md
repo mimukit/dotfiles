@@ -97,12 +97,12 @@ Default per-step models. Two things drive each assignment: **what a mistake cost
 
 **How a step's cost actually works.** Every tool use re-bills the agent's entire accumulated context. So cost tracks **context size × turns**, not token volume and not how often the step fires. A measured run bears this out sharply: the two steps that *explored the codebase*, each running exactly once, were over 40% of the bill between them, while three mechanical commit dispatches were under 9% for work the previous agent could have done in a handful of turns. **The way to make a step cheap is to hand it what it needs, not to ask it to think less**, and the cheapest step of all is the one that never gets its own dispatch. That is what [the run directory](#the-run-directory) and the dispatch floor are for, and it is why an expensive step is more often fixed by deleting a rediscovery than by dropping a tier.
 
-The **Tool uses** column is a descriptive baseline from observed runs, never a target, so read it as "this is roughly what this step needed." Where two runs disagreed the column gives the range. Implement is the row that does not generalize: it scales with the size of the change, and a run outside the range is not evidence that anything went wrong. [The run metrics](#run-metrics) in the hand-off are what keep this column honest, because they come from real runs rather than one remembered one.
+The **Tool uses** column is a descriptive baseline from observed runs, never a target, so read it as "this is roughly what this step needed." Where two runs disagreed the column gives the range. Implement is the row that does not generalize: it scales with the size of the change, it runs [once per phase](#one-dispatch-per-phase), and a run outside the range is not evidence that anything went wrong. [The run metrics](#run-metrics) in the hand-off are what keep this column honest, because they come from real runs rather than one remembered one.
 
 | Step | Model | Runs | Tool uses | Why |
 |------|-------|------|-----------|-----|
 | Spec gate | `opus` | 1× | ~29–31 | Gates the whole run, since a missed decision-gap poisons every step after it, and every later step inherits its orientation and its check list. Runs once, so buying capability here is nearly free. |
-| Implement | `opus` | 1× | ~45–175, scales with the change | The bulk of the work; implementkit's own test + build gate is the safety net underneath it. It commits its own work before returning. |
+| Implement | `opus` | 1× per phase | ~45–175 per phase, scales with the change | The bulk of the work; implementkit's own test + build gate is the safety net underneath it. It commits its own work before returning. |
 | Verify | `opus` | 1× | ~20–30 | Runs the code rather than reading it, the one lens review does not have. Small context (orientation plus the check list), so the strong tier is cheap here. |
 | Review, round 1 | `fable` | 1× | ~15–16 | The quality gate, over the full branch diff, deliberately on a **different model family** from the one that wrote the code; see below. |
 | Review, rounds 2–3 | `fable` | ≤2× | ~10–12 | Same model, delta-scoped to the fix commits (see [Fix loop](#6-fix-loop)). |
@@ -162,7 +162,9 @@ An issue already `in-progress` is **not** a refusal. issuekit takes its adopt pa
 
 ### 2. Spec gate
 
-Dispatch a subagent (worktree) to read the issue body and the relevant code, and classify any gaps between what the issue specifies and what building it requires. Because it is the only step that explores the repo before any code exists, it is also the step that writes down everything the run will need later. It has **four outputs**: the classification below, plus `orientation.md`, `assumptions.md`, and `checks.md` in [the run directory](#the-run-directory). Writing all three costs the gate almost nothing; it is already holding everything that goes in them.
+Dispatch a subagent (worktree) to read the issue body and the relevant code, and classify any gaps between what the issue specifies and what building it requires. Because it is the only step that explores the repo before any code exists, it is also the step that writes down everything the run will need later. It has **five outputs**: the classification below, the issue's phase list, plus `orientation.md`, `assumptions.md`, and `checks.md` in [the run directory](#the-run-directory). Writing all three files costs the gate almost nothing; it is already holding everything that goes in them.
+
+**The phase list is a return value, not a file.** An issue written by issuekit carries its phases as `## Phase N` headings, and [Implement](#3-implement) dispatches one subagent per heading. The gate reads the whole body anyway, so it returns the headings in order and the conductor holds them. A body with no phase headings returns a single unnamed phase, which is the same thing as today's one dispatch.
 
 The classification is the whole point:
 
@@ -192,6 +194,23 @@ Dispatch a subagent (worktree) to invoke **implementkit** against the issue spec
 Say so in the dispatch prompt, because the agent has to know the commit is part of its job: implementkit's own contract stops short of committing and it will otherwise hand back an uncommitted tree.
 
 Folding rather than dispatching is [the dispatch floor](#how-the-conductor-runs-each-step) applied to the clearest case in the pipeline. The agent that wrote the diff is still holding it, so the commit costs it a handful of turns. A fresh agent has to re-read the whole diff from cold to reach the same place, and in the measured run three of them spent 92,839 tokens and 55 tool uses doing precisely that.
+
+#### One dispatch per phase
+
+**A multi-phase issue gets one implement dispatch per phase**, in the order the phases are written, each invoking implementkit narrowed to that phase and each committing before it returns. A single-phase issue gets exactly one dispatch, which is this step's original shape and its original cost. The phase list comes from the [spec gate](#2-spec-gate), which read the whole issue body already; the conductor holds it and never re-reads the issue to rebuild it.
+
+The loop is what makes a large issue workable. Issues are now sized to a whole plan rather than to what fits in one agent's context, so one dispatch for a four-phase issue would ask a single agent to carry every earlier phase's exploration while it writes the last one.
+
+**This is [the dispatch floor](#how-the-conductor-runs-each-step) read the other way, and the two rulings are consistent.** The floor removes a dispatch when the next step needs *the previous agent's context*, which is why the commit stays folded in. It keeps a dispatch when the next step needs the *repository state* the previous agent produced and none of the reasoning that produced it. Phase N+1 needs phase N's committed code, not its transcript, so a fresh agent starts from a clean tree and the branch carries the hand-off.
+
+Route a failure exactly as a single-phase run does, per phase. Then name the phase in what the conductor holds:
+
+- **A phase escalates** → the run stops at that phase. The escalation comment names the phases already committed, the phase that stopped, and why, so a re-run resumes at the right place instead of rebuilding what landed.
+- **A phase reports green** → its commits are on the branch. Dispatch the next phase.
+
+**Every step after this one still runs once**, over the whole branch diff: [Verify](#4-verify), [Review](#5-review), [the fix loop](#6-fix-loop), [the QA plan](#7-qa-plan), and [the PR](#8-open-the-pr). The loop is Implement's alone. Reviewing per phase would re-read a growing diff once per phase and split the reviewer's judgment across pieces it cannot see whole, which is the opposite of what the review tier is bought for.
+
+**The conductor does not tick the issue's phase checkboxes as phases land.** It would read as useful progress on a long run, and it is a new unprompted tracker mutation that no mode owns. This pipeline has exactly two such exemptions ([issuekit `start`'s flip](#1-start-the-issue) and [prkit's `in-review` advance](#8-open-the-pr)), both belonging to the mode rather than to afkkit, and a progress indicator does not earn a third. The commits on the branch are the record while the run is live, and the PR is the record after it.
 
 ### 4. Verify
 
@@ -271,7 +290,7 @@ Crown **one** next move even after a batch, usually the oldest open PR, since re
 
 ### Run metrics
 
-Print one table per issue, after the outcome and before the next move. One row per dispatched step:
+Print one table per issue, after the outcome and before the next move. One row per dispatched step, so [a per-phase implement dispatch](#one-dispatch-per-phase) gets its own row and names the phase (`Implement · phase 2`):
 
 | Step | Model | Time | Tool uses | Tokens |
 |------|-------|------|-----------|--------|
@@ -301,7 +320,7 @@ Then escalation always means the same five things:
 
 1. **No PR.** Never open a pull request from a run that hit a wall.
 2. **Keep the work.** Leave the worktree and every commit intact, so the next human (or the re-run) picks up from real progress, not a clean slate.
-3. **Comment the stuck-state** on the issue, precisely: the open questions for a planning gap, the failing gate output for an execution gap, the surviving blockers for a review gap.
+3. **Comment the stuck-state** on the issue, precisely: the open questions for a planning gap, the failing gate output for an execution gap, the surviving blockers for a review gap. On a [multi-phase issue](#one-dispatch-per-phase), name the phases that committed and the phase that stopped, because a re-run that rebuilds landed work is the expensive way to fail twice.
 4. **Set the label by *cause*.** This is the load-bearing distinction:
    - **Planning gap** (the [spec gate](#2-spec-gate) or implementkit found a missing *decision*) → flip `in-progress → needs-planning`. The spec itself is incomplete, so it goes back to the human's grill queue. A re-run after grilling adopts the existing worktree.
    - **Execution gap** (tests won't go green, or review blockers survive the fix loop) → **keep `in-progress`**. The spec was fine; execution is stuck. The comment and batch summary carry the detail for a human to unstick, with no label churn, because the issue isn't waiting on a *decision*.
@@ -325,7 +344,7 @@ Then escalation always means the same five things:
 
 **Sequential, not parallel, and the ceiling is worth stating rather than leaving it to read like an unexamined v1 limit.** Three things hold it there.
 
-- **Most of the run cannot be parallelized at all.** [Implement](#3-implement) was 44% of the measured wall clock on its own, and it is irreducibly serial: nothing downstream of it can start before it finishes. Even a perfect parallelization of every other step caps the saving near 55%, and that is the ceiling before any of the risks below.
+- **Most of the run cannot be parallelized at all.** [Implement](#3-implement) was 44% of the measured wall clock on its own, and it is irreducibly serial: nothing downstream of it can start before it finishes, and its phases build on one another in one branch, so the phase loop is serial for the same reason at a smaller scale. Even a perfect parallelization of every other step caps the saving near 55%, and that is the ceiling before any of the risks below.
 - **The one genuinely independent pair is unsafe.** QA and review could run at the same time, and a QA plan written from a diff the fix loop then changes describes behavior that no longer exists. The pipeline already moved the live-verification half of that work earlier, to [Verify](#4-verify), which captures the useful part of the overlap without the staleness.
 - **Concurrency across issues costs a human more than it saves.** Parallel branches off the same base make merge-conflict and resource behavior unpredictable, and a returning human faces a pile of concurrent PRs rather than one at a time.
 

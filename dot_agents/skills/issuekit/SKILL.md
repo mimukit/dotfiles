@@ -12,15 +12,15 @@ metadata:
 
 Own the GitHub issue lifecycle through the [`gh` CLI](https://cli.github.com), in five explicit **modes**:
 
-- **`create`.** Turn a plan document or a plain description into well-formed issues, with parent→child links.
+- **`create`.** Turn a plan document or a plain description into well-formed issues.
 - **`start`.** Take a `ready` issue into its own worktree and flip it `in-progress`.
 - **`close`.** Once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down.
-- **`sync`.** Reconcile and repair the PR↔issue relationship *after* the fact (issues a merged PR should have closed, a missing link on an existing PR, an un-ticked parent checklist).
+- **`sync`.** Reconcile and repair the PR↔issue relationship *after* the fact (issues a merged PR should have closed, a missing link on an existing PR, a dependent still marked `blocked` by an issue that landed).
 - **`triage`.** Report the health of the tracker, then offer fixes you approve.
 
 One skill, five jobs, because they're the same job at five points in a dev workflow: file the work, pick it up, land it, keep everything in sync as PRs merge, and keep the tracker honest.
 
-**`close` vs `sync`.** They do overlapping tracker work and the split is by *scope*, not mechanism: `close` lands **one named issue** whose PR you know merged, and is the only mode that touches the filesystem (the worktree teardown). `sync` sweeps the **whole tracker** for drift after the fact, meaning issues a merged PR should have closed but didn't, missing links, and un-ticked parents, and it never touches a worktree. `close` reuses `sync`'s reconciliation rather than restating it.
+**`close` vs `sync`.** They do overlapping tracker work and the split is by *scope*, not mechanism: `close` lands **one named issue** whose PR you know merged, and is the only mode that touches the filesystem (the worktree teardown). `sync` sweeps the **whole tracker** for drift after the fact, meaning issues a merged PR should have closed but didn't, missing links, and dependents still marked `blocked` by work that landed, and it never touches a worktree. `close` reuses `sync`'s reconciliation rather than restating it.
 
 ## When this fires
 
@@ -29,7 +29,7 @@ The user wants to act on GitHub issues. Route to a mode from what they ask:
 - **create.** "Create issues from this plan", "open issues for `plan-auth.md`", "file an issue for X", "file this as an issue".
 - **start.** "Start issue #42", "begin #42", "pick up #42", "spin up a worktree for #42", "I'm working on 42 now".
 - **close.** "Close #42", "close out #42", "wrap up #42 now the PR merged", "tear down #42's worktree", "#42 landed, clean it up".
-- **sync.** "Sync my issues", "this PR merged but the issue is still open", "link this PR to #42", "tick the parent checklist".
+- **sync.** "Sync my issues", "this PR merged but the issue is still open", "link this PR to #42", "unblock what #42 was holding up".
 - **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority".
 
 **If no mode is clear, ask first.** Present the modes as options and let the user pick before doing anything, and don't guess between creating and mutating the tracker.
@@ -62,11 +62,10 @@ Issue titles follow the same shape as commitkit's commit subjects and the [Conve
 type(scope): short imperative summary
 ```
 
-Pick the `type` from what the issue delivers, not the files it touches. The set mirrors commitkit's, with one addition (`epic`) for parent issues:
+Pick the `type` from what the issue delivers, not the files it touches. The set is commitkit's, unchanged:
 
 | type | when |
 |------|------|
-| `epic` | a **parent** issue that groups child issues/sub-issues |
 | `feat` | a new capability the user can see |
 | `fix` | a bug fix |
 | `docs` | documentation only |
@@ -82,7 +81,7 @@ Rules, applied to **every** title you generate:
 - **`(scope)` is mandatory**, naming the module, package, directory, or feature area the work belongs to (`feat(auth): …`). For genuinely global work (repo-wide config, tooling, cross-cutting cleanup) fall back to `repo`: `chore(repo): …`.
 - **Entirely lowercase.** Never capitalize any word in the title, including the first. Proper nouns and acronyms (`OIDC`, `SSO`, `CI`) are the only exceptions.
 - **Imperative mood**, stating the *effect* ("add sso login"), not the activity ("changes to auth"). **No trailing period.** Keep it concise.
-- A parent epic and its children **share the scope** so the group is obvious in the list: `epic(auth): …` over `feat(auth): oidc login end to end`, `feat(auth): sso account linking`.
+- **Title the whole issue, not its first phase.** A multi-phase issue names the capability it delivers end to end (`feat(auth): add sso login`), and its phases live in the body. A title that reads like one phase is a sign the issue was sliced too thin.
 
 If the repo has its own issue-title style (visible in `gh issue list` or an `.github/ISSUE_TEMPLATE/`), follow that instead and say you did; see [Notes](#notes).
 
@@ -110,7 +109,7 @@ A **closed** issue needs no `done` label, because the closed state is the signal
 
 **`ready` vs `blocked` is the parallel-work pair.** issuekit sizes and sequences issues so each can be picked up in its own worktree with no ordering constraint, and those get `ready`. The exception, an issue that genuinely can't start until another lands, gets `blocked` plus a `Blocked by #N` line in its body: the label says *that* it's blocked, the body says *by what*. `gh issue list --label ready` is then the exact set the user can fan out in parallel right now.
 
-**`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended**, so an agent (or an orchestrator like afkkit) can take it straight to a PR without a human. `needs-planning` means a human plan/grill session is still owed before the issue is workable at all. An issue earns `ready` only once its decisions are settled by a grill; see [the grill gate at creation](#5-label-lifecycle-state-and-priority-and-record-dependencies). `gh issue list --label needs-planning` is then the exact set that still needs the human, the mirror of the `ready` fan-out set.
+**`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended**, so an agent (or an orchestrator like afkkit) can take it straight to a PR without a human. `needs-planning` means a human plan/grill session is still owed before the issue is workable at all. An issue earns `ready` only once its decisions are settled by a grill; see [the grill gate at creation](#4-label-lifecycle-state-and-priority-and-record-dependencies). `gh issue list --label needs-planning` is then the exact set that still needs the human, the mirror of the `ready` fan-out set.
 
 **Type lives in the title, not a label.** Issues already carry `feat(scope):` / `fix(scope):` per the [title convention](#title-convention-every-issue-this-skill-creates), so this map has no `type:` labels, only lifecycle status.
 
@@ -160,18 +159,14 @@ Turn work into issues. Two inputs: a plan file (the main path) or a plain descri
 - **Ad-hoc path:** a plain description with no plan. This is the "start fresh, just file it" case → one well-formed issue.
 
 ### 2. Decompose a plan into a proposed breakdown
-Read the plan's structure (phases, milestones, tasks) and decide the shape:
-- a **parent epic + N child issues** when the plan has distinct sub-tasks worth tracking separately, or
-- a **flat list** (or single issue) when it doesn't.
+Read the plan's structure (phases, milestones, tasks) and decide the shape. Four principles govern the breakdown, applied **before** you present anything:
 
-Four principles govern the breakdown, applied **before** you present anything:
+- **One issue per plan by default.** A plan is work one person planned and grilled in a single session, so it becomes a single issue, and the plan's phases become [`## Phase N` sections in that issue's body](#3-create-the-issues) rather than separate issues. Every split costs a worktree, a branch, a PR, a review, and a close, and it buys sequencing the phases already carry for free. Split only where a piece has a genuinely different lifecycle: it ships on its own, it wants its own PR, or a real ordering constraint survives the attempt to design it away. The user can always ask to split one further, and starting consolidated beats starting fragmented.
+- **Vertical slices.** Size each issue so it completes **one testable feature end to end**, meaning something a person could verify on its own, rather than a horizontal layer (e.g. "all the DB models", "all the endpoints") that isn't demonstrable until other issues land. Where a plan does yield two issues, prefer "user can log in with SSO" over separate "add OIDC table" / "add OIDC route" / "add OIDC UI" issues. **Nothing caps a slice at what fits in one agent context.** A multi-phase issue is the normal shape here, and an unattended worker builds it phase by phase.
+- **Independent by default.** Where a plan does yield more than one issue, sequence them so each can be picked up in its own git worktree and worked **in parallel**, with no issue waiting on another. When two candidate issues share state (a migration one creates and another consumes, an API contract one produces), first try to **design the dependency away**: fold them back into one issue as consecutive phases, or resequence so the shared piece ships inside the prerequisite. Only when a real ordering constraint survives do you record it: the dependent gets [`blocked`](#lifecycle-labels-every-mode) and a `Blocked by #N` line, everything else gets `ready`.
+- **Prefactor first.** Before slicing anything, look for a simplifying refactor that makes the real change trivial: *"make the change easy, then make the easy change."* It normally belongs as the issue's **first phase**, where the code that needs it follows in the same branch. File it as its own `ready` issue (behavior-preserving → `refactor(scope):`) only when it stands alone, meaning it ships and reviews on its own merits whether or not the feature ever lands.
 
-- **Fewest issues by default.** Actively look for scopes where several related tasks can collapse into **one issue with a checklist** instead of separate issues. Merge aggressively; only split into its own issue/sub-issue when a task is genuinely independent, meaning a different lifecycle, owner, or PR. Default to the *smallest* number of issues and sub-issues that still tracks the work honestly. The user can always ask to split one further; starting consolidated and splitting on request beats starting fragmented.
-- **Vertical slices.** Size each issue/sub-issue so it completes **one testable feature end to end** whenever possible, meaning a slice a person could verify on its own, rather than a horizontal layer (e.g. "all the DB models", "all the endpoints") that isn't demonstrable until other issues land. Prefer "user can log in with SSO" over separate "add OIDC table" / "add OIDC route" / "add OIDC UI" issues; fold those layers into the one vertical slice as checklist items. Size it, too, so one slice **fits in a single fresh agent context / worktree session**: if a slice couldn't plausibly be finished in one sitting, it's a sign to split it.
-- **Independent by default.** Size and sequence issues so each can be picked up in its own git worktree and worked **in parallel**, with no issue waiting on another. When two candidate slices share state (a migration one creates and another consumes, an API contract one produces), first try to **design the dependency away**: fold them into one issue, or resequence so the shared piece ships inside the prerequisite. Only when a real ordering constraint survives do you record it: the dependent gets [`blocked`](#lifecycle-labels-every-mode) and a `Blocked by #N` line, everything else gets `ready`. This is what makes the tracker safe to fan out across worktrees.
-- **Prefactor first.** Before slicing the feature, look for a simplifying refactor that makes the real change trivial: *"make the change easy, then make the easy change."* File that refactor as its own `ready` issue (behavior-preserving → `refactor(scope):`) that the feature slices then build on. A clean prefactor often *removes* a dependency that would otherwise force a `blocked` chain, so it earns its keep even as an extra issue.
-
-**Wide mechanical refactors.** When a change has broad blast radius and genuinely can't be one vertical slice, such as renaming a shared column or retyping a symbol used everywhere, don't file it as one giant issue. Sequence it **expand → migrate → contract**:
+**Wide mechanical refactors are the standing exception to the one-issue default.** When a change has broad blast radius and genuinely can't be one vertical slice, such as renaming a shared column or retyping a symbol used everywhere, phases in one body are the wrong shape: the migrate batches are independent *of each other* and want to run in parallel branches, which is the one thing phases in a single issue cannot do. Sequence it **expand → migrate → contract**:
 
 - **expand.** Add the new form alongside the old; nothing breaks yet. `ready`.
 - **migrate.** Update call sites in batches by area, each batch its own issue [`blocked`](#lifecycle-labels-every-mode) by the expand issue (`Blocked by #<expand>`). The batches are independent of *each other*, so fan them out in parallel.
@@ -179,17 +174,15 @@ Four principles govern the breakdown, applied **before** you present anything:
 
 This turns one un-sliceable change into a fan of mostly-parallel issues with honest `Blocked by #N` edges, and reuses the existing `ready`/`blocked` machinery, with no new labels. If the batches can't each stay green on their own, add one final integrate-and-verify issue blocked by them all.
 
-**Milestones are opt-in.** Do **not** create GitHub milestones by default; map a plan's phases onto issues and checklists instead. Only when the user **explicitly asks** for milestones (or points at a repo that already uses them) should you create one (`gh api --method POST repos/{owner}/{repo}/milestones -f title="<title>"`, then `gh issue create --milestone <title>`) and attach issues to it. Absent that ask, never introduce a milestone the user would then have to maintain.
+**Milestones are opt-in.** Do **not** create GitHub milestones by default; map a plan's phases onto the issue body instead. Only when the user **explicitly asks** for milestones (or points at a repo that already uses them) should you create one (`gh api --method POST repos/{owner}/{repo}/milestones -f title="<title>"`, then `gh issue create --milestone <title>`) and attach issues to it. Absent that ask, never introduce a milestone the user would then have to maintain.
 
 Present the proposal as a **preview table** and stop for approval. Do **not** create anything yet:
 
-| # | Type | Title | Parent | Priority | Depends on | Checklist |
-|---|------|-------|--------|----------|-----------|-----------|
-| 1 | epic | `epic(auth): add sso login` | none | high | none | none |
-| 2 | child | `feat(auth): oidc login end to end` | #1 | high | none | provider · session · token refresh · UI |
-| 3 | child | `feat(auth): sso account linking` | #1 | medium | #2 | link existing · unlink · conflict handling |
+| # | Title | Priority | Depends on | Phases |
+|---|-------|----------|-----------|--------|
+| 1 | `feat(auth): add sso login` | high | none | oidc provider · session + token refresh · login UI · account linking |
 
-Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase, the epic and its children sharing the `auth` scope. Each child is a vertical slice with its layers folded into a checklist, not one issue per layer. The **Depends on** column is where independence is decided out loud: an empty cell means the issue is `ready`, so pick it up in its own worktree now, while a `#N` means it's `blocked` by that issue (row 3 waits on row 2). Keep the column as empty as honesty allows; a mostly-empty column is a tracker the user can fan out in parallel. Let the user add, drop, retitle, reparent, **reprioritize**, **resequence to break a dependency**, or **split** any row before you proceed, and offer splitting explicitly when a slice is large. This guard is the point, so never spray a repo with auto-generated issues.
+Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase. The **Phases** column is the plan's structure, carried into one issue rather than scattered across four. The **Depends on** column is where independence is decided out loud, and on a one-issue breakdown it is empty by construction: a cell filled with `#N` means that issue is `blocked` by another one in the table, and every empty cell is an issue the user can take into a worktree now. Let the user add, drop, retitle, **reprioritize**, **resequence to break a dependency**, or **split** any row before you proceed. Offer the split explicitly when a phase looks like it ships on its own, and say what the split would cost: a second branch, PR, review, and close. This guard is the point, so never spray a repo with auto-generated issues.
 
 **Propose a [priority](#priority-labels-every-mode) per row, and expect to be overruled.** You can read relative importance off a plan, meaning what it calls out as the core of the feature versus the polish, what it defers, and what it flags as a risk, and that's a real signal worth putting in the column. What you cannot read is why the work is being done at all, which is the thing priority actually encodes. So propose from the plan, mark anything the plan doesn't rank as `medium`, and treat the column as the one most likely to be corrected. This is exactly the right moment for that correction: setting priority here costs the user one glance at a table they're already reviewing, where doing it later means a pass back over issues that have scattered across the tracker.
 
@@ -206,41 +199,35 @@ gh issue list --state all --limit 200 --json number,title,state
 
 On trackers with more than 200 issues, raise the limit or use `gh search issues --repo {owner}/{repo} --match title "<candidate title>"` so older duplicates are not silently missed.
 
-Then write each issue with a title in the [`type(scope): summary` convention](#title-convention-every-issue-this-skill-creates) and a body that carries the relevant slice of the plan: context, acceptance criteria, and any decisions. Create parents before children so child bodies can reference them.
+Then write each issue with a title in the [`type(scope): summary` convention](#title-convention-every-issue-this-skill-creates) and a body that carries the relevant slice of the plan: context, phases, acceptance criteria, and any decisions.
 
-Two conventions for the body:
+**A multi-phase issue carries its phases as `## Phase N` headings**, one per phase of the plan, in the order they build, each followed by its own acceptance criteria:
 
-- **Write acceptance criteria as `- [ ]` checkboxes**, giving a concrete, verifiable definition of done for *this* issue. (Distinct from the sub-issue/parent checklist below, which tracks child issues.)
+```markdown
+## Phase 1: oidc provider
+- [ ] the app redirects to the provider and back
+- [ ] the callback rejects a mismatched `state` parameter
+
+## Phase 2: session + token refresh
+- [ ] a session survives a browser restart
+- [ ] an expired access token refreshes with no re-login
+```
+
+That heading is a real interface rather than a formatting choice: it is what lets a builder be pointed at **one phase of the issue**, the same way it can be pointed at one phase of a plan, and it is what an unattended run walks to build a large issue in one branch.
+
+Three conventions for the body:
+
+- **Write acceptance criteria as `- [ ]` checkboxes**, under the phase they belong to, giving a concrete verifiable definition of done for that phase. A single-phase issue drops the headings and carries one flat list.
+- **Order the phases as they build.** One branch builds them in sequence, so a phase may assume every phase above it has landed and must assume nothing about the ones below.
 - **Don't hard-code file paths**, because they go stale as the branch evolves; describe the change by behavior and area instead. The one exception is a **decision-rich snippet** (a schema, state machine, type, reducer) where the decision *is* the code, so include it, trimmed to just the substantive part.
 
 ```sh
-gh issue create --title "epic(auth): add sso login" --body-file <bodyfile>
+gh issue create --title "feat(auth): add sso login" --body-file <bodyfile>
 ```
 
 Use a temp file for each body (multi-line markdown through `--body` is flaky) and clean it up after.
 
-### 4. Link parents → children
-Try GitHub's **native sub-issues** first, then fall back:
-
-```sh
-# Native (preferred): attach a child to its parent via the sub-issues API.
-# sub_issue_id is the child's DATABASE id (an integer), NOT the GraphQL node id
-# that `gh issue view --json id` returns. Resolve it from the REST endpoint:
-child_id=$(gh api repos/{owner}/{repo}/issues/{child_number} --jq .id)
-# Attach it, using -F (typed integer), not -f (which would send a string and be rejected):
-gh api --method POST repos/{owner}/{repo}/issues/{parent_number}/sub_issues \
-  -F sub_issue_id="$child_id"
-```
-
-If that call fails, whether because sub-issues are disabled, on older GitHub Enterprise, or through insufficient permissions, **fall back** to a task-list checklist in the parent body and **tell the user which path was used**:
-
-```markdown
-### Sub-issues
-- [ ] #43 wire OIDC provider
-- [ ] #44 session + token refresh
-```
-
-### 5. Label lifecycle state and priority, and record dependencies
+### 4. Label lifecycle state and priority, and record dependencies
 Apply the [lifecycle labels](#lifecycle-labels-every-mode) so the fresh issues advertise their state. The **grill gate** decides which vocabulary applies, because `ready` is a promise the work can run *unattended*, earned only when the decisions are already settled:
 
 - **Grilled source.** The input plan file carries a `Grilled: YYYY-MM-DD` stamp (grillkit writes it when it hardens a plan), *or* the user explicitly says the work is grilled/ready. The decisions are settled, so the normal pair applies: every independent issue gets `ready`, every dependent one gets `blocked` plus a `Blocked by #N` line in its body naming the prerequisite.
@@ -262,22 +249,23 @@ gh issue edit 45 --add-label needs-planning --add-label low
 
 Preview the label set alongside the issues and get an OK before applying, as with any other mutation.
 
-### 6. Write the issue numbers back into the plan
-Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth. Add the ref next to each task it maps to without changing its creation-date suffix:
+### 5. Write the issue numbers back into the plan
+Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth. Add the ref to each phase heading the issue covers, without changing the file's creation-date suffix:
 
 ```markdown
-### Phase 2: auth (#41)
-- OIDC provider (#43)
-- session + token refresh (#44)
+### Phase 1: oidc provider (#41)
+### Phase 2: session + token refresh (#41)
 ```
+
+**The same number repeats on every phase one issue covers**, which is the normal shape now and not a mistake to tidy up. The annotation answers "where is this phase tracked", and for a one-issue breakdown the answer is the same issue every time. A builder writes its own `(built YYYY-MM-DD)` stamp after the number, so the two annotations sit side by side.
 
 Use `Edit` for this. For an ad-hoc issue with no plan file, skip this step.
 
-### 7. Hand off
+### 6. Hand off
 
 _Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Give a table of what you created: number, title, parent, URL, lifecycle label, and priority. Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
+**What changed.** Give a table of what you created: number, title, URL, lifecycle label, priority, and phase count. Say that the plan was annotated.
 
 **Where it landed.** Call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set**, naming what each blocked issue waits on. Order the `ready` set by priority, since that set exists to be picked from.
 
@@ -361,23 +349,22 @@ This precondition is the whole reason `close` is safe to run on a name you half-
 
 Show the full consequence in one line and wait:
 
-> PR #10 (`feat(auth): add sso login`) merged → close #42, tick parent #41's checklist, unblock #44, remove the worktree for `issue-42-add-sso-login`.
+> PR #10 (`feat(auth): add sso login`) merged → close #42, unblock #44, remove the worktree for `issue-42-add-sso-login`.
 
 Name every effect, including the ones that feel routine. Unblocking a dependent changes what someone else picks up next; removing a worktree deletes a directory they may have a terminal sitting in.
 
 ### 3. Reconcile the tracker
 
-Close the issue, tick the parent epic's checklist, and flip any dependents `blocked → ready`. **This is [`sync`](#mode-sync)'s job and `close` reuses it rather than restating it**, so apply [Reconcile](#1-reconcile-a-merged-pr-whose-issue-never-closed), [Checklist](#3-checklist-tick-the-parent-when-a-child-closes), and [Labels](#4-labels-advance-lifecycle-state-unblock-whats-freed) to this one issue:
+Close the issue and flip any dependents `blocked → ready`. **This is [`sync`](#mode-sync)'s job and `close` reuses it rather than restating it**, so apply [Reconcile](#1-reconcile-a-merged-pr-whose-issue-never-closed) and [Labels](#3-labels-advance-lifecycle-state-unblock-whats-freed) to this one issue:
 
 ```sh
 gh issue close <n> --comment "Closed by #<pr> (merged)."
 gh issue edit <n> --remove-label in-review --remove-label in-progress
-# tick "- [ ] #<n>" → "- [x] #<n>" in a task-list parent's body
 # for each dependent whose body says "Blocked by #<n>":
 gh issue edit <dep> --remove-label blocked --add-label ready
 ```
 
-Closing strips the active status label in the same action, because a closed issue must never carry a stale `in-review`. Native sub-issues tick themselves; only the task-list fallback needs the body edit.
+Closing strips the active status label in the same action, because a closed issue must never carry a stale `in-review`.
 
 ### 4. Tear the worktree down through gitkit, keyed on the branch
 
@@ -393,7 +380,7 @@ If no worktree matches the branch, say so and carry on, because the tracker half
 
 ### 5. Hand off
 
-**What changed.** Report the issue closed and by which PR, the parent ticked, and each dependent unblocked (`blocked → ready`).
+**What changed.** Report the issue closed and by which PR, and each dependent unblocked (`blocked → ready`).
 
 **Where it landed.** Say whether the worktree was removed, left dirty, or already gone. If it survived, name the path and why, so it doesn't quietly linger.
 
@@ -413,7 +400,7 @@ Reconcile and repair the PR↔issue relationship. **Sync deliberately does not w
 | Who | Owns |
 |-----|------|
 | PR-authoring skill | write `Closes #N` into a **new** PR at open time (forward, happy path) |
-| **issuekit sync** | reconcile drift after merge, repair a missing link on an **existing** PR, tick parent checklists, advance lifecycle labels and unblock dependents |
+| **issuekit sync** | reconcile drift after merge, repair a missing link on an **existing** PR, advance lifecycle labels and unblock dependents |
 
 ### 1. Reconcile a merged PR whose issue never closed
 Find PRs merged recently whose linked issue is still open because the `Closes #` keyword was missing:
@@ -433,7 +420,7 @@ On approval:
 gh issue close 42 --comment "Closed by #10 (merged)."
 ```
 
-Closing is a lifecycle transition too, so strip any active status label (`in-review`, `in-progress`, …) in the same action and a closed issue never carries a stale status (see [Labels: advance lifecycle state](#4-labels-advance-lifecycle-state-unblock-whats-freed)). Never auto-close, and always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess**, because closing the wrong issue is worse than leaving one open.
+Closing is a lifecycle transition too, so strip any active status label (`in-review`, `in-progress`, …) in the same action and a closed issue never carries a stale status (see [Labels: advance lifecycle state](#3-labels-advance-lifecycle-state-unblock-whats-freed)). Never auto-close, and always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess**, because closing the wrong issue is worse than leaving one open.
 
 ### 2. Repair a missing link on an existing open PR
 If an **open** PR should reference an issue but doesn't, add `Closes #N` to its body (editing the existing PR, not opening a new one):
@@ -442,15 +429,7 @@ If an **open** PR should reference an issue but doesn't, add `Closes #N` to its 
 gh pr edit <pr> --body-file <updated-body>
 ```
 
-### 3. Checklist: tick the parent when a child closes
-The task-list fallback (`- [ ] #child`) does **not** auto-tick when the child closes; native sub-issues do. When a child issue is closed, update the parent body to check its box:
-
-```sh
-gh issue view <parent> --json body -q .body   # read
-gh issue edit <parent> --body-file <updated>  # write back with - [x] #child
-```
-
-### 4. Labels: advance lifecycle state, unblock what's freed
+### 3. Labels: advance lifecycle state, unblock what's freed
 Move issues through the [lifecycle labels](#lifecycle-labels-every-mode) as PRs advance: an issue whose PR just opened → `in-review`; and, the dependency payoff, when an issue that was a **blocker** closes, find the issues whose body says `Blocked by #<it>` and swap them `blocked` → `ready`, optionally commenting that the prerequisite landed:
 
 ```sh
@@ -461,8 +440,8 @@ gh issue edit 42 --remove-label in-review   # closing → strip the active statu
 
 As everywhere in sync, **preview each move and wait for the OK**, and never auto-relabel. If a label the map needs isn't provisioned, stop and point the user at **repokit** or the `gh label create` line, because issuekit uses labels and doesn't create them. If the repo predates this map and runs its own status scheme, follow that instead and say you did.
 
-### 5. Hand off
-**What changed.** Report issues closed, PR bodies repaired, checklists ticked, and issues advanced or **unblocked** (`blocked` → `ready`), each an action the user approved. Say plainly if nothing needed repairing; a clean sweep is a real result.
+### 4. Hand off
+**What changed.** Report issues closed, PR bodies repaired, and issues advanced or **unblocked** (`blocked` → `ready`), each an action the user approved. Say plainly if nothing needed repairing; a clean sweep is a real result.
 
 **Where it landed.** Give the **actionable set**: a table of every open issue that is `in-progress` or `ready` *after* the sync, so the user sees at a glance what's being worked and what they can pick up next in a fresh worktree:
 
@@ -487,19 +466,16 @@ List `in-progress` rows first, then `ready`, each group ordered by priority. If 
 Report first, act on approval. Never mutate the tracker just to "tidy up."
 
 ### 1. Read the tracker
-Fetch `--state all` (not just open), because detecting a **closed** parent with open children, or the inverse, needs the closed issues too. Filter to open for the drift that only concerns open work.
+Fetch `--state all` (not just open), because a `Blocked by #N` pointing at an already-closed issue is drift that the open-issue list alone cannot see. Filter to open for the drift that only concerns open work.
 
 ```sh
 gh issue list --state all --limit 200 --json number,title,state,labels,assignees,updatedAt,createdAt
 ```
 
-Parent→child hierarchy has two representations: a task-list (`- [ ] #child`) lives in the parent's body, but **native sub-issue links live in the API, not the body**, so enumerate them with `gh api repos/{owner}/{repo}/issues/{n}/sub_issues` rather than assuming the body tells the whole story.
-
 ### 2. Flag drift
 Produce a **status report**, as a table, surfacing:
 - **Stale.** No update in a long while (e.g. 30–60 days; scale to the repo's pace).
-- **Orphaned.** No labels, no assignee, no parent.
-- **Closed-parent / open-children** (and its inverse), meaning a broken hierarchy.
+- **Orphaned.** No labels and no assignee.
 - **Zombie label.** A **closed** issue still carrying a status label (`in-review`, `in-progress`, …) → strip it; the closed state is the signal.
 - **Stale block.** An issue labeled `blocked` whose `Blocked by #N` target is already closed → it should be `ready` (hand the relabel to `sync`).
 - **Dangling / circular dependency.** A `Blocked by #N` pointing at a missing issue, or two issues blocking each other.
@@ -551,4 +527,4 @@ Use a temp file for multi-line markdown and remove it after.
 - **Never** merge PRs, and never mutate GitHub state without showing the change and getting an OK first.
 - If the repo has its own issue conventions, whether a template in `.github/ISSUE_TEMPLATE/`, a labeling scheme, or a title style visible in `gh issue list`, follow those over these defaults and say you did.
 - Prefer `--body-file` over `--body` for anything multi-line; clean up temp files afterward.
-- Keep issues proportional to the work: a one-line fix is one issue, not an epic with three children. Scale the breakdown to the plan's real surface area.
+- Keep issues proportional to the work: a one-line fix is one issue with one acceptance criterion, not a phased build-out. Scale the body to the plan's real surface area, and let a large plan stay one large issue.
