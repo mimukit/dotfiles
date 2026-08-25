@@ -127,6 +127,8 @@ brew "mycli"
 brew "neovim"
 # Trigger notifications when a process completes
 brew "noti"
+# Reattach to the user namespace so Touch ID works for sudo inside tmux
+brew "pam-reattach"
 # Simplistic interactive filtering tool
 brew "peco"
 # CLI for Postgres with auto-completion and syntax highlighting
