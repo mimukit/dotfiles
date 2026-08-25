@@ -166,6 +166,12 @@ it on purpose: `ya pkg` owns those files and pins them in
 `.config/yazi/package.toml`, which chezmoi does track. Restore them with
 `ya pkg install`.
 
+One consequence: `chezmoi verify` now exits 1 even when nothing is pending,
+because it cannot compute the state of a `git-repo` external without a network
+fetch. `chezmoi diff`, `chezmoi status` and `chezmoi apply --dry-run` are all
+accurate. Use `chezmoi verify --exclude=externals` when you want an exit code to
+mean something.
+
 `~/.gitconfig.local` is included from the end of `~/.gitconfig` and is not
 tracked. It holds keys a tool generates per install, starting with
 `coderabbit.machineId`. Note that `git config --global` always writes to
