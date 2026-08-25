@@ -1,5 +1,12 @@
 **/.DS_Store
 
+# repository files, not dotfiles. Anything at the source root that does not
+# start with a dot becomes a target: chezmoi was applying this repo's README to
+# ~/README.md, and would have created ~/docs from the plan and QA documents the
+# agent skills write here.
+README.md
+docs
+
 # editor/app scratch + state
 **/*.tmp
 .config/zed/.tmp*
