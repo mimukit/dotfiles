@@ -11,7 +11,7 @@
 # No published tool covers the four things wanted at once: copy a value, show
 # the local addresses, look the public IP up in more depth, and reach all of it
 # from the keyboard. The `ipinfo` CLI does the lookup half and nothing else, so
-# it would still need this wrapper, plus a formula in setup_scripts. The repo
+# it would still need this wrapper, plus a formula in the Brewfile. The repo
 # already solves this exact shape with fzf in .zshrc (`kp`, `mk`, `ms`, `tl`),
 # and fzf, jq and curl are all installed already.
 #

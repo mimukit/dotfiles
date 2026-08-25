@@ -62,14 +62,15 @@ RE_ADD_PATHS=(
   "$HOME/.ssh/config"
   "$HOME/.claude/CLAUDE.md"
   "$HOME/.claude/statusline.sh"
-  "$HOME/.local/bin/agent-hook"
-  "$HOME/.local/bin/rm-guard"
+  # Every script chezmoi manages now lives here, including this one. re-add
+  # touches managed files only, so an unmanaged binary dropped in by uv or pipx
+  # is never pulled in.
+  "$HOME/.local/bin"
   "$HOME/.config/nvim"
   "$HOME/.config/brew/Brewfile"
-  "$HOME/.config/icons"
+  "$HOME/.config/btop/btop.conf"
   # Codex (~/.codex): stable config files only. Secrets (auth.json), history,
   # logs, caches, sqlite DBs, sessions and other runtime state are excluded.
-  "$HOME/.codex/config.toml"
   "$HOME/.codex/hooks.json"
   "$HOME/.codex/rules/default.rules"
   "$HOME/.codex/AGENTS.md"
@@ -123,7 +124,7 @@ synced_any=0
 # mixed in with this machine's repos, worktrees and telemetry id. `chezmoi re-add`
 # would drag all of that into the source, so a dedicated script pulls out just the
 # tracked keys instead. It no-ops when Orca is not installed.
-ORCA_EXPORT="$HOME/setup_scripts/orca_settings_export.sh"
+ORCA_EXPORT="$HOME/.local/bin/orca_settings_export.sh"
 if [ -x "$ORCA_EXPORT" ]; then
   echo -e "${CYAN}⏳ extract  Orca settings${RESET}"
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -138,7 +139,7 @@ fi
 # keys in and passes those entries through, which `chezmoi re-add` cannot capture
 # because it skips modify_ entries. This pulls our slice back out instead. It
 # no-ops when Claude Code has never written a settings file.
-CLAUDE_EXPORT="$HOME/setup_scripts/claude_settings_export.sh"
+CLAUDE_EXPORT="$HOME/.local/bin/claude_settings_export.sh"
 if [ -x "$CLAUDE_EXPORT" ]; then
   echo -e "${CYAN}⏳ extract  Claude settings${RESET}"
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -239,7 +240,7 @@ fi
 # it into the source. The brew script self-syncs into chezmoi, so this only runs
 # the shared backup script. It has no --dry-run mode, so we skip it on dry runs.
 # Non-fatal: a brew failure must never abort the chezmoi sync.
-BREW_BACKUP="$HOME/setup_scripts/brew_apps_backup.sh"
+BREW_BACKUP="$HOME/.local/bin/brew_apps_backup.sh"
 if [ -x "$BREW_BACKUP" ] && command -v brew >/dev/null 2>&1; then
   echo
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -254,7 +255,7 @@ fi
 # Not a chezmoi operation — the zoxide DB is machine-local runtime state and is
 # intentionally unmanaged. Run here only because it shares the same "sync my
 # environment" ritual. Non-fatal: a failure must never abort the chezmoi sync.
-ZOXIDE_SYNC="$HOME/setup_scripts/zoxide_sync.sh"
+ZOXIDE_SYNC="$HOME/.local/bin/zoxide_sync.sh"
 if [ -x "$ZOXIDE_SYNC" ]; then
   echo
   echo -e "${CYAN}⏳ zoxide  backfill from atuin${RESET}"

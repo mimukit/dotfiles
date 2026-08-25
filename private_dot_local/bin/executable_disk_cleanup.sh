@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Reclaim rebuildable macOS application, CLI, and project caches.
-# Chezmoi installs this file as ~/setup_scripts/disk_cleanup.sh.
+# Chezmoi installs this file as ~/.local/bin/disk_cleanup.sh.
 
 set -u
 
