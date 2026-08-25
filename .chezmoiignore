@@ -18,6 +18,11 @@ docs
 # local-only backups
 .config/raycast/settings-backup.rayconfig
 
+# machine-local git settings, included from the end of ~/.gitconfig. Holds keys
+# a tool generates per install, starting with coderabbit.machineId. Same reason
+# Orca's telemetry.installId is withheld: an id is not a preference.
+.gitconfig.local
+
 # yazi flavors — yazi's own package manager (`ya pkg`) installs and rewrites
 # these, pinned by rev and hash in .config/yazi/package.toml, which chezmoi does
 # track. Two writers on the same files made `chezmoi apply` stop and ask whether

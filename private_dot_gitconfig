@@ -26,5 +26,16 @@
 	; Wrapper that clears SSH_AUTH_SOCK, so ssh-keygen signs with the key file
 	; instead of asking the 1Password agent for Touch ID on every commit.
 	program = /Users/mukit/.local/bin/git-ssh-sign
-[coderabbit]
-	machineId = cli/246b513fa35240ca8573e992f22bc632
+; Machine-local git settings, kept out of this repo. Last include wins, so
+; anything here overrides the sections above.
+;
+; This exists for keys a tool generates per machine. coderabbit.machineId was
+; the first: a per-install id, the same class of value as Orca's
+; telemetry.installId, which this repo already refuses to track.
+;
+; Caveat: `git config --global` always writes to ~/.gitconfig, never to an
+; include. If a tool regenerates such a key it lands above this line, and the
+; next `czs` offers it back to the source. Reject it in the diff and move the
+; value here.
+[include]
+	path = ~/.gitconfig.local
