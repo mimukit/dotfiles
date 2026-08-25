@@ -1,0 +1,146 @@
+name: ci
+
+# Direct commits to main are the normal habit on this repo, and afkkit and prkit
+# both open pull requests, so both triggers are needed. The weekly run exists for
+# the gitleaks history scan, which is the slow half and does not belong on every
+# push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+
+      # The modify_ scripts and the bootstrap script are shell, but they are not
+      # valid shell until the Go template directives are substituted out. Render
+      # each one through chezmoi first, then lint the result.
+      # NUL-delimited throughout. One tracked path contains a space
+      # ("private_Application Support"), so any `for f in $(git ls-files)` here
+      # silently splits it into two nonexistent paths.
+      - name: Render templated scripts
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          mkdir -p rendered
+          git ls-files -z | grep -zE '(modify_|run_).*\.tmpl$' | while IFS= read -r -d '' tmpl; do
+            out="rendered/$(printf '%s' "$tmpl" | tr '/ ' '__' | sed 's/\.tmpl$//')"
+            chezmoi execute-template --source . < "$tmpl" > "$out"
+            echo "rendered $tmpl"
+          done
+
+      - name: Lint
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          # dot_agents/ is vendored: the `skills` CLI installs it from
+          # mimukit/skills and github/awesome-copilot, and czs re-adds whatever
+          # it writes. A fix applied here is overwritten on the next
+          # `skills update`, so lint it upstream, not in this repo.
+          files=()
+          while IFS= read -r -d '' f; do files+=("$f"); done \
+            < <(git ls-files -z | grep -zE '\.sh$|bin/executable_' \
+                | grep -zv '\.tmpl$' | grep -zv '^dot_agents/')
+          while IFS= read -r -d '' f; do files+=("$f"); done \
+            < <(find rendered -type f -print0)
+          printf 'linting %d files\n' "${#files[@]}"
+          shellcheck -S warning "${files[@]}"
+
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      # A full history scan needs full history. Every other run only reads the
+      # working tree, so a shallow clone is enough and much faster.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ github.event_name == 'schedule' && 0 || 1 }}
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      # `dir` reads the working tree only and is what runs on push and on a pull
+      # request. `git` walks every commit and runs on the weekly schedule, which
+      # is worth doing here because this repo is public and its history has
+      # carried an Obsidian vault and a Raycast settings backup.
+      - name: Scan working tree
+        if: github.event_name != 'schedule'
+        run: gitleaks dir . --redact --verbose
+
+      - name: Scan full history
+        if: github.event_name == 'schedule'
+        run: gitleaks git . --redact --verbose
+
+  chezmoi:
+    name: chezmoi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+
+      # NUL-delimited: one tracked template path contains a space.
+      - name: Render every template
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          git ls-files -z | grep -zE '\.tmpl$' | while IFS= read -r -d '' tmpl; do
+            chezmoi execute-template --source . < "$tmpl" > /dev/null
+            echo "ok  $tmpl"
+          done
+
+      # Apply for real into a throwaway destination, then apply again and require
+      # the second pass to be silent. A single dry run only proves the source
+      # renders; the second pass is what proves the modify_ scripts converge.
+      # This is the check that caught the Claude modify_ script emitting a raw
+      # __HOME__ token down its fresh-machine path.
+      #
+      # externals are excluded to keep the run offline and fast. scripts are
+      # excluded because the bootstrap script's job is to change the machine, so
+      # it is not idempotent by design.
+      - name: Apply twice against a throwaway home
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          DEST="$(mktemp -d)"
+          chezmoi --source . --destination "$DEST" apply --exclude=externals,scripts
+          pending="$(chezmoi --source . --destination "$DEST" \
+            apply --dry-run --verbose --exclude=externals,scripts 2>&1)"
+          if [ -n "$pending" ]; then
+            echo "second apply is not a no-op:" >&2
+            echo "$pending" >&2
+            exit 1
+          fi
+          chezmoi --source . --destination "$DEST" verify --exclude=externals,scripts
+          echo "apply converges and verify is clean"
+
+      # Anything at the source root without a leading dot becomes a target, which
+      # is how this repo's own README was landing in $HOME. Library is the one
+      # legitimate non-dot target: it is where Orca keeps its settings on macOS.
+      - name: Assert no repo file is a target
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          DEST="$(mktemp -d)"
+          leaked="$(chezmoi --source . --destination "$DEST" managed --exclude=scripts \
+            | grep -vE '^\.|^Library(/|$)' || true)"
+          if [ -n "$leaked" ]; then
+            echo "these repository files would be written into \$HOME:" >&2
+            echo "$leaked" >&2
+            exit 1
+          fi
+          echo "no repository file is a target"
