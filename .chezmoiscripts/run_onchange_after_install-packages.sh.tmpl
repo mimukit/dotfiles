@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Install the Brewfile on a new machine, and whenever the Brewfile changes.
+#
+# Before this existed, `chezmoi apply` wrote ~/.config/brew/Brewfile and stopped.
+# Installing from it was a separate step you had to remember on the machine where
+# you have the least context.
+#
+# The hash line below is what makes this a `run_onchange_` script rather than a
+# `run_` script: chezmoi hashes the rendered file and re-runs only when the
+# result differs from the last run it recorded. Because the hash is computed from
+# the Brewfile's contents, editing a package re-runs this and a routine apply
+# does not.
+#
+# `after_` in the filename puts this behind the file phase, so the Brewfile is
+# already written to its target when the script reads it.
+#
+# Brewfile hash: {{ include "dot_config/brew/Brewfile" | sha256sum }}
+
+set -euo pipefail
+
+BREWFILE="$HOME/.config/brew/Brewfile"
+
+# No Homebrew means a CI runner, a Linux box, or a Mac where the bootstrap has
+# not happened yet. None of those should fail the apply.
+if ! command -v brew >/dev/null 2>&1; then
+  echo "chezmoi: Homebrew not found, skipping brew bundle" >&2
+  exit 0
+fi
+
+if [ ! -f "$BREWFILE" ]; then
+  echo "chezmoi: no Brewfile at $BREWFILE, skipping" >&2
+  exit 0
+fi
+
+echo "chezmoi: Brewfile changed, running brew bundle"
+
+# Plain `bundle`, never `--cleanup`. Cleanup uninstalls anything absent from the
+# Brewfile, which would make a routine apply destructive and would duplicate
+# ~/.local/bin/brew_apps_cleanup.sh, which exists to do that deliberately.
+#
+# A real failure exits non-zero and stops the apply. That is the intent: a
+# bootstrap that fails quietly is worse than one that stops you, because the
+# machine then looks configured and is not.
+brew bundle --file="$BREWFILE"

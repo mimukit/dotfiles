@@ -45,6 +45,19 @@ chezmoi add $FILE
 
 Two files are deliberately missing from that script's re-add list, and both would look covered while doing nothing. `~/.claude/settings.json` and `~/.codex/config.toml` are managed by `modify_` scripts, which `chezmoi re-add` skips; the extract steps in the same script handle them. `~/.gitconfig` is a template now, and `re-add` skips a template just as silently. Edit `private_dot_gitconfig.tmpl` and apply.
 
+## On a new machine
+
+`chezmoi apply` installs the Brewfile itself. `.chezmoiscripts/run_onchange_after_install-packages.sh.tmpl` carries the Brewfile's hash, so it runs on a fresh machine and again whenever a package is added or removed, and stays quiet on a routine apply. It skips without failing when Homebrew is absent, which is what keeps it out of the way in CI.
+
+It runs plain `brew bundle`, never `--cleanup`. Cleanup uninstalls anything missing from the Brewfile, which would make a routine apply destructive; `~/.local/bin/brew_apps_cleanup.sh` does that deliberately when you ask for it.
+
+Still manual, by choice, because each one is another way for an apply to fail halfway:
+
+```
+ya pkg install     # yazi flavors, pinned in .config/yazi/package.toml
+mise install       # language runtimes
+```
+
 ## Orca
 
 Orca keeps its preferences in one blob it rewrites every few seconds, mixed in
