@@ -43,6 +43,8 @@ chezmoi add $FILE
 ~/.local/bin/chezmoi_sync.sh --dry-run  # preview what would change
 ```
 
+Two files are deliberately missing from that script's re-add list, and both would look covered while doing nothing. `~/.claude/settings.json` and `~/.codex/config.toml` are managed by `modify_` scripts, which `chezmoi re-add` skips; the extract steps in the same script handle them. `~/.gitconfig` is a template now, and `re-add` skips a template just as silently. Edit `private_dot_gitconfig.tmpl` and apply.
+
 ## Orca
 
 Orca keeps its preferences in one blob it rewrites every few seconds, mixed in

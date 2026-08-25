@@ -22,10 +22,10 @@
 [alias]
 	  lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
 [gpg "ssh"]
-	allowedSignersFile = /Users/mukit/.ssh/allowed_signers
+	allowedSignersFile = {{ .chezmoi.homeDir }}/.ssh/allowed_signers
 	; Wrapper that clears SSH_AUTH_SOCK, so ssh-keygen signs with the key file
 	; instead of asking the 1Password agent for Touch ID on every commit.
-	program = /Users/mukit/.local/bin/git-ssh-sign
+	program = {{ .chezmoi.homeDir }}/.local/bin/git-ssh-sign
 ; Machine-local git settings, kept out of this repo. Last include wins, so
 ; anything here overrides the sections above.
 ;

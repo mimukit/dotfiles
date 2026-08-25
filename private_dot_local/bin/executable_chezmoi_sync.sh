@@ -56,9 +56,14 @@ RED='\033[0;31m'
 # script, and `chezmoi re-add` silently skips modify_ entries, so listing it here
 # would look like it was covered while doing nothing. The extract step below
 # handles it instead.
+#
+# ~/.gitconfig is deliberately absent too, for a third reason: its source is a
+# template now, and `chezmoi re-add` skips a template exactly as silently as it
+# skips a modify_ script. Edit private_dot_gitconfig.tmpl and apply. A key that
+# `git config --global` writes into the target lands in ~/.gitconfig.local, or
+# gets copied into the template by hand.
 RE_ADD_PATHS=(
   "$HOME/.zshrc"
-  "$HOME/.gitconfig"
   "$HOME/.ssh/config"
   "$HOME/.claude/CLAUDE.md"
   "$HOME/.claude/statusline.sh"
