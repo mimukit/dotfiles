@@ -96,6 +96,14 @@ jobs:
       - name: Install chezmoi
         run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
 
+      # The Codex modify_ script merges TOML through `uv run --with tomlkit`.
+      # Without uv it takes its passthrough path and leaves the file unchanged,
+      # so the convergence check below fails for a reason that has nothing to do
+      # with the source. Installing uv is what makes that check exercise the
+      # merge rather than the fallback.
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
       # NUL-delimited: one tracked template path contains a space.
       - name: Render every template
         run: |
@@ -116,11 +124,14 @@ jobs:
       # it is not idempotent by design.
       - name: Apply twice against a throwaway home
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
+          export PATH="$HOME/.local/bin:$HOME/.local/share/uv/tools:$PATH"
           DEST="$(mktemp -d)"
           chezmoi --source . --destination "$DEST" apply --exclude=externals,scripts
+          # stdout only. chezmoi writes "config file template has changed" to
+          # stderr on a runner that has no config file, and folding that in with
+          # 2>&1 made this check fire on a warning rather than on a real diff.
           pending="$(chezmoi --source . --destination "$DEST" \
-            apply --dry-run --verbose --exclude=externals,scripts 2>&1)"
+            apply --dry-run --verbose --exclude=externals,scripts)"
           if [ -n "$pending" ]; then
             echo "second apply is not a no-op:" >&2
             echo "$pending" >&2
