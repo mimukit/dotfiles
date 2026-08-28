@@ -158,11 +158,33 @@ make_segment() {
 # Separator
 BAR_SEP="${SEP} | ${RESET}"
 
-# Model name (mauve)
-SEG_MODEL="${MAUVE}${MODEL}${RESET}"
+# Segment order: 5h, 7d, ctx, model, dir.
+# A rate-limit segment is skipped when its window is absent from the payload.
+SEGMENTS=()
 
-# Directory (sky)
-SEG_DIR="${SKY}${DIRNAME}${RESET}"
+# 5-hour rate limit segment (only when data present)
+if [ -n "$FIVE_H" ]; then
+    FH_PCT=$(clamp_pct "$FIVE_H")
+    FH_COLOR=$(pick_color "$FH_PCT")
+    SEG_5H="${LABEL}5h${RESET} ${FH_COLOR}${FH_PCT}%${RESET}"
+    FH_RESET=$(fmt_reset "$FIVE_H_RESET")
+    if [ -n "$FH_RESET" ]; then
+        SEG_5H="${SEG_5H} ${LABEL}(${FH_RESET})${RESET}"
+    fi
+    SEGMENTS+=("$SEG_5H")
+fi
+
+# 7-day rate limit segment (only when data present)
+if [ -n "$SEVEN_D" ]; then
+    SD_PCT=$(clamp_pct "$SEVEN_D")
+    SD_COLOR=$(pick_color "$SD_PCT")
+    SEG_7D="${LABEL}7d${RESET} ${SD_COLOR}${SD_PCT}%${RESET}"
+    SD_RESET=$(fmt_reset "$SEVEN_D_RESET" "%b %d")
+    if [ -n "$SD_RESET" ]; then
+        SEG_7D="${SEG_7D} ${LABEL}(${SD_RESET})${RESET}"
+    fi
+    SEGMENTS+=("$SEG_7D")
+fi
 
 # Context window segment
 CTX_COLOR=$(pick_color "$CTX_PCT")
@@ -170,31 +192,23 @@ SEG_CTX="${LABEL}ctx${RESET} ${CTX_COLOR}${CTX_PCT}%${RESET}"
 if [ -n "$CTX_TOKENS" ]; then
     SEG_CTX="${SEG_CTX} ${LABEL}($(fmt_tokens "$CTX_TOKENS"))${RESET}"
 fi
+SEGMENTS+=("$SEG_CTX")
 
-# Build base line
-LINE="${SEG_MODEL}${BAR_SEP}${SEG_DIR}${BAR_SEP}${SEG_CTX}"
+# Model name (mauve)
+SEGMENTS+=("${MAUVE}${MODEL}${RESET}")
 
-# 7-day rate limit segment (only when data present)
-if [ -n "$SEVEN_D" ]; then
-    SD_PCT=$(clamp_pct "$SEVEN_D")
-    SD_COLOR=$(pick_color "$SD_PCT")
-    LINE="${LINE}${BAR_SEP}${LABEL}7d${RESET} ${SD_COLOR}${SD_PCT}%${RESET}"
-    SD_RESET=$(fmt_reset "$SEVEN_D_RESET" "%b %d")
-    if [ -n "$SD_RESET" ]; then
-        LINE="${LINE} ${LABEL}(${SD_RESET})${RESET}"
+# Directory (sky)
+SEGMENTS+=("${SKY}${DIRNAME}${RESET}")
+
+# Join the segments with the separator
+LINE=""
+for seg in "${SEGMENTS[@]}"; do
+    if [ -z "$LINE" ]; then
+        LINE="$seg"
+    else
+        LINE="${LINE}${BAR_SEP}${seg}"
     fi
-fi
-
-# 5-hour rate limit segment (only when data present)
-if [ -n "$FIVE_H" ]; then
-    FH_PCT=$(clamp_pct "$FIVE_H")
-    FH_COLOR=$(pick_color "$FH_PCT")
-    LINE="${LINE}${BAR_SEP}${LABEL}5h${RESET} ${FH_COLOR}${FH_PCT}%${RESET}"
-    FH_RESET=$(fmt_reset "$FIVE_H_RESET")
-    if [ -n "$FH_RESET" ]; then
-        LINE="${LINE} ${LABEL}(${FH_RESET})${RESET}"
-    fi
-fi
+done
 
 # ---------------------------------------------------------------------------
 # 10. Print — printf to honour ANSI escape sequences
