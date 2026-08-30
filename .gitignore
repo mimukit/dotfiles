@@ -46,3 +46,6 @@ id_dsa
 .env.*
 *.secrets
 act.secrets
+
+# ---- Local scratch ----
+docs/status/
