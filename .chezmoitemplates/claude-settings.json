@@ -50,7 +50,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "Notification": [
       {
@@ -134,6 +134,9 @@
     "type": "command",
     "command": "~/.claude/statusline.sh"
   },
-  "effortLevel": "high",
-  "theme": "dark"
+  "effortLevel": "medium",
+  "awaySummaryEnabled": false,
+  "theme": "dark",
+  "fileCheckpointingEnabled": false,
+  "terminalProgressBarEnabled": true
 }
