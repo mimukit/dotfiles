@@ -87,13 +87,6 @@ _Generated <date> · against `<commit sha>` · covers <brief scope>_
 - What the feature does, in one short sentence.
 - What "working" means, in one short sentence.
 
-## Overall result
-_Tick one when you finish the run._
-
-- [ ] Pass: every case passed
-- [ ] Fail: at least one case failed
-- [ ] Partial: cases were skipped or not reached
-
 ## Environment
 True for the whole plan. Do this once, before Scenario 1.
 
@@ -190,10 +183,18 @@ Commands run (one per block; chain with `&&` when they must run together):
 ## Not covered / needs human judgment
 - <anything that can't be scripted: visual polish, UX feel, external integrations, timing>
 - <dimension deliberately skipped, and why>
+
+## Overall result
+_Tick one when you finish the run._
+
+- [ ] Pass: every case passed
+- [ ] Fail: at least one case failed
+- [ ] Partial: cases were skipped or not reached
 ````
 
 Rules for good cases:
-- **Never ask the tester to transcribe something you already know.** The header stamp carries the date and the exact commit the plan was written against, so fill both in yourself from `git log` and don't leave a blank table for a human to copy a sha into. The only thing the plan asks of the tester up front is the one judgment a machine can't make: the overall verdict. If they end up running against a different build than the stamp, that belongs in a case's **Notes**, not in a field every plan carries empty forever.
+- **Never ask the tester to transcribe something you already know.** The header stamp carries the date and the exact commit the plan was written against, so fill both in yourself from `git log` and don't leave a blank table for a human to copy a sha into. The only thing the plan asks of the tester is the one judgment a machine can't make: the overall verdict. If they end up running against a different build than the stamp, that belongs in a case's **Notes**, not in a field every plan carries empty forever.
+- **Overall result goes last, at the foot of the file.** The tester ticks it when the run ends, and the run ends at the bottom of the plan. A verdict box near the top asks them to scroll back through every case they just finished, so it stays unticked.
 - **Fixed case body, always these four parts in this order:** **Goal**, **Steps**, **Result**, **Notes**. No case drops one, no case invents a fifth. A tester should be able to jump to any case in any plan and find the same shape.
 - **Goal is one line and says what the case *proves***, not what it does: "an expired token can't reach another tenant's orders", not "test the orders endpoint".
 - **Verification lives under the step that produces it.** Never a separate expected-results list at the bottom of the case: a step is followed immediately by its own `- [ ]` checkpoints, so the tester ticks as they go instead of holding five expectations in their head and reconciling them at the end. A step with nothing to observe simply has no checkpoints.

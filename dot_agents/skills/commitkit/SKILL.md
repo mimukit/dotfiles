@@ -1,7 +1,7 @@
 ---
 name: commitkit
 description: >-
-  Create a git commit with a Conventional Commits message derived from the actual diff. Use when the user asks to commit changes, says "commit this", runs "/commitkit", or wants a well-formed commit message written for staged work, even if they don't spell out the format.
+  Create a git commit with a Conventional Commits message derived from the actual diff, then push it to origin. Use when the user asks to commit changes, says "commit this", runs "/commitkit", or wants a well-formed commit message written for staged work, even if they don't spell out the format.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -16,7 +16,7 @@ Turn the current changes into one or more clean commits with [Conventional Commi
 
 The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). If they only want a *message drafted* (not committed), do everything except the final `git commit`.
 
-This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage the right files yourself, group the work into as many commits as it deserves, commit them, and report back a table of what you created, without stopping to ask at each step.
+This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage the right files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step.
 
 ## Draft mode
 
@@ -93,6 +93,7 @@ The `(scope)` is required, so every message carries one, falling back to `(repo)
 Rules:
 - **Imperative mood**, **all lowercase** subject. Never capitalize the first word or any word in the title (proper nouns and acronyms are the only exceptions), use **no trailing period**, and aim for ≤ 50 characters.
 - The summary states the *effect* of the change ("add retry to fetch client"), not the activity ("changes to fetch client").
+- **Keep every body line at 72 characters or fewer.** Break a longer bullet into two bullets, or continue it on an indented next line. Commit hooks such as commitlint's `body-max-line-length` reject long lines, and 72 clears the common 72/80/100 limits.
 - **A body is required.** Open with a short one-line summary of *why*, then a bullet list capturing the reasons and the concrete changes. Keep it to what a reviewer needs. Don't pad trivial commits, but always include the summary line and at least one bullet.
 - Do **not** add `Co-authored-by` or tool advertising unless the user asked for it.
 
@@ -104,7 +105,7 @@ Group by *what the change accomplishes*, not by file type or directory. Keep a f
 Order the groups so dependencies land first (e.g. a shared helper before the feature that uses it). When a file contains hunks from multiple groups, plan to stage it interactively rather than assigning the whole path to one group.
 
 ### 5. Commit each group
-With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the `git status -sb` the hand-off needs:
+With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs:
 
 ```sh
 git add <group 1 paths> && git commit -m "type(scope): summary" -m "why in one line
@@ -114,8 +115,16 @@ git add <group 1 paths> && git commit -m "type(scope): summary" -m "why in one l
 git add <group 2 paths> && git commit -m "type(scope): summary" -m "why in one line
 
 - reason/change bullet" && \
-git status -sb
+git push -u origin HEAD && git status -sb
 ```
+
+**Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way.
+
+Hold the push and ask in these cases:
+
+- **The remote rejects it.** Report the rejection and stop. Never reach for `--force` or `--force-with-lease` here; a rejected push means the branch moved on the remote, and rewriting it is gitkit's and prkit's business, not commitkit's.
+- **There is no `origin`,** or the branch tracks some other remote. Report the commits and name the push the user would run.
+- **The user asked you not to push,** with "commit, don't push", "don't publish yet", or a request for a message only. Honor that and say the commits are local.
 
 Interactive staging of a mixed file (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)) is the one step that can't join the chain. Commit up to that group in one call, handle the split, then chain the rest.
 
@@ -136,12 +145,12 @@ Close with what changed, where it landed, and the next move.
 
 List each commit's changed/created files in the last column. You already know them, since they're the paths you passed to `git add` for each group, so build the table from that rather than querying git again. If you do need to check, one `git log --stat --oneline -<n>` covers every commit you just made; don't run a separate `git show` per commit. If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped or left for the user), note it under the table.
 
-**Where it landed.** Report the branch the commits sit on, and whether it has an upstream. The `git status -sb` at the end of the commit chain already printed both in one line; report from that output rather than running it again. Commits on a local-only branch exist nowhere but this machine, and saying so is the most useful line in the report.
+**Where it landed.** Report the branch the commits sit on, and say whether the push happened. The `git status -sb` at the end of the commit chain prints the branch and its upstream in one line; report from that output rather than running it again. When the push did not happen, say so and name the reason, because commits that exist nowhere but this machine are the most useful line in the report.
 
-**Next.** Name one move and stop. The work is committed but unpublished, so the default is to publish it: **prkit** when it's installed, to open a pull request from exactly these commits; otherwise `git push -u origin HEAD` and open the PR by hand. If the feature clearly isn't finished, say that instead and name the plain action, which is to keep building, then re-run commitkit for the next group. Don't push or open anything yourself; commitkit's job ends at the commit.
+**Next.** Name one move and stop. The commits are pushed, so the default is to open a pull request from exactly these commits: **prkit** when it's installed, otherwise `gh pr create`. When the push did not happen, crown the push instead and give the command. When the feature clearly isn't finished, say that and name the plain action, which is to keep building, then re-run commitkit for the next group. Don't open a pull request yourself; commitkit's job ends at the push.
 
 ## Notes
 
-- **Never** run `git push`, `git commit --amend`, or history-rewriting commands unless the user explicitly asks.
+- **Never** run `git commit --amend`, `git rebase`, `git reset`, or any other history-rewriting command unless the user explicitly asks. A fast-forward push publishes work and is recoverable with a revert; rewriting a published branch is not, which is why the guard sits here and not on the push (see [Commit each group](#5-commit-each-group)).
 - If a repo has its own commit convention (a `CONTRIBUTING.md`, a commit template, or an obviously different style in `git log`), follow that over these defaults and say you did.
 - No filesystem or shell? Then you can't run `git`. Instead read the diff the user provides and print the finished commit message as a codeblock for them to run themselves.

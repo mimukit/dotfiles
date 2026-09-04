@@ -17,7 +17,7 @@ An idea is a subject someone wants to think about, not a project they have commi
 
 A jot is smaller again: a thought with no folder, no slug, and no commitment. The jotpad takes any subject at any time, and a jot earns a folder by coming back.
 
-Eight modes. [`jot`](#mode-jot) drops a loose thought into the pad. [`promote`](#mode-promote) turns a jot that keeps returning into its own idea. [`capture`](#mode-capture) writes an idea down and stops. [`session`](#mode-session) is the mode that thinks. [`status`](#mode-status) reports and writes nothing. [`research`](#mode-research) and [`validate`](#mode-validate) send a question out and bring the answer back. [`close`](#mode-close) records a verdict.
+Eight modes. [`jot`](modes/jot.md) drops a loose thought into the pad. [`promote`](modes/promote.md) turns a jot that keeps returning into its own idea. [`capture`](modes/capture.md) writes an idea down and stops. [`session`](modes/session.md) is the mode that thinks. [`status`](modes/status.md) reports and writes nothing. [`research`](modes/research.md) and [`validate`](modes/validate.md) send a question out and bring the answer back. [`close`](modes/close.md) records a verdict.
 
 **`jot`, `promote`, `capture`, and `close` write on their own. Every other mode offers its writes and takes no for an answer.** See [Saving is a demand, not a default](#saving-is-a-demand-not-a-default).
 
@@ -88,7 +88,7 @@ Two reasons hold it up. Ideas contaminate each other: half-formed thinking about
 
 **One bounded exception.** Open a second topic folder only when the user names that idea in the ask ("does this connect to the agent memory idea?"). That folder is **read-only** for the session, and the connection is written into the primary idea's `NOTES.md` alone. One session, one owner of the log. When a link looks obvious and the user has not asked, say the link in one sentence and leave the folder shut.
 
-**The rule holds across the pad in both directions.** A topic mode opens no file under `jotpad/`, and a jotpad mode opens no folder under `topics/`. See [The jotpad](#the-jotpad) for how a jot session bounds its own reads, and [`promote`](#mode-promote) for the one mode that touches both.
+**The rule holds across the pad in both directions.** A topic mode opens no file under `jotpad/`, and a jotpad mode opens no folder under `topics/`. See [The jotpad](#the-jotpad) for how a jot session bounds its own reads, and [`promote`](modes/promote.md) for the one mode that touches both.
 
 ### The three topic files
 
@@ -128,7 +128,7 @@ Two to six lines in the user's own words: what the thought is, and what set it o
 
 **Dropping a jot is a one-cell edit.** When the user says a jot is nothing, set its state to `dropped` and write nothing else. It needs no mode and no verdict entry: a jot never claimed enough to need one.
 
-**The isolation guard covers the pad.** A `jot` run reads `jotpad/INDEX.md` and `INDEX.md`, both bounded routers. A jot discussion reads those plus only the dated files that one jot's row names. Neither opens a folder under `topics/`, and no topic mode opens a file under `jotpad/`. [`promote`](#mode-promote) is the single crossing, and it reads one jot and writes one topic folder.
+**The isolation guard covers the pad.** A `jot` run reads `jotpad/INDEX.md` and `INDEX.md`, both bounded routers. A jot discussion reads those plus only the dated files that one jot's row names. Neither opens a folder under `topics/`, and no topic mode opens a file under `jotpad/`. [`promote`](modes/promote.md) is the single crossing, and it reads one jot and writes one topic folder.
 
 A dated file does hold unrelated jots side by side, so reading one thread carries its neighbours into the window. That cost is accepted and it is bounded. The pad holds loose thoughts by definition, and a thread heavy enough to be worth protecting from them is a thread that has earned `promote`.
 
@@ -172,157 +172,18 @@ Composing first is what makes the yes cheap. An offer that asks "want me to save
 
 **The cost, stated plainly.** `session` opens on a status report, and `status` crowns the coldest idea carrying an open question. Both read `NOTES.md`. Unsaved sessions leave those reads behind what the user actually thinks. The hand-off says so on every run that writes nothing, so a thin log never passes for a quiet month.
 
-## Mode: `jot`
-
-Drop the thought into the pad and stop. It does not discuss, does not propose a slug, and does not create a folder. See [The jotpad](#the-jotpad) for the file formats.
-
-### 1. Read the two routers, and nothing else
-
-Read `jotpad/INDEX.md`. **Match the thought against every jot summary.** When one is plainly the same thought, append a block under that jot's existing id. Otherwise allocate the next id.
-
-Read `INDEX.md` too, because it is bounded and cheap. **When the thought plainly belongs to a registered idea, say so in one line and write the jot anyway.** The pad is the low-friction door, and stopping to route a thought is the friction the pad removes. [`promote`](#mode-promote) is what moves it later, and it appends to that idea rather than creating a second one.
-
-Open no topic folder and no dated file the matched jot does not name.
-
-### 2. Write the block
-
-Create `jotpad/YYYY-MM-DD.md` when today has no file yet. Append the block under a `## j-NNN · <short title>` heading, two to six lines in the user's own words. **When the mode fires from another repo, record that repo in the block.** Where a thought arrived from is usually part of the thought.
-
-Leave every earlier block in the file alone.
-
-### 3. Write the jot router row
-
-On a new jot, add the row: the title, the id, a one-line summary, today's date, and state `live`. On a return, add today's date to the existing row's `Entries` cell and leave the rest of the row as it is.
-
-**Done when** the block exists in today's file and `jotpad/INDEX.md` names it. Then go to [Hand off](#hand-off).
-
-## Mode: `promote`
-
-Turn a jot into an idea. This is [`capture`](#mode-capture) with a source, and it is the one mode that reads the pad and writes a topic folder.
-
-### 1. Route to exactly one jot
-
-Read `jotpad/INDEX.md` and resolve one id. **With no jot named, ask.** Offer the `live` jots, the ones with three or more entries first, and use `AskUserQuestion` when four or fewer fit. Then read only the dated files that jot's row names.
-
-### 2. Match against the idea router
-
-Read `INDEX.md`. Match the jot against every slug, every alias, and every summary, as `capture` does. **When anything is close, show the candidate row and ask** whether this appends to that idea or starts a new one.
-
-### 3. Confirm the slug, then create
-
-On a new idea, propose a slug and **confirm it before writing anything**, because it is permanent. Then create `topics/<slug>/`, write `IDEA.md` from the jot's own blocks, and write the first dated `NOTES.md` entry. **That entry names the jot id and the date the thought first arrived**, so the folder carries its own origin.
-
-On an append, add a dated `NOTES.md` entry carrying the jot's blocks, refresh the `## Open` block, and rewrite the router row.
-
-### 4. Flip the jot row and leave the blocks alone
-
-Set the jot's state to `` `promoted` · `<slug>` ``. **Cut nothing out of any dated file.** The pad records when the thought arrived and how it read at the time, and moving the text destroys that record for no gain.
-
-**Done when** `topics/<slug>/` holds `IDEA.md` and a first `NOTES.md` entry naming the jot id, the idea router carries its row, and the jot row reads `promoted`. Then go to [Hand off](#hand-off).
-
-## Mode: `capture`
-
-Write the idea down and stop. It does not discuss, does not research, and offers a session once at most.
-
-### 1. Match before you create
-
-Read `INDEX.md`. Match the ask against every slug, every alias, and every summary. **When anything is close, show the candidate row and ask** whether this belongs on that idea or starts a new one. Read only the router here, so the guard holds.
-
-Two folders for one idea splits the log, and the guard means a later session opens one of them with nothing signalling the other exists.
-
-### 2. Confirm the slug, then create
-
-On a new idea, propose a slug and **confirm it before writing anything**, because it is permanent. Then create `topics/<slug>/`, write `IDEA.md` from the user's own words, and write the first dated `NOTES.md` entry.
-
-**When the mode fires from another repo, record that repo in the first entry.** Where an idea arrived from is usually part of the idea.
-
-### 3. Write the router row
-
-Add the row with two or three aliases the user would plausibly say later, the one-line summary, and the open question when one is obvious. Status is `active`.
-
-On an append instead of a create, add the dated `NOTES.md` entry, refresh the `## Open` block, and rewrite the router row.
-
-**Done when** the router row exists and `IDEA.md` states the idea in the user's own words. Then go to [Hand off](#hand-off).
-
-## Mode: `session`
-
-The mode that thinks.
-
-### 1. Route to exactly one idea
-
-Read `INDEX.md` and resolve one slug. On an unknown slug, run [`capture`](#mode-capture) first, then continue here.
-
-**With no idea named, ask.** Offer the ideas by last touched, plus "a new idea". Use `AskUserQuestion` when four or fewer candidates fit, and a numbered list otherwise. Never guess the idea, and never fall through to `status`.
-
-### 2. Read only that folder
-
-Read `IDEA.md`, then `NOTES.md`, then only the artifacts those two name. Open nothing else.
-
-### 3. Open with the status report
-
-Print the single-idea report from [`status`](#mode-status) as the first thing the user sees. The session then starts from where the last one stopped rather than from a cold restatement.
-
-### 4. Discuss
-
-**The posture: state the strongest version of the idea, then name what would kill it.** Build the case first, because an idea argued down before it is stated properly never gets a fair test. Then say the one condition that would end it.
-
-**When the user says they are thinking out loud, build only and skip the stress pass.** Record the kill condition as the open question either way, so an expansive night still costs the log nothing.
-
-### 5. Close the session
-
-Compose three writes, then offer them as one save:
-
-1. The dated `NOTES.md` entry, three to six lines minimum, naming a decision, a rejection, or an open question. That entry is the spine the next session reads.
-2. A refreshed `## Open` block for `IDEA.md`, plus a rewritten head when the idea itself changed.
-3. The router row, including `Last touched`.
-
-Print all three under their paths and ask save, edit, or drop, as [Saving is a demand, not a default](#saving-is-a-demand-not-a-default) sets out. On a yes, write them in the order above. On a no, write nothing, and say so in the hand-off.
-
-A full session record goes to `topics/<slug>/docs/sessions/` **only when the user asks for one**. Do not offer it.
-
-A `parked` or `closed` idea that gets a saved session returns to `active` under a new dated entry.
-
-**Done when** the user has seen the composed entry and answered. On a save, the entry names a decision, a rejection, or an open question, the `## Open` block matches that entry, and the router row matches both. On a drop, nothing in the folder changed. Then go to [Hand off](#hand-off).
-
-## Mode: `status`
-
-Reports, and writes nothing at all.
-
-### Cross-idea scope, no idea named
-
-Read `INDEX.md` and list `topics/`. **Open no topic folder.** Print one table sorted by last touched, grouped by status, with each row's age in days (`untouched 94 days`). Name any folder the router does not list, and say to run `session` on it to register it.
-
-Read `jotpad/INDEX.md` and report the pad in one line below the table: the count of `live` jots, and every jot with three or more entries named as a promotion candidate. **Open no dated file.** The `Entries` cell already carries the count, which is what that column is for.
-
-There is no stale marker. A tag most rows would wear inside a year is a verdict on a repo whose whole point is that ideas sit, and the crown below already promotes the cold ones.
-
-Then crown one move:
-
-| # | State | Move → |
-|---|-------|--------|
-| 1 | an `active` idea carries a recorded open question | `session` on the **coldest** such idea, naming its age |
-| 2 | a `live` jot carries three or more entries | `promote` on that jot |
-| 3 | an `active` idea carries no open question | `session` on it, to find one |
-| 4 | a `building` idea carries an open question | `session` on it |
-| 5 | every idea is `parked` or `closed`, and no `live` jot exists | say there is no next move, and offer `capture` |
-
-**Within rule 1 the crown goes to the coldest idea, not the warmest.** Cold plus an open question means the user stopped mid-thought, which is the recoverable case, and it is the row a table sorted by recency buries. Ranking on recency would make the crown restate row one.
-
-**No ideas repo, or an empty one?** Say so in one line, offer `capture` or `jot`, and print no empty table.
-
-### Single-idea scope, one idea named
-
-Read `IDEA.md`, the last two or three `NOTES.md` entries, and a **listing** of `docs/` without reading the artifacts. Print what the idea is, where it stands, and the open questions. Then crown one move:
-
-| # | State | Move → |
-|---|-------|--------|
-| 1 | an open question blocks the others | `session` on that question |
-| 2 | the idea rests on an unresearched external fact | `research` |
-| 3 | the idea is a business and has no verdict | `validate` |
-| 4 | the idea is settled enough to shape work | plan it in the project repo |
-| 5 | nothing is open and no next question exists | `close`, naming which verdict fits |
-
-**Done when** the printed state matches the files read and exactly one move is crowned. Then go to [Hand off](#hand-off).
+## The modes
+
+The mode bodies live in one file each under `modes/`. Route with [Mode selection](#mode-selection), read that one file, and follow it. Everything above this line, and the shared sections below, apply to every mode and are not restated in the mode files.
+
+- Mode `jot` → read [modes/jot.md](modes/jot.md), then follow it.
+- Mode `promote` → read [modes/promote.md](modes/promote.md), then follow it.
+- Mode `capture` → read [modes/capture.md](modes/capture.md), then follow it.
+- Mode `session` → read [modes/session.md](modes/session.md), then follow it.
+- Mode `status` → read [modes/status.md](modes/status.md), then follow it.
+- Mode `research` → read [modes/research.md](modes/research.md), then follow it.
+- Mode `validate` → read [modes/validate.md](modes/validate.md), then follow it.
+- Mode `close` → read [modes/close.md](modes/close.md), then follow it.
 
 ## The dispatch contract
 
@@ -334,45 +195,6 @@ Read `IDEA.md`, the last two or three `NOTES.md` entries, and a **listing** of `
 - **Fold back only what gets saved.** On a yes, offer the dated `NOTES.md` entry naming the question, the answer, and the artifact path, together with the `IDEA.md` and router updates. On a no, the answer stays in the conversation and the log stays as it was.
 
 The idea's own log holds one authoritative thread of everything the user kept, so a later session reads one file and finds every saved answer.
-
-## Mode: `research`
-
-Route to one slug first, then classify the question before acting.
-
-- **A tool, library, framework, or architecture question** goes to a research skill (**researchkit** when installed), answering inline. Offer to keep it at `topics/<slug>/docs/research/` afterwards.
-- **A build-or-drop question** is not research. Redirect it to [`validate`](#mode-validate).
-- **A market, competitor, category, or customer-signal question** has no sibling owner, so ideakit runs it directly: who else does this, what the category is called, how incumbents price it, and what users publicly complain about. **Give every claim a source and a date.** Offer the result at `topics/<slug>/docs/research/research-<slug>-YYYY-MM-DD.md`.
-
-Without a research skill installed, run the comparison against primary sources directly and **say plainly that it is the short version**.
-
-**Done when** the user has seen the answer and answered the save offer. On a yes, the artifact exists, the `NOTES.md` entry names the question and the answer, and `IDEA.md` and the router row match. On a no, the folder is untouched. Then go to [Hand off](#hand-off).
-
-## Mode: `validate`
-
-Route to one slug, then hand the idea to a validation skill (**validatekit** when installed), answering inline. Offer to keep the write-up at `topics/<slug>/docs/validation/` afterwards.
-
-**Honor the sibling's side-project off-ramp rather than working around it.** It will fire often here, because most ideas in a personal ideas repo are not businesses, and an honest "this is a side project, not a company" is a real answer worth offering to write down.
-
-Offer the verdict, the wedge, and the assignment as one `NOTES.md` entry, with the router status change when the verdict moves it.
-
-Without a validation skill installed, run a short forcing-question set and a graded verdict, and **say plainly that it is the short version**.
-
-**Done when** the user has seen the verdict and answered the save offer. On a yes, the verdict, the wedge, and the assignment are in `NOTES.md`, and the router status matches the verdict. On a no, the folder is untouched. Then go to [Hand off](#hand-off).
-
-## Mode: `close`
-
-Route to one slug. Ask which verdict applies: `building`, `parked`, or `closed`. **Require the reason**, and refuse to write a verdict without one.
-
-Then write, without a save offer. The verdict and its reason are the demand, and the reason question already gave the user a place to stop.
-
-1. Write a dated verdict entry into `NOTES.md`, recording what was decided, what evidence decided it, and what would reopen it.
-2. Rewrite `IDEA.md` so the verdict sits at the top of its head.
-3. Update the router row.
-4. On `building`, record the implementation repo in the status cell and in the entry.
-
-**A closed idea keeps its folder.** This mode never deletes a topic folder, never moves a file out of one, and never migrates anything to another repo. An idea that gets built runs its implementation in a separate repo, and the folder stays open for future thinking about the same subject.
-
-**Done when** the verdict entry, `IDEA.md`, and the router row agree, and nothing else in the folder changed. Then go to [Hand off](#hand-off).
 
 ## Hand off
 
