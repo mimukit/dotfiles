@@ -1,9 +1,8 @@
+tap "abue-ammar/tinycast", trusted: true
 tap "anomalyco/tap", trusted: true
-tap "ender-wang/tap", trusted: { casks: ["edgemark"] }
 tap "gromgit/brewtils", trusted: true
 tap "infisical/get-cli", trusted: true
 tap "peterldowns/tap", trusted: true
-tap "shobhit99/tap"
 tap "stablyai/orca", trusted: { casks: ["orca"] }
 # Run your GitHub Actions locally
 brew "act"
@@ -127,7 +126,7 @@ brew "mycli"
 brew "neovim"
 # Trigger notifications when a process completes
 brew "noti"
-# Reattach to the user namespace so Touch ID works for sudo inside tmux
+# PAM module for reattaching to the user's GUI (Aqua) session
 brew "pam-reattach"
 # Simplistic interactive filtering tool
 brew "peco"
@@ -173,6 +172,8 @@ brew "starship"
 brew "subversion"
 # Easiest, most secure way to use WireGuard and 2FA
 brew "tailscale"
+# Interactive TUI for Homebrew
+brew "taproom"
 # Send macOS User Notifications from the command-line
 brew "terminal-notifier"
 # Official tldr client written in Rust
@@ -205,8 +206,6 @@ brew "zellij"
 brew "zoxide"
 # The AI coding agent built for the terminal.
 brew "anomalyco/tap/opencode", trusted: true
-# Interactive TUI for Homebrew
-brew "gromgit/brewtils/taproom", trusted: true
 # The official Infisical CLI
 brew "infisical/get-cli/infisical", trusted: true
 # Localias is a tool for developers to securely manage local aliases for development servers.
@@ -229,6 +228,8 @@ cask "antigravity"
 cask "antigravity-cli"
 # AI Coding Agent IDE
 cask "antigravity-ide"
+# Temporary notes with calculations and extensible features
+cask "antinote"
 # Allows connection to a computer remotely
 cask "anydesk"
 # Multi-track audio editor and recorder
@@ -241,8 +242,6 @@ cask "bitwarden"
 cask "blip"
 # File manager
 cask "bloom"
-# Prevents your sleeping computer from connecting to Bluetooth accessories
-cask "bluesnooze"
 # E-books management software
 cask "calibre"
 # Native GUI for Homebrew casks
@@ -263,8 +262,6 @@ cask "codex"
 cask "daisydisk"
 # Voice and text chat software
 cask "discord"
-# Window peeking utility app
-cask "dockdoor"
 # Desktop client for Ente Auth
 cask "ente-auth"
 # Web browser
@@ -313,14 +310,14 @@ cask "local"
 cask "losslesscut"
 # Markdown previewer with bundled Quick Look extension
 cask "markdown-preview"
+# Markdown editor
+cask "markedit"
 # Free up RAM manually and automatically
 cask "memory-cleaner"
 # Meet, chat, call, and collaborate in just one place
 cask "microsoft-teams"
 # App to write, plan, collaborate, and get organised
 cask "notion"
-# Calculator and converter application
-cask "numi"
 # Open-source software for live streaming and screen recording
 cask "obs"
 # Verify system files structure, run miscellaneous maintenance and more
@@ -349,20 +346,22 @@ cask "shottr"
 cask "spotify"
 # Text editor for code, markup and prose
 cask "sublime-text"
-# Raycast-style command launcher
-cask "shobhit99/tap/supercmd", trusted: true
 # VPN client for secure internet access and private browsing
 cask "surfshark"
+# Minimal GUI for AI code agents
+cask "t3-code"
 # Native GUI tool for relational databases
 cask "tableplus"
+# Native database client for many database types
+cask "tablepro"
 # Mesh VPN based on WireGuard
 cask "tailscale-app"
 # Desktop client for Telegram messenger
 cask "telegram-desktop"
-# Menu bar manager
-cask "thaw"
 # To-do & task list manager
 cask "ticktick"
+# Tiny, fully native launcher, hotkeys, and clipboard history
+cask "abue-ammar/tinycast/tinycast", trusted: true
 # Speech-to-text and AI text processing
 cask "typewhisper"
 # Open-source code editor
@@ -388,6 +387,6 @@ mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
 mas "Pastel", id: 413897608
 mas "TeraCopy", id: 1378806557
-mas "Unsplash Wallpapers", id: 1284863847
 mas "Xcode", id: 497799835
+npm "command-code"
 npm "corepack"
