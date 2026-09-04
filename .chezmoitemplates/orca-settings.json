@@ -25,12 +25,15 @@
       "copilot": "",
       "grok": "",
       "devin": "",
-      "ante": ""
+      "ante": "",
+      "trae": "",
+      "droid": ""
     },
     "agentDefaultEnv": {
       "goose": {}
     },
     "agentHibernationIdleMs": 1800000,
+    "agentSkillSharingEnabled": false,
     "agentStatusHooksEnabled": true,
     "agentYoloDefaultsMigrated": true,
     "appFontFamily": "Geist",
@@ -41,6 +44,7 @@
     "autoRenameBranchFromWorkDefaultedOn": true,
     "branchPrefix": "none",
     "branchPrefixCustom": "",
+    "browserClientHostedRemoteEnabled": true,
     "browserGuestWorktreeRetentionBudget": true,
     "claudeAgentTeamsDefaultDisabledMigrated": true,
     "claudeAgentTeamsMode": "off",
@@ -83,6 +87,7 @@
     "experimentalNativeChat": false,
     "experimentalNewWorktreeCardStyle": true,
     "experimentalPet": false,
+    "experimentalStructuredNativeChat": false,
     "experimentalTerminalAttention": true,
     "experimentalWorktreeSymlinks": false,
     "floatingTerminalCwd": "~",
@@ -108,6 +113,7 @@
     "minimizeToTrayOnClose": false,
     "nativeChatSessionOptions": {},
     "nestWorkspaces": true,
+    "nestedWorkerMaxDepth": 1,
     "notifications": {
       "enabled": true,
       "agentTaskComplete": true,
@@ -148,8 +154,9 @@
     "showAutomationsButton": true,
     "showGitIgnoredFiles": true,
     "showMenuBarIcon": false,
-    "showMobileButton": true,
+    "showMobileButton": false,
     "showPinnedWorktreesInGroups": false,
+    "showSkillsButton": false,
     "showTasksButton": true,
     "showTitlebarAppName": true,
     "skipCloseTerminalWithRunningProcessConfirm": true,
@@ -298,7 +305,10 @@
       "microphoneDeviceLabel": null
     },
     "windowBackgroundBlur": false,
-    "workspaceDir": "~/worktrees"
+    "workspaceDir": "~/worktrees",
+    "worktreeVisibilityDefaults": {
+      "external": "hide"
+    }
   },
   "ui": {
     "agentActivityDisplayMode": "compact",
@@ -313,15 +323,15 @@
     "hideDetachedHeadWorkspaces": false,
     "hideSleepingWorkspaces": false,
     "markdownTocPanelWidth": 240,
-    "projectOrderBy": "manual",
+    "projectOrderBy": "recent",
     "rightSidebarExplorerView": "files",
     "rightSidebarOpen": true,
-    "rightSidebarTab": "explorer",
+    "rightSidebarTab": "source-control",
     "rightSidebarWidth": 335,
     "showActiveOnly": false,
     "showSleepingWorkspaces": true,
     "sidebarWidth": 342,
-    "sortBy": "manual",
+    "sortBy": "name",
     "statusBarItems": [
       "claude",
       "gemini",
@@ -334,7 +344,7 @@
     "statusBarUsageMode": "verbose",
     "statusBarVisible": true,
     "syncTaskStatusFromWorkspaceBoard": false,
-    "uiZoomLevel": -0.5,
+    "uiZoomLevel": -1,
     "usagePercentageDisplay": "remaining",
     "workspaceBoardColumnWidth": 308,
     "workspaceBoardOpacity": 1,
@@ -367,6 +377,7 @@
     "worktreeCardProperties": [
       "status",
       "unread",
+      "issue",
       "pr",
       "automation",
       "comment",
