@@ -1,4 +1,8 @@
-## Mode `start <n>`: make it merge-ready
+## Mode `start <n>`: prepare the review workspace
+
+**`<n>` is a PR number, always.** mergekit starts from an open pull request, so read the bare number in `start 34`, `start #34`, or "pull 34 down" as PR 34. Never read it as an issue number, even when a same-numbered issue exists. If the user means the issue, they say so, and that run belongs to issuekit's `start`.
+
+`start` prepares the workspace and stops. It creates or adopts the worktree, gets the project running, and prints the review pack. **It never syncs the branch and never pushes.** The reviewer runs **gitkit `sync`** inside the worktree when they choose to, because a sync rewrites a published branch and outdates review threads, and that call belongs to the human who is about to read them.
 
 ### 1. Resolve the head
 
@@ -24,20 +28,18 @@ So: resolve the head branch, look it up, and **reuse the worktree that already h
 
 The worktree lands wherever gitkit's convention puts it, outside the repository rather than in a `.worktrees/` directory inside it. An in-repo worktree gets swept into docker build contexts, bind mounts, and file watchers, and every one of those failures surfaces far from its cause. Nothing here needs a `.git/info/exclude` entry.
 
-### 3. Sync with the base branch
+### 3. Measure the base-branch gap and report it
 
-Bring `origin/<base>` into the PR branch *before* the human reviews, so they review what will actually land:
+Fetch, then measure how far the branch has drifted:
 
 ```sh
 git fetch origin
 git rev-list --left-right --count origin/<base>...HEAD    # "<behind>\t<ahead>"; left > 0 means behind
 ```
 
-If behind, **hand the sync to gitkit**, which owns the rebase-versus-merge rule in full. What mergekit owns is the *when*: that the sync happens before a human reads the diff, and that nothing leaves this machine without their OK.
+**Report the two numbers and stop there.** Do not rebase, do not merge the base in, do not push. The reviewer decides whether the drift matters, and runs **gitkit `sync`** inside the worktree when it does.
 
-Two things follow from gitkit's rule that matter specifically here. A PR branch is published, so the sync is in the **preview-and-confirm** class: one prompt covering the rebase and its `--force-with-lease` push, never a silent rewrite of a branch a reviewer may already be looking at. And this is the one place the merge exception's trigger actually fires: [the review pack](#5-print-the-review-pack) already queries unresolved review threads, so **feed that count into the preview**, because a rebase marks every one of them outdated, and the reviewer is about to spend their attention on exactly those threads. Name the number, still recommend the rebase, and let them take the merge if the threads are worth more than the history.
-
-**On conflict:** stop and surface it. List the conflicted files (`git diff --name-only --diff-filter=U`), propose a resolution for each, and confirm before writing. Then, before pushing, **run the repo's own test and build gate**, because a conflict resolution is a code change, and it can break something CI passed on five minutes ago. Push the sync only after the gate is green and the human has OK'd it, so the PR itself becomes mergeable on GitHub. On a fork PR you cannot push; say so, and keep the sync local for review purposes only.
+The reason the sync waits: a sync rewrites a published branch and marks every unresolved review thread outdated. [The review pack](#5-print-the-review-pack) prints that thread count beside the behind count, so the reviewer weighs both before they act. Without gitkit, the plain fallback is a rebase onto the base followed by `git push --force-with-lease`, and the reviewer runs it themselves.
 
 ### 4. Set the project up
 
@@ -53,7 +55,7 @@ Everything the reviewer needs, assembled once so they don't go hunting:
 - The QA plan, if the repo has one for this change, and any proof artifacts.
 - **Unresolved review threads with `file:line` and the comment text**, bot or human. This is the highest-value part of the pack: it is what the reviewer would otherwise re-derive by hand.
 - Any follow-up nits the PR body itself records.
-- CI status per check, and whether the branch is now in sync.
+- CI status per check, and the behind/ahead counts against `origin/<base>`.
 
 **Name what is missing.** "No QA plan in this repo's conventional location" is information; printing nothing where a QA plan would go is not.
 
@@ -61,10 +63,10 @@ Everything the reviewer needs, assembled once so they don't go hunting:
 
 _Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Report whether the worktree was adopted or created, and whether a sync was pushed (and if so, whether it rebased or took the merge exception, and how many threads it outdated). Nothing else here mutates anything.
+**What changed.** Report whether the worktree was adopted or created. State that no sync ran and nothing was pushed. Nothing else here mutates anything.
 
 **Where it landed.** Two lines: the worktree path, and the single command that starts the app.
 
-**Next.** The reviewer reads, runs, and forms an opinion; then `close <n>` executes whichever verdict they reach, whether a merge or a fix round. Say both halves, so it's clear merging isn't the assumed outcome.
+**Next.** The reviewer reads, runs, and forms an opinion. When the branch is behind, name **gitkit `sync`** inside the worktree as the first move, and give the behind count. Then `close <n>` executes whichever verdict they reach, whether a merge or a fix round. Say both halves, so it's clear merging isn't the assumed outcome.
 
 Then stop, because the human reviews and tests. mergekit does not judge the code, and does not proceed to `close` on its own.

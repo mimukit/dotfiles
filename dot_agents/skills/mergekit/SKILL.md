@@ -1,7 +1,7 @@
 ---
 name: mergekit
 description: >-
-  Take an open GitHub PR and make it merge-ready on your machine (worktree, base-branch sync, project running, review pack), then merge it once you say so, or service review feedback on a PR you authored. Use when you say "pull PR #34 down so I can test it", "merge PR #34", "address the review comments on my PR", or "my PR is red, fix the CI".
+  Take an open GitHub PR and set it up for review on your machine (worktree, project running, review pack), then merge it once you say so, or service review feedback on a PR you authored. Use when you say "pull PR #34 down so I can test it", "merge PR #34", "address the review comments on my PR", or "my PR is red, fix the CI".
 license: MIT
 allowed-tools: Bash, Read, Write, Skill
 metadata:
@@ -10,7 +10,7 @@ metadata:
 
 # mergekit
 
-The other half of a pull request's life. Something else opened it, whether you, an agent, or a teammate; mergekit is what you run when it is your turn to *judge* it, and what you run when your own PR comes back needing changes. It gets the PR into a [git worktree](https://git-scm.com/docs/git-worktree), reusing the one the branch already lives in when there is one, syncs it with the base branch, gets the project running, and prints a **review pack** of everything you need to form an opinion. Then it waits. When you say merge, it merges; when it needs changes, it fixes them in the worktree you already have open.
+The other half of a pull request's life. Something else opened it, whether you, an agent, or a teammate; mergekit is what you run when it is your turn to *judge* it, and what you run when your own PR comes back needing changes. It gets the PR into a [git worktree](https://git-scm.com/docs/git-worktree), reusing the one the branch already lives in when there is one, gets the project running, and prints a **review pack** of everything you need to form an opinion. Then it waits. When you say merge, it merges; when it needs changes, it fixes them in the worktree you already have open.
 
 mergekit is the **one skill permitted to merge a pull request**, a deliberate exception to the "never merge without an explicit ask" rule the rest of a PR toolchain holds. That permission is earned by a single hard precondition, stated in [Never merge automatically](#never-merge-automatically): a human confirms *that specific PR*, every time. Without the confirmation, mergekit has no more authority than any other skill.
 
@@ -21,7 +21,7 @@ It forms **no opinion about the code**. Judging the source is a code-review job;
 The PR already exists, and you are either reviewing it, or you authored it and it has come back needing changes:
 
 - **list.** "What PRs are waiting on me", "show me the ready-for-review PRs", "mergekit list".
-- **start `<n>`.** "Pull PR #34 down so I can test it", "set up #34 for review", "check out this PR for QA", "get #34 merge-ready".
+- **start `<n>`.** "Pull PR #34 down so I can test it", "set up #34 for review", "check out this PR for QA". **`<n>` is a PR number by default**, in every mode here.
 - **close `<n>`.** "Merge #34", "this one's good, land it", "#34 needs changes: <findings>".
 - **fix `<n>`.** The author's side: "my PR is red, fix the CI", "address the review comments on #34", "respond to the feedback on my PR". It triages the feedback before acting on it; it does not apply every comment on sight.
 
@@ -58,7 +58,7 @@ gh repo view --json nameWithOwner           # inside a repo
 
 ## What gitkit owns
 
-mergekit does not implement worktrees, base-ref detection, or the rebase-versus-merge rule, because **gitkit** does, and mergekit calls it for all three. What mergekit owns is the *policy about when*: that a PR is worth pulling down, that a sync should happen before a human reads the diff, that a merge needs a confirmation. If you find a worktree path convention, a base-ref ladder, or a sync rule restated below as mergekit's own, that is a bug.
+mergekit does not implement worktrees, base-ref detection, or the rebase-versus-merge rule, because **gitkit** does, and mergekit calls it for all three. What mergekit owns is the *policy about when*: that a PR is worth pulling down, that a merge needs a confirmation. **The sync is the reviewer's call, not mergekit's.** `start` reports how far the branch is behind and stops; the human runs gitkit `sync` in the worktree. Only `fix` syncs, because it is already pushing to that branch. If you find a worktree path convention, a base-ref ladder, or a sync rule restated below as mergekit's own, that is a bug.
 
 When gitkit isn't installed, fall back to the plain git commands named inline, but keep the same convention, and don't invent a different one.
 
@@ -76,7 +76,7 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 - **The merge exception is narrow.** mergekit may merge because a human is sitting in front of it. It must therefore never be dispatched as a subagent inside an unattended pipeline, because the confirmation would have nobody to come from, and "the orchestrator said yes" is not a human review.
 - **No polling, no queue, no auto-merge.** mergekit runs when you invoke it. It does not watch for PRs, does not enable GitHub's auto-merge, and does not act on a schedule.
 - **`fix` is interactive too.** Reading review feedback and judging whether each comment is right *for this project* is judgment work, so mergekit does not do it unattended, and `fix` never runs inside an automated pipeline. Its [triage step](modes/fix.md#2-triage-the-punch-list-and-decide-what-is-actually-worth-fixing) exists to be overruled by a human, which needs one present. It is the author-side counterpart to `start`: it services the PR but, like every mode here, never merges it.
-- **Force-push only with a lease, and only behind the gate.** gitkit's sync rule rebases by default, so a PR branch does get rewritten, but always `--force-with-lease`, never bare `--force`, and never without the preview that names how many review threads it outdates. Never force-push to tidy history; the only force-push mergekit performs is the one the human just OK'd as part of a sync.
+- **Force-push only with a lease, and only behind the gate.** `fix` is the one mode that syncs, and gitkit's sync rule rebases by default, so a PR branch does get rewritten. Use `--force-with-lease`, never bare `--force`, and never without the preview that names how many review threads it outdates. Never force-push to tidy history; the only force-push mergekit performs is the one the human just OK'd as part of a `fix` sync.
 - **Read-only on fork PRs.** You can review and merge them; you cannot push fixes to them. Say so at setup, not at failure.
 - **Bot review feedback is reported, not resolved, on the reviewer's side.** `list` and `start` surface unresolved threads and stop there; judging and answering them is the *author's* job, and `fix` is where it happens. A bot's finding carries no more authority than a human's: both are triaged against the project's own conventions before anything is changed.
 - **No shell or `gh` available** (e.g. a browser-based agent)? Then you can't create a worktree or call `gh`. Print the review pack from what the user provides, and print the setup and merge commands as codeblocks for them to run, and never claim a merge happened that you could not perform.

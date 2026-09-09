@@ -68,10 +68,13 @@ A 404 means unprotected and selects [the direct path](#the-direct-path). Any oth
 **Resolve the last release.** Take the **nearest semver ancestor of HEAD**, not the highest version in the repo:
 
 ```sh
-git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*'
+git describe --tags --abbrev=0 \
+  --match 'v[0-9]*.[0-9]*.[0-9]*' --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*-*'
 ```
 
-Filtering to the semver shape stops a `nightly-2026-08-01` tag being mistaken for a release, and taking an ancestor rather than a maximum is what lets a repo running `v1.x` alongside `v2.x` read its own lineage. **Skip prereleases**, so a `v1.3.0-rc.1` tag is passed over and the commits it shipped still appear in the `v1.3.0` changelog. Cut them at the resolver, so nothing downstream has to know prereleases exist.
+**Both `--match` patterns are load-bearing**, because the tag prefix is inherited rather than chosen, and a repo tagging `1.2.3` without the `v` is as valid as one tagging `v1.2.3`. Matching only the prefixed shape makes releasekit report no previous release on a bare-tagged repo, then rebuild the whole history into one changelog. Filtering to the semver shape at all is what stops a `nightly-2026-08-01` tag being read as a release, and taking an ancestor rather than a maximum is what lets a repo running `v1.x` alongside `v2.x` read its own lineage.
+
+**`--exclude '*-*'` is what skips prereleases**, so a `v1.3.0-rc.1` tag is passed over and the commits it shipped still appear in the `v1.3.0` changelog. The exclusion has to be its own flag: a `--match` glob ending in `*` accepts `-rc.1` as part of the final number, so the shape filter alone lets every prerelease through. Cut them here at the resolver, so nothing downstream has to know prereleases exist. A stable tag carries no hyphen, so the pattern reaches nothing else the `--match` pair selected.
 
 **Read the range** `<lasttag>..HEAD`, or the whole history when no tag exists. Parse each commit's **subject and body**, because a `BREAKING CHANGE:` footer lives in the body, so bodies cannot be skipped.
 

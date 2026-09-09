@@ -115,8 +115,11 @@ git add <group 1 paths> && git commit -m "type(scope): summary" -m "why in one l
 git add <group 2 paths> && git commit -m "type(scope): summary" -m "why in one line
 
 - reason/change bullet" && \
-git push -u origin HEAD && git status -sb
+git push -u origin HEAD && git status -sb && \
+gh pr view --json number,url,state 2>/dev/null || true
 ```
+
+The `gh pr view` tail tells the hand-off whether this branch already has a pull request. It costs nothing extra, because it rides the same call. An empty result or a `gh` failure means no pull request, and that is a normal outcome rather than an error.
 
 **Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way.
 
@@ -147,7 +150,15 @@ List each commit's changed/created files in the last column. You already know th
 
 **Where it landed.** Report the branch the commits sit on, and say whether the push happened. The `git status -sb` at the end of the commit chain prints the branch and its upstream in one line; report from that output rather than running it again. When the push did not happen, say so and name the reason, because commits that exist nowhere but this machine are the most useful line in the report.
 
-**Next.** Name one move and stop. The commits are pushed, so the default is to open a pull request from exactly these commits: **prkit** when it's installed, otherwise `gh pr create`. When the push did not happen, crown the push instead and give the command. When the feature clearly isn't finished, say that and name the plain action, which is to keep building, then re-run commitkit for the next group. Don't open a pull request yourself; commitkit's job ends at the push.
+**Next.** Name one move and stop. Pick it from the state you already read, in this order:
+
+1. **The push did not happen.** Crown the push and give the command.
+2. **The branch already has an open pull request** (the `gh pr view` tail printed one). The commits are on it now, so crown the review move, not a new pull request. Say the pull request updated, give its number and URL, and name the move that fits the reason you committed. After review fixes, that is to reply to the reviewer and re-request review with **mergekit**, otherwise `gh pr comment <number>`. Never crown opening a pull request for a branch that has one.
+3. **The pull request is merged or closed.** Say so and crown a new branch for this work with **gitkit**, otherwise `git switch -c <name> <base>`.
+4. **The branch has no pull request.** Crown opening one from exactly these commits: **prkit** when it is installed, otherwise `gh pr create`.
+5. **The feature clearly is not finished.** Say that and crown the plain action, which is to keep building, then re-run commitkit for the next group.
+
+Don't open a pull request yourself; commitkit's job ends at the push.
 
 ## Notes
 

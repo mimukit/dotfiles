@@ -34,7 +34,9 @@ Rules that keep this honest:
 
 ### 3. Get the worktree and sync
 
-Adopt the branch's existing worktree exactly as [`start` does](./start.md#2-get-a-worktree-adopting-first-and-creating-only-if-needed), because your own PR almost always still has the worktree it was built in, then sync exactly as [`start` syncs](./start.md#3-sync-with-the-base-branch), through gitkit. It is your branch, but it is *published*, so the sync previews and waits for an OK before anything is pushed. The thread count matters more here than anywhere else: you are about to *answer* those threads, and a rebase outdates the ones you have not replied to yet, so gather and triage the punch list first, and put the number in the preview. A PR you opened from a fork you don't control is the read-only case, where you cannot push; say so and stop.
+Adopt the branch's existing worktree exactly as [`start` does](./start.md#2-get-a-worktree-adopting-first-and-creating-only-if-needed), because your own PR almost always still has the worktree it was built in. Then, unlike `start`, **sync it**: you are about to push to this branch anyway, so it lands on the base it will merge into. Hand the sync to gitkit, which owns the rebase-versus-merge rule; without gitkit, rebase onto the base and push with `--force-with-lease`.
+
+It is your branch, but it is *published*, so the sync previews and waits for an OK before anything is pushed. The thread count matters more here than anywhere else: you are about to *answer* those threads, and a rebase outdates the ones you have not replied to yet, so gather and triage the punch list first, and put the number in the preview. On conflict, stop: list the conflicted files (`git diff --name-only --diff-filter=U`), propose a resolution for each, confirm before writing, then run the repo's test and build gate before you push. A PR you opened from a fork you don't control is the read-only case, where you cannot push; say so and stop.
 
 ### 4. Fix, gate, commit, push
 

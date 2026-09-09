@@ -35,7 +35,7 @@ gitkit is a **primitives skill**. Most of its runs come from another skill calli
 | mode | does | lives |
 |---|---|---|
 | `worktree` | create, adopt, look up, list, and remove a worktree | [below](#worktree) |
-| `sync` | bring a feature branch onto the latest base and force-push it with a lease | [below](#sync) |
+| `sync` | catch a feature branch up with its own remote, bring it onto the latest base, and force-push it with a lease | [below](#sync) |
 | `clean` | sweep the merged worktrees and branches away, one confirmation each | [clean.md](./clean.md) |
 | `rescue` | find work that looks lost and restore it onto a new branch | [rescue.md](./rescue.md) |
 | `stack` | build and restack a chain of branches through `gh stack` | [stacks.md](./stacks.md), and [Stacked branches](#stacked-branches) |
@@ -183,17 +183,18 @@ git rebase "origin/$BASE"
 
 ### `sync`
 
-The runnable form of the rule above: bring one feature branch up to date with its base, resolve every conflict, and leave the branch and its pull request on the latest base code. Run it in the branch's worktree. Each step names the condition that ends it.
+The runnable form of the rule above. A sync has **two halves, in this order**: first bring the local branch level with its own counterpart on `origin`, then bring it up to date with the base. Skipping the first half is what makes a later `--force-with-lease` reject, or silently drop a commit pushed from another machine. Run it in the branch's worktree. Each step names the condition that ends it.
 
 1. **Fix the ground.** Resolve the base with [the base ref ladder](#the-base-ref). Run `git -C "$WT" fetch origin --prune`. Confirm the worktree is on the feature branch and that `git status --porcelain` is empty. A dirty tree stops the sync: report the files and let the human stash or commit. Ends when the base name, the branch name, and a clean tree are all known.
-2. **Measure the gap.** Run `git rev-list --left-right --count "origin/$BASE"...HEAD`. Behind count `0` means the branch is already current: report that, push nothing, and stop. Ends with a behind count and an ahead count.
-3. **Preview and confirm, once.** An unpushed branch skips this step and goes straight through. A published branch gets one preview that covers the rebase *and* the force-push: the base, the behind and ahead counts, and the unresolved review thread count from the GraphQL `reviewThreads` connection when a pull request is open. Name merge as the alternative, and still recommend the rebase. Ends on the user's answer.
-4. **Rebase.** Run `git rebase "origin/$BASE"`. Ends when the rebase reports success or stops on a conflict.
-5. **Resolve every conflict.** For each stop, list the files with `git diff --name-only --diff-filter=U`. Read each conflicted file, propose a resolution that keeps the branch's intent and the base's new code, and confirm before writing. Stage the file, then `git rebase --continue`. Repeat for every remaining stop. `git rebase --abort` restores the pre-rebase state, and it is the answer when a conflict is not yours to settle. Ends when no conflict marker remains and the rebase is complete.
-6. **Prove the branch still works.** Run the repository's own test and build gate. Report a failure with its output and stop before the push. Ends with a pass, or a stop.
-7. **Push with a lease.** Run `git push --force-with-lease origin "$BRANCH"`. A rejected lease means somebody pushed while you rebased: fetch, show the new commits, and ask before any retry. Ends when the remote branch matches the local one.
+2. **Sync with `origin/$BRANCH`.** Run `git rev-list --left-right --count "origin/$BRANCH"...HEAD` when the remote branch exists. Behind count `0` means nothing to take. Otherwise run `git pull --rebase origin "$BRANCH"` to replay your local commits on the remote ones, and resolve every conflict by the rule in **Resolve every conflict** below. A branch with no remote counterpart skips this step. Ends when the local branch contains every commit on `origin/$BRANCH`.
+3. **Measure the gap to the base.** Run `git rev-list --left-right --count "origin/$BASE"...HEAD`. Behind count `0` means the branch is already on the latest base: push whatever the previous step took, report that, and stop. Ends with a behind count and an ahead count.
+4. **Preview and confirm, once.** An unpushed branch skips this step and goes straight through. A published branch gets one preview that covers the rebase *and* the force-push: the base, the behind and ahead counts, and the unresolved review thread count from the GraphQL `reviewThreads` connection when a pull request is open. Name merge as the alternative, and still recommend the rebase. Ends on the user's answer.
+5. **Rebase onto the base.** Run `git rebase "origin/$BASE"`. Ends when the rebase reports success or stops on a conflict.
+6. **Resolve every conflict.** For each stop, list the files with `git diff --name-only --diff-filter=U`. Read each conflicted file, propose a resolution that keeps the branch's intent and the base's new code, and confirm before writing. Stage the file, then `git rebase --continue`. Repeat for every remaining stop. `git rebase --abort` restores the pre-rebase state, and it is the answer when a conflict is not yours to settle. Ends when no conflict marker remains and the rebase is complete.
+7. **Prove the branch still works.** Run the repository's own test and build gate. Report a failure with its output and stop before the push. Ends with a pass, or a stop.
+8. **Push with a lease.** Run `git push --force-with-lease origin "$BRANCH"`. A rejected lease means somebody pushed while you rebased: fetch, show the new commits, and ask before any retry. Ends when the remote branch matches the local one.
 
-**Hand off.** Report the base, the behind and ahead counts, the files whose conflicts you resolved, the gate result, and the pushed branch. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
+**Hand off.** Report the commits taken from `origin/$BRANCH`, the base, the behind and ahead counts, the files whose conflicts you resolved, the gate result, and the pushed branch. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
 
 ### The merge exception
 

@@ -119,7 +119,7 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 **Where it landed.** Give the file paths, and the pre-flight result including anything left unfixed.
 
-**Next.** **Repeat the design read verbatim in this hand-off.** It is the only durable record of why the UI looks the way it does, and repeating it here is what carries it into a PR body when this runs inside a pipeline. Then, if the project has no `DESIGN.md`, the crowned next move is **designkit** `init` when installed (otherwise write one by hand), because it derives the system from shipped UI, and there is now shipped UI to derive from. If a `DESIGN.md` already exists, the next move is committing the work with **commitkit** when installed, otherwise `git add` and commit. Changes are left unstaged either way; uikit does not commit.
+**Next.** **Repeat the design read verbatim in this hand-off.** It is the only durable record of why the UI looks the way it does, and repeating it here is what carries it into a PR body when this runs inside a pipeline. Then, if the project has no `DESIGN.md`, the crowned next move is **designkit** `init` when installed (otherwise write one by hand), because it derives the system from shipped UI, and there is now shipped UI to derive from. If a `DESIGN.md` already exists, the next move is committing the work with **commitkit** when installed, otherwise `git add` and commit. Changes are left unstaged either way; uikit does not commit. As a runner-up, look at the shipped screen with verifykit `show` when installed, otherwise open the app and look.
 
 ## Mode: `audit`
 

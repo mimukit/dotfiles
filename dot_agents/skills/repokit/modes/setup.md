@@ -25,7 +25,7 @@ gh api repos/{owner}/{repo} --jq '{allow_update_branch, security_and_analysis}'
 | `--enable-projects` | false | Nothing in this collection reads a project board. |
 | `--enable-issues` | true | The issue tracker is the workflow's substrate. |
 | `--allow-update-branch` | true | Puts the "Update branch" button on a PR behind its base, the sync mergekit runs. |
-| `--enable-auto-merge` | true | Lets `gh pr merge --auto` land a PR once checks pass, which is how afkkit finishes unattended. |
+| `--enable-auto-merge` | true | Lets `gh pr merge --auto` land an approved PR once checks pass, so a merge waits on CI instead of on you. No skill here uses it: mergekit merges on your word and afkkit stops at an open PR. |
 | `--enable-secret-scanning` | true | GitHub reports a credential committed to the repo. |
 | `--enable-secret-scanning-push-protection` | true | GitHub blocks the push that carries a credential, so nothing to revoke. |
 

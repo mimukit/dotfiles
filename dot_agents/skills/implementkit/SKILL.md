@@ -101,7 +101,7 @@ Leave every change **unstaged**. Do not `git add`, do not commit, do not draft a
 - the **gate result** (which commands ran and that they passed),
 - the **phases stamped**, and which phases of that plan are still unbuilt.
 
-Then point the user to commitkit when installed, or say plainly that the next step is to group and commit the changes. Don't run it yourself.
+Then point the user to commitkit when installed, or say plainly that the next step is to group and commit the changes. Don't run it yourself. When the build touched a UI surface, add one runner-up: look at it with verifykit `show` when installed, otherwise open the app and look.
 
 Name the next phase of the plan when one is left. Say the plan is fully built when none is.
 

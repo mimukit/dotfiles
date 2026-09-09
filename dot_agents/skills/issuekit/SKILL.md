@@ -1,7 +1,7 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle in five modes: create issues from a plan or description, start a `ready` issue into its own worktree, close one out once its PR merges, sync PR↔issue links after merge, and triage the tracker for lifecycle and priority gaps. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "sync my issues", "triage the backlog", or "set the priority on #42". It runs the tracker only; it writes no plan and no code.
+  Own the GitHub issue lifecycle in five modes: create issues from a plan or description, start a `ready` issue into its own worktree, close one out once its PR merges, sync PR↔issue links after merge, and triage the tracker for lifecycle, priority, and title gaps. Use when the user says "create issues from this plan", "file an issue", "open a GitHub issue", "log this as a task", "add this to the backlog", "make issues for these TODOs", "start issue #42", "close #42", "sync my issues", "triage the backlog", "set the priority on #42", "relabel #42", "rename issue #42", or "fix the titles on these issues". It runs the tracker only; it writes no plan and no code.
 license: MIT
 allowed-tools: Bash, Read, Edit, Write, Skill
 metadata:
@@ -26,11 +26,11 @@ One skill, five jobs, because they're the same job at five points in a dev workf
 
 The user wants to act on GitHub issues. Route to a mode from what they ask:
 
-- **create.** "Create issues from this plan", "open issues for `plan-auth.md`", "file an issue for X", "file this as an issue".
+- **create.** "Create issues from this plan", "open issues for `plan-auth.md`", "file an issue for X", "file this as an issue", "open a GitHub issue", "log this as a task", "add this to the backlog", "make issues for these TODOs".
 - **start.** "Start issue #42", "begin #42", "pick up #42", "spin up a worktree for #42", "I'm working on 42 now".
 - **close.** "Close #42", "close out #42", "wrap up #42 now the PR merged", "tear down #42's worktree", "#42 landed, clean it up".
 - **sync.** "Sync my issues", "this PR merged but the issue is still open", "link this PR to #42", "unblock what #42 was holding up".
-- **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority".
+- **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority", "relabel #42", "rename issue #42", "fix the titles on these issues", "these titles don't follow the convention".
 
 **If no mode is clear, ask first.** Present the modes as options and let the user pick before doing anything, and don't guess between creating and mutating the tracker.
 
