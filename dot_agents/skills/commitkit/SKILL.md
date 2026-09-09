@@ -64,6 +64,7 @@ Pick the `type` from what the diff *does*, not what files it touches:
 |------|------|
 | `feat` | a new capability the user can see |
 | `fix` | a bug fix |
+| `hotfix` | an urgent fix patched straight onto the base branch |
 | `docs` | documentation only |
 | `refactor` | behavior-preserving code change |
 | `perf` | a performance improvement |
@@ -71,6 +72,8 @@ Pick the `type` from what the diff *does*, not what files it touches:
 | `build` / `ci` | build system, deps, or pipeline |
 | `style` | formatting/whitespace, no logic |
 | `chore` | routine maintenance that fits nothing above |
+
+**`hotfix` is `fix` in a hurry, and the branch decides it, not the severity.** Use `hotfix` when the commit sits on a branch named `hotfix-<slug>`, cut from the base branch to patch it directly. Everything else stays `fix`, however urgent it felt. This keeps the type checkable from the branch name rather than from a judgement about how bad the bug was. `hotfix` is an addition to the [Conventional Commits](https://www.conventionalcommits.org) set, so drop back to `fix` in a repo whose tooling validates types against the standard list; say once that you did.
 
 **Scope** is **mandatory** here. Unlike vanilla Conventional Commits, never omit it. Work out the module or feature group the diff belongs to (a package, module, directory, or feature area) and use that as the scope: `feat(auth): …`. When a change is genuinely global or fits no single area (repo-wide config, tooling, cross-cutting cleanup), use `repo` as the scope: `chore(repo): …`. Add a `!` (or a `BREAKING CHANGE:` footer) when the change breaks existing behavior.
 

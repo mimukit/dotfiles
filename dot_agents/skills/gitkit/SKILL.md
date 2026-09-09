@@ -79,6 +79,7 @@ Consequences:
 ### Branch naming
 
 - **`issue-<n>-<slug>`** for work that starts from a tracker issue. Slug from the issue title: if it follows a conventional `type(scope): summary` form, strip the prefix; kebab-case the rest, cap at roughly 50 characters on a word boundary, drop a trailing hyphen. An empty slug degrades to a bare `issue-<n>`. The number guarantees uniqueness, so no tie-break is ever needed.
+- **`hotfix-<slug>`** for an urgent fix that patches the base branch directly. Slug from the symptom, kebab-cased, capped at roughly 40 characters. The number is absent because a hotfix starts from the symptom rather than from a tracker issue; when one *does* trace to an issue, the branch still takes this shape and the pull request carries the `Closes #<n>` link. On a collision with an existing branch, add a short distinguishing word rather than a counter. **The separator is a hyphen: write `hotfix-<slug>`, never `hotfix/<slug>`.** A slash makes git treat `hotfix` as a directory in the ref namespace, so `hotfix-restore-session` and `hotfix/restore-session` cannot both exist, and every skill that reads the type off the branch name (commitkit, prkit) matches the hyphen form only.
 - **`pr-<n>-<slug>`** only for a **fork** pull request, where no local branch exists yet and one must be invented to hold the fetched head. Slug from the head branch name, kebab-cased, capped at roughly 40 characters.
 - Anything else takes a branch name the human or the repo's convention supplies. gitkit does not rename it.
 
