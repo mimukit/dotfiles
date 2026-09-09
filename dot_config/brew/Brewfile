@@ -2,6 +2,7 @@ tap "abue-ammar/tinycast", trusted: true
 tap "anomalyco/tap", trusted: true
 tap "gromgit/brewtils", trusted: true
 tap "infisical/get-cli", trusted: true
+tap "local/remnote-temp"
 tap "peterldowns/tap", trusted: true
 tap "stablyai/orca", trusted: { casks: ["orca"] }
 # Run your GitHub Actions locally
@@ -228,12 +229,12 @@ cask "antigravity"
 cask "antigravity-cli"
 # AI Coding Agent IDE
 cask "antigravity-ide"
-# Temporary notes with calculations and extensible features
-cask "antinote"
 # Allows connection to a computer remotely
 cask "anydesk"
 # Multi-track audio editor and recorder
 cask "audacity"
+# IDE for running and orchestrating coding agents
+cask "bb"
 # Utility to create and modify archives
 cask "betterzip"
 # Desktop password and login vault
@@ -251,7 +252,7 @@ cask "chatgpt"
 # Anthropic's official Claude AI desktop app
 cask "claude"
 # Terminal-based AI coding assistant
-cask "claude-code"
+cask "claude-code@latest"
 # Screen capturing tool
 cask "cleanshot"
 # AI code review CLI
@@ -296,12 +297,8 @@ cask "imageoptim"
 cask "istat-menus"
 # Terminal emulator as alternative to Apple's Terminal app
 cask "iterm2"
-# Keyboard customiser
-cask "karabiner-elements"
 # File archiver
 cask "keka"
-# Open-source keystroke visualiser
-cask "keycastr"
 # App to manage software development and track bugs
 cask "linear"
 # WordPress local development tool by Flywheel
@@ -318,6 +315,8 @@ cask "memory-cleaner"
 cask "microsoft-teams"
 # App to write, plan, collaborate, and get organised
 cask "notion"
+# Calculator and converter application
+cask "numi"
 # Open-source software for live streaming and screen recording
 cask "obs"
 # Verify system files structure, run miscellaneous maintenance and more
@@ -337,7 +336,7 @@ cask "proxyman"
 # Control your tools with a few keystrokes
 cask "raycast"
 # Spaced-repetition powered note-taking tool
-cask "remnote"
+cask "local/remnote-temp/remnote", trusted: true
 # App that enables mouse-free UI interaction
 cask "shortcat"
 # Screenshot measurement and annotation tool
@@ -388,5 +387,4 @@ mas "Klack", id: 6446206067
 mas "Pastel", id: 413897608
 mas "TeraCopy", id: 1378806557
 mas "Xcode", id: 497799835
-npm "command-code"
 npm "corepack"
