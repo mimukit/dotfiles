@@ -11,3 +11,5 @@ npm-debug.log
 act.secrets
 
 **/.claude/settings.local.json
+
+**/.claude/.cc-writes/
