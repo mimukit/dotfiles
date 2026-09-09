@@ -50,7 +50,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -136,6 +136,7 @@
   },
   "effortLevel": "medium",
   "awaySummaryEnabled": false,
+  "tui": "fullscreen",
   "theme": "dark",
   "fileCheckpointingEnabled": false,
   "terminalProgressBarEnabled": true
