@@ -1,0 +1,426 @@
+#!/usr/bin/env bash
+# Print the Claude Code 5-hour and 7-day usage limits on the terminal.
+#
+# Sources, freshest wins:
+#   ~/.claude.json                  .cachedUsageUtilization, written on OAuth /login
+#   ~/.claude/usage-live-cache.json written by the statusline on every render,
+#                                   and by the probe below
+#
+# Both sources move only when Claude Code runs, so on their own the numbers are
+# as fresh as the last session. To close that gap this script probes the API
+# itself: a 1-token request whose response headers carry the live rate-limit
+# numbers. The probe runs when the cache is older than PROBE_MAX_AGE and writes
+# the result back to the statusline cache, so a later statusline render and this
+# script agree. The age of the reading is always printed, so a stale value is
+# visible rather than silent.
+#
+# The probe authenticates from the first source that has a credential:
+# CLAUDE_CODE_OAUTH_TOKEN, then ~/.devaloy_secrets (where this box writes that
+# variable, and which a login shell does not export), then the accessToken that
+# /login stores — the macOS login Keychain on Darwin, or
+# ~/.claude/.credentials.json elsewhere — then ANTHROPIC_API_KEY. Both auth
+# styles work, so the probe does not care how the box was provisioned.
+#
+# Usage:
+#   usage             coloured one-screen report
+#   usage --line      one line: percent and time left per window
+#   usage --json      the raw utilization block of the chosen source
+#   usage --fetch     probe the API even when the cache is fresh
+#   usage --no-fetch  never probe, read the cache only
+#
+# --line does not probe unless --fetch is given, so a prompt that calls it
+# stays instant.
+#
+# Environment:
+#   USAGE_PROBE_MAX_AGE   seconds before the cache is probed again (default 120)
+#   USAGE_NO_FETCH        set to any value for --no-fetch by default
+#
+# Colour is off when stdout is not a terminal or NO_COLOR is set.
+
+set -u
+
+CONFIG="${CLAUDE_CONFIG_FILE:-$HOME/.claude.json}"
+FALLBACK="$HOME/.claude/usage-live-cache.json"
+CREDENTIALS="$HOME/.claude/.credentials.json"
+KEYCHAIN_SERVICE="Claude Code-credentials"
+MODE="report"
+PROBE_MAX_AGE="${USAGE_PROBE_MAX_AGE:-120}"
+# auto: probe when the cache is stale. always: probe regardless. never: no probe.
+FETCH="auto"
+[ -n "${USAGE_NO_FETCH:-}" ] && FETCH="never"
+
+LINE_MODE=0
+for arg in "$@"; do
+    case "$arg" in
+        --line) MODE="line"; LINE_MODE=1 ;;
+        --json) MODE="json" ;;
+        --fetch) FETCH="always" ;;
+        --no-fetch) FETCH="never" ;;
+        -h|--help)
+            sed -n '/^# Usage:/,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *)
+            echo "usage: usage [--line|--json] [--fetch|--no-fetch]" >&2
+            exit 2
+            ;;
+    esac
+done
+
+# --line stays instant unless the caller asks for a probe outright.
+if [ "$LINE_MODE" = 1 ] && [ "$FETCH" != "always" ]; then
+    FETCH="never"
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+    echo "usage: jq is required" >&2
+    exit 1
+fi
+
+# --- the probe ---------------------------------------------------------------
+# Claude Code's own /api/oauth/usage endpoint rejects a long-lived
+# CLAUDE_CODE_OAUTH_TOKEN with 403, so the numbers come from the rate-limit
+# headers on a normal request instead. A max_tokens:1 Haiku call costs about
+# 23 input tokens and 1 output token, which the freshness gate keeps rare.
+
+# newest_cache_ms — the fetchedAtMs of the freshest source, 0 when there is none.
+newest_cache_ms() {
+    local f newest=0 v
+    for f in "$CONFIG" "$FALLBACK"; do
+        [ -r "$f" ] || continue
+        v=$(jq -r 'if has("cachedUsageUtilization") then .cachedUsageUtilization else . end
+                   | .fetchedAtMs // 0 | floor' "$f" 2>/dev/null)
+        case "$v" in ''|*[!0-9]*) v=0 ;; esac
+        [ "$v" -gt "$newest" ] && newest="$v"
+    done
+    printf '%s' "$newest"
+}
+
+# probe — fetch the live numbers and rewrite $FALLBACK. Returns non-zero and
+# stays silent on any failure, so the caller falls back to the cached reading.
+
+# oauth_token — the bearer token for a Claude subscription, from the first
+# source that has one:
+#
+#   1. CLAUDE_CODE_OAUTH_TOKEN in the environment.
+#   2. ~/.devaloy_secrets, which is where the entrypoint writes that variable.
+#      A login shell does not export it, so an interactive `usage --fetch`
+#      sees an empty environment variable on a token-provisioned box.
+#   3. The credential `/login` writes. macOS keeps it in the login Keychain
+#      under the "Claude Code-credentials" service; every other platform keeps
+#      it in ~/.claude/.credentials.json. Either way the JSON is the same shape
+#      and its accessToken is the same kind of OAuth token, so the API accepts
+#      it the same way.
+#
+# An expired accessToken is skipped rather than sent: the API would answer 401
+# and the probe would fail anyway. Nothing here refreshes it — a `claude`
+# session does that, and the next probe picks up the rewritten credential.
+
+# login_credentials — print the credential JSON that `/login` wrote, or nothing.
+login_credentials() {
+    if [ "$(uname -s)" = "Darwin" ] && command -v security >/dev/null 2>&1; then
+        security find-generic-password -s "$KEYCHAIN_SERVICE" -w 2>/dev/null && return 0
+    fi
+    [ -r "$CREDENTIALS" ] && cat "$CREDENTIALS" 2>/dev/null
+}
+
+oauth_token() {
+    local t exp now_ms creds
+    if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+        printf '%s' "$CLAUDE_CODE_OAUTH_TOKEN"; return 0
+    fi
+    if [ -r "$HOME/.devaloy_secrets" ]; then
+        t=$( . "$HOME/.devaloy_secrets" >/dev/null 2>&1
+             printf '%s' "${CLAUDE_CODE_OAUTH_TOKEN:-}" )
+        if [ -n "$t" ]; then printf '%s' "$t"; return 0; fi
+    fi
+    creds=$(login_credentials)
+    if [ -n "$creds" ]; then
+        t=$(printf '%s' "$creds" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null)
+        exp=$(printf '%s' "$creds" | jq -r '.claudeAiOauth.expiresAt // 0 | floor' 2>/dev/null)
+        case "$exp" in ''|*[!0-9]*) exp=0 ;; esac
+        now_ms=$(( $(date +%s) * 1000 ))
+        if [ -n "$t" ] && { [ "$exp" -eq 0 ] || [ "$exp" -gt "$now_ms" ]; }; then
+            printf '%s' "$t"; return 0
+        fi
+    fi
+    return 1
+}
+
+probe() {
+    local auth=() headers pct5 reset5 pct7 reset7 tmp now_ms token
+    command -v curl >/dev/null 2>&1 || return 1
+
+    token=$(oauth_token) || token=""
+    if [ -n "$token" ]; then
+        auth=(-H "Authorization: Bearer $token"
+              -H "anthropic-beta: oauth-2025-04-20")
+    elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+        auth=(-H "x-api-key: $ANTHROPIC_API_KEY")
+    else
+        return 1
+    fi
+
+    # The OAuth token is only accepted for Claude Code, which the system prompt
+    # identifies. It is required, not decoration.
+    headers=$(curl -sS --max-time 10 -D - -o /dev/null \
+        https://api.anthropic.com/v1/messages \
+        "${auth[@]}" \
+        -H "anthropic-version: 2023-06-01" \
+        -H "content-type: application/json" \
+        -d '{"model":"claude-haiku-4-5-20251001","max_tokens":1,
+             "system":[{"type":"text","text":"You are Claude Code, Anthropic'"'"'s official CLI for Claude."}],
+             "messages":[{"role":"user","content":"hi"}]}' 2>/dev/null) || return 1
+
+    # Header names are lower case over HTTP/2 but not guaranteed to be, and the
+    # values are fractions: 0.57 is 57 percent.
+    hdr() {
+        printf '%s' "$headers" \
+            | tr -d '\r' \
+            | awk -v k="anthropic-ratelimit-unified-$1:" \
+                  'tolower($1) == k {print $2; exit}'
+    }
+    pct5=$(hdr 5h-utilization); reset5=$(hdr 5h-reset)
+    pct7=$(hdr 7d-utilization); reset7=$(hdr 7d-reset)
+    [ -n "$pct5" ] && [ -n "$pct7" ] || return 1
+    pct5=$(awk -v v="$pct5" 'BEGIN {print v * 100}')
+    pct7=$(awk -v v="$pct7" 'BEGIN {print v * 100}')
+
+    # Same atomic write as the statusline, which can render concurrently.
+    tmp=$(mktemp "$HOME/.claude/.usage-live-cache.XXXXXX" 2>/dev/null) || return 1
+    now_ms=$(( $(date +%s) * 1000 ))
+    printf '{"fetchedAtMs": %s, "utilization": {"five_hour": {"utilization": %s, "resets_at": "%s"}, "seven_day": {"utilization": %s, "resets_at": "%s"}}}\n' \
+        "$now_ms" "$pct5" "$reset5" "$pct7" "$reset7" > "$tmp" 2>/dev/null \
+        && mv "$tmp" "$FALLBACK" 2>/dev/null && return 0
+    rm -f "$tmp" 2>/dev/null
+    return 1
+}
+
+# PROBED marks a reading this run fetched itself, so the footer can say "live"
+# instead of naming the cache file the probe happens to write through.
+PROBED=0
+if [ "$FETCH" = "always" ]; then
+    if probe; then PROBED=1; else
+        echo "usage: probe failed, showing the cached reading" >&2
+    fi
+elif [ "$FETCH" = "auto" ]; then
+    CACHE_AGE=$(( $(date +%s) - $(newest_cache_ms) / 1000 ))
+    if [ "$CACHE_AGE" -ge "$PROBE_MAX_AGE" ] && probe; then PROBED=1; fi
+fi
+
+# extract_fields FILE ROOT_EXPR — ROOT_EXPR is a jq filter locating the
+# utilization block within FILE. Prints one tab-separated line:
+#   fetchedAtMs  five_pct  five_reset  seven_pct  seven_reset
+# Missing, null and empty values become "-" so no field is ever blank.
+extract_fields() {
+    local file="$1" root="$2"
+    jq -r "
+        def v: if . == null or . == \"\" then \"-\" else . end;
+        (${root}) as \$c
+        | [ (\$c.fetchedAtMs // 0),
+            (\$c.utilization.five_hour.utilization | v),
+            (\$c.utilization.five_hour.resets_at | v),
+            (\$c.utilization.seven_day.utilization | v),
+            (\$c.utilization.seven_day.resets_at | v) ]
+        | @tsv" "$file" 2>/dev/null
+}
+
+# read_source FILE ROOT_EXPR — loads the fields into A_* and returns 0 when
+# the file holds a usable five_hour percentage.
+read_source() {
+    local line
+    [ -r "$1" ] || return 1
+    line=$(extract_fields "$1" "$2") || return 1
+    [ -n "$line" ] || return 1
+    IFS=$'\t' read -r A_FETCHED A_FIVE_PCT A_FIVE_RESET A_SEVEN_PCT A_SEVEN_RESET <<<"$line"
+    [ "${A_FIVE_PCT:--}" != "-" ]
+}
+
+SOURCE_FILE=""
+SOURCE_LABEL=""
+SOURCE_ROOT="."
+TIER="-"
+FETCHED_MS=0
+
+if read_source "$CONFIG" ".cachedUsageUtilization"; then
+    SOURCE_FILE="$CONFIG"
+    SOURCE_LABEL="account cache"
+    SOURCE_ROOT=".cachedUsageUtilization"
+    FETCHED_MS="$A_FETCHED" FIVE_PCT="$A_FIVE_PCT" FIVE_RESET="$A_FIVE_RESET"
+    SEVEN_PCT="$A_SEVEN_PCT" SEVEN_RESET="$A_SEVEN_RESET"
+fi
+
+# The statusline mirror is refreshed on every render, the account block only
+# on /login. Take whichever reading is newer.
+if read_source "$FALLBACK" "." && [ "${A_FETCHED:-0}" -gt "$FETCHED_MS" ] 2>/dev/null; then
+    SOURCE_FILE="$FALLBACK"
+    SOURCE_LABEL="statusline cache"
+    [ "$PROBED" = 1 ] && SOURCE_LABEL="live"
+    SOURCE_ROOT="."
+    FETCHED_MS="$A_FETCHED" FIVE_PCT="$A_FIVE_PCT" FIVE_RESET="$A_FIVE_RESET"
+    SEVEN_PCT="$A_SEVEN_PCT" SEVEN_RESET="$A_SEVEN_RESET"
+fi
+
+if [ -z "$SOURCE_FILE" ]; then
+    echo "usage: no cached usage in $CONFIG or $FALLBACK — start a Claude Code session once" >&2
+    exit 1
+fi
+
+if [ "$SOURCE_FILE" = "$CONFIG" ]; then
+    TIER=$(jq -r '.oauthAccount.organizationRateLimitTier // "-"' "$CONFIG" 2>/dev/null)
+fi
+
+if [ "$MODE" = "json" ]; then
+    jq "$SOURCE_ROOT" "$SOURCE_FILE"
+    exit 0
+fi
+
+# --- colours: Catppuccin Mocha, same ramp as the status line -----------------
+RESET="\033[0m"
+GREEN="\033[38;2;166;227;161m"
+LAVENDER="\033[38;2;180;190;254m"
+PEACH="\033[38;2;250;179;135m"
+PINK="\033[38;2;243;139;168m"
+LABEL="\033[38;2;147;153;178m"
+SEP="\033[38;2;88;91;112m"
+
+if [ ! -t 1 ] || [ -n "${NO_COLOR:-}" ]; then
+    RESET="" GREEN="" LAVENDER="" PEACH="" PINK="" LABEL="" SEP=""
+fi
+
+pick_color() {
+    if   [ "$1" -ge 80 ]; then printf '%b' "$PINK"
+    elif [ "$1" -ge 70 ]; then printf '%b' "$PEACH"
+    elif [ "$1" -ge 60 ]; then printf '%b' "$LAVENDER"
+    else                       printf '%b' "$GREEN"
+    fi
+}
+
+# Round to an integer and clamp to 0-100; anything non-numeric becomes 0.
+clamp_pct() {
+    awk -v s="${1:-0}" 'BEGIN {
+        v = int(s + 0.5)
+        if (v < 0) v = 0
+        if (v > 100) v = 100
+        print v
+    }'
+}
+
+# --- time helpers ------------------------------------------------------------
+now=$(date +%s)
+today=$(date +%Y-%m-%d)
+
+# GNU date parses an ISO 8601 string with -d and formats an epoch with -d @sec.
+# BSD date (macOS) has neither: it parses with -j -f and formats with -r. These
+# two wrappers pick the form the local date supports, so the report prints the
+# same reset times on both.
+
+# iso_to_epoch — epoch seconds of an ISO 8601 timestamp; empty when unparsable.
+iso_to_epoch() {
+    local ts="$1" base
+    date -d "$ts" +%s 2>/dev/null && return 0
+    # BSD: drop any fractional seconds and the zone, then read the rest as UTC.
+    base=${ts%%.*}; base=${base%%+*}; base=${base%Z}
+    date -u -j -f "%Y-%m-%dT%H:%M:%S" "$base" +%s 2>/dev/null
+}
+
+# epoch_fmt — format epoch seconds "$1" with the strftime format "$2".
+epoch_fmt() {
+    date -d "@$1" +"$2" 2>/dev/null || date -r "$1" +"$2" 2>/dev/null
+}
+
+# Epoch seconds of an ISO 8601 or unix-epoch timestamp; empty when unparsable.
+epoch_of() {
+    local ts="$1"
+    case "$ts" in
+        ""|-) return 1 ;;
+        *[!0-9]*) iso_to_epoch "$ts" ;;
+        *) echo "$ts" ;;
+    esac
+}
+
+# "in 3h 12m" until the reset, "due" when the window already turned over,
+# or empty when the reset time is unknown.
+time_left() {
+    local secs d h m
+    secs=$(epoch_of "$1") || return 0
+    [ -n "$secs" ] || return 0
+    d=$(( secs - now ))
+    if [ "$d" -le 0 ]; then echo "due"; return; fi
+    h=$(( d / 3600 )); m=$(( (d % 3600) / 60 ))
+    if [ "$h" -gt 0 ]; then echo "in ${h}h ${m}m"; else echo "in ${m}m"; fi
+}
+
+# Wall-clock reset time in the local zone. Adds the date when it is not today.
+reset_at() {
+    local secs
+    secs=$(epoch_of "$1") || return 0
+    [ -n "$secs" ] || return 0
+    if [ "$(epoch_fmt "$secs" "%Y-%m-%d")" = "$today" ]; then
+        epoch_fmt "$secs" "%H:%M %Z"
+    else
+        epoch_fmt "$secs" "%a %d %b %H:%M %Z"
+    fi
+}
+
+# "resets 23:59 UTC (in 3h 12m)", with the unknown pieces left out.
+reset_text() {
+    local at left
+    at=$(reset_at "$1"); left=$(time_left "$1")
+    if   [ -n "$at" ] && [ -n "$left" ]; then echo "resets $at ($left)"
+    elif [ -n "$at" ];                    then echo "resets $at"
+    else                                       echo "reset time unknown"
+    fi
+}
+
+bar() {
+    local pct="$1" width=24 filled i out=""
+    filled=$(( pct * width / 100 ))
+    for (( i = 0; i < width; i++ )); do
+        if [ "$i" -lt "$filled" ]; then out="${out}█"; else out="${out}░"; fi
+    done
+    printf '%s' "$out"
+}
+
+FIVE_PCT=$(clamp_pct "$FIVE_PCT")
+SEVEN_PCT=$(clamp_pct "$SEVEN_PCT")
+
+case "$FETCHED_MS" in
+    ""|-|*[!0-9]*|0) AGE="age unknown" ;;
+    *)
+        AGE_MIN=$(( (now - FETCHED_MS / 1000) / 60 ))
+        if [ "$AGE_MIN" -lt 1 ]; then AGE="read just now"
+        elif [ "$AGE_MIN" -lt 60 ]; then AGE="read ${AGE_MIN}m ago"
+        elif [ "$AGE_MIN" -lt 1440 ]; then AGE="read $(( AGE_MIN / 60 ))h $(( AGE_MIN % 60 ))m ago"
+        else AGE="read $(( AGE_MIN / 1440 ))d $(( (AGE_MIN % 1440) / 60 ))h ago"
+        fi
+        ;;
+esac
+
+if [ "$MODE" = "line" ]; then
+    FIVE_LEFT=$(time_left "$FIVE_RESET"); SEVEN_LEFT=$(time_left "$SEVEN_RESET")
+    printf '%b5h%b %b%s%%%b %b(%s)%b%b | %b%b7d%b %b%s%%%b %b(%s)%b\n' \
+        "$LABEL" "$RESET" "$(pick_color "$FIVE_PCT")" "$FIVE_PCT" "$RESET" \
+        "$LABEL" "${FIVE_LEFT:-?}" "$RESET" \
+        "$SEP" "$RESET" \
+        "$LABEL" "$RESET" "$(pick_color "$SEVEN_PCT")" "$SEVEN_PCT" "$RESET" \
+        "$LABEL" "${SEVEN_LEFT:-?}" "$RESET"
+    exit 0
+fi
+
+printf '\n'
+printf '  %b5 hour%b   %b%s%b %b%3s%%%b   %b%s%b\n' \
+    "$LABEL" "$RESET" \
+    "$(pick_color "$FIVE_PCT")" "$(bar "$FIVE_PCT")" "$RESET" \
+    "$(pick_color "$FIVE_PCT")" "$FIVE_PCT" "$RESET" \
+    "$LABEL" "$(reset_text "$FIVE_RESET")" "$RESET"
+printf '  %b7 day%b    %b%s%b %b%3s%%%b   %b%s%b\n' \
+    "$LABEL" "$RESET" \
+    "$(pick_color "$SEVEN_PCT")" "$(bar "$SEVEN_PCT")" "$RESET" \
+    "$(pick_color "$SEVEN_PCT")" "$SEVEN_PCT" "$RESET" \
+    "$LABEL" "$(reset_text "$SEVEN_RESET")" "$RESET"
+if [ "$TIER" = "-" ]; then
+    printf '\n  %b%s · %s%b\n\n' "$SEP" "$SOURCE_LABEL" "$AGE" "$RESET"
+else
+    printf '\n  %b%s · %s · %s%b\n\n' "$SEP" "$TIER" "$SOURCE_LABEL" "$AGE" "$RESET"
+fi
