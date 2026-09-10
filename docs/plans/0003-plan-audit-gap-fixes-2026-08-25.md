@@ -2,7 +2,7 @@
 
 ## Context
 
-The 2026-08-25 gap audit (`docs/audit/audit-chezmoi-gaps-2026-08-25.md`) found roughly 40 verified issues across five severity tiers. Two shell bugs can destroy local state today. The weekly secret scan has never run. Codex holds pre-approved `git commit` and `git push` with no counter-instruction. The rest is policy drift, new-machine breakage, CI hardening, and stale docs.
+The 2026-08-25 gap audit (`docs/audit/0001-audit-chezmoi-gaps-2026-08-25.md`) found roughly 40 verified issues across five severity tiers. Two shell bugs can destroy local state today. The weekly secret scan has never run. Codex holds pre-approved `git commit` and `git push` with no counter-instruction. The rest is policy drift, new-machine breakage, CI hardening, and stale docs.
 
 Success means: no tracked script can uninstall a dependency or delete `main` by accident, the scheduled gitleaks run walks full history and fails loudly when it cannot, Codex and Claude carry the same operating rules, every finding in the audit is either fixed or explicitly accepted in a comment, and the audit report can be re-run clean.
 

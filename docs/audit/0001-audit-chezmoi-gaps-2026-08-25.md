@@ -1,6 +1,6 @@
 # Audit: remaining gaps in the chezmoi repo
 
-Date: 2026-08-25. Scope: the full repo, minus the six items in `docs/plans/plan-chezmoi-audit-followups-2026-08-25.md`. Four parallel reviews covered the shell layer, the chezmoi machinery, CI and docs, and the agent config surface. Every finding below was verified against the file, and many against live state.
+Date: 2026-08-25. Scope: the full repo, minus the six items in `docs/plans/0002-plan-chezmoi-audit-followups-2026-08-25.md`. Four parallel reviews covered the shell layer, the chezmoi machinery, CI and docs, and the agent config surface. Every finding below was verified against the file, and many against live state.
 
 One status correction first. Phase 5 of the follow-up plan is done but not marked. The pack is 2.06 MiB, `main` matches `origin/main`, and no bundle remains on the Desktop. Mark the phase built in the plan.
 
@@ -86,7 +86,7 @@ All in `.github/workflows/ci.yml`.
 - `.chezmoiignore:41-43` claims `chezmoi add` bypasses the ignore file. Verified false on v2.72.0, which warns and refuses. The two `modify_` script comments about `chezmoi add` also describe the wrong mechanism, replacement rather than shadowing. Three patterns (`**/.DS_Store`, the zed prompts line, the `*.tmp` block) match nothing anywhere. Correct the comments and prune or tag the dead patterns.
 - `.chezmoiexternal.toml` pins neither zinit nor tpm, while yazi and nvim plugins are pinned. Self-update makes a hard pin awkward, so at minimum record the trade-off and last-known-good SHAs.
 - `private_dot_claude/CLAUDE.md:50` and `dot_codex/AGENTS.md:58` forbid hard-wrapped Markdown and are themselves hard-wrapped. `AGENTS.md:46` also puts chat replies in the third-party prose bucket, which contradicts CLAUDE.md. Unwrap both and align the split.
-- Plan and QA hygiene: mark follow-up Phase 5 built, mark agent-hook plan Phase 2 built, and repoint `docs/qa/qa-agent-hook-notifications-2026-08-22.md` off commit `9598896`, which the rewrite destroyed.
+- Plan and QA hygiene: mark follow-up Phase 5 built, mark agent-hook plan Phase 2 built, and repoint `docs/qa/0001-qa-agent-hook-notifications-2026-08-22.md` off commit `9598896`, which the rewrite destroyed.
 - `dot_agents/dot_skill-lock.json` carries a `git-commit` entry with no skill dir anywhere. Remove or reinstall.
 - Dead code: `make_segment`/`make_bar` in `executable_statusline.sh:127-152` (26 unreachable lines), `--view` in `executable_ip`, the `cur` alias plus four tracked `dot_config/cursor` files for an editor that is not installed, and rule 8 in `dot_codex/rules/default.rules` pinned to `issue:23`.
 - Small bugs: the `grep -c . || echo "0"` fallback in `brew_apps_cleanup.sh:65-103` yields the string `0\n0`, so the "no extras" fast path is unreachable; `codex_settings_export.sh:21,92` names the modify script by a wrong filename; `rm-guard:2` states its own source path wrongly; the three export scripts duplicate ~40 lines of scaffolding and have already drifted; `MISE_TRUSTED_CONFIG_PATHS` is set in both `dot_zshrc:120` and the mise template; `.gitignore` has a bare `Icon` pattern and no `docs/status/` entry.
