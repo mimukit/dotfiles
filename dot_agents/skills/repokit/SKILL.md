@@ -1,7 +1,7 @@
 ---
 name: repokit
 description: >-
-  Set up a GitHub repo's metadata and configuration through the gh CLI: an inferred one-line About description + topics from the repo's own contents, the workflow labels (issuekit's lifecycle and priority sets, plus an `ai-review` trigger label for AI PR review tools), and a full new-repo setup that also applies the house repo settings (merge-commit-only, delete-branch-on-merge) and scaffolds the baseline files (LICENSE, README, .gitignore, AGENTS.md). Use when the user says "repokit", "set the repo description", "add topics/tags", "write an About blurb for this repo", "provision the workflow labels", "set up this repo's labels", "add priority labels", "configure this repo's metadata", "set up this new repo", or "make this repo match my conventions", meaning anything about a repo's About panel, its label vocabulary, or bringing a fresh repo up to convention.
+  Set up a GitHub repo's metadata and configuration through the gh CLI: an inferred one-line About description + topics from the repo's own contents, the workflow labels (issuekit's lifecycle and priority sets, plus an `ai-review` trigger label for AI PR review tools), and a full new-repo setup that also applies the house repo settings (merge-commit-only, delete-branch-on-merge) and scaffolds the baseline files (LICENSE, README, .gitignore, AGENTS.md), plus a one-time migration that renumbers the repo's docs/ artifacts into creation order. Use when the user says "repokit", "set the repo description", "add topics/tags", "write an About blurb for this repo", "provision the workflow labels", "set up this repo's labels", "add priority labels", "configure this repo's metadata", "set up this new repo", "make this repo match my conventions", "number my docs files", "renumber the docs", or "my docs don't sort by date", meaning anything about a repo's About panel, its label vocabulary, bringing a fresh repo up to convention, or the naming of the files under docs/.
 license: MIT
 disable-model-invocation: true
 allowed-tools: Bash, Read, Write
@@ -11,13 +11,14 @@ metadata:
 
 # repokit
 
-Configure a GitHub repository through the [`gh` CLI](https://cli.github.com), in three explicit **modes**:
+Configure a GitHub repository through the [`gh` CLI](https://cli.github.com), in four explicit **modes**:
 
 - **`about`.** Infer a one-line *About* description and a focused set of topics from the repo's own contents (README, manifest, code), show them against whatever is already set, and apply what you approve.
 - **`labels`.** Provision the workflow labels: the **lifecycle and priority** sets issuekit uses to track work and rank it, and the **automation** label that asks a repo's AI review tooling to look at a PR. Create what's missing, reconcile what drifted.
 - **`setup`.** Bring an already-created repo up to convention in one span: apply the house repo settings (merge-commit-only, delete-branch-on-merge), scaffold the baseline files (LICENSE by an asked question, README, `.gitignore`, `AGENTS.md`), then run `about` and `labels` on top. It configures; `gh repo create` stays with the user.
+- **`docs`.** Renumber the repo's `docs/` artifacts so a directory listing reads in creation order: a zero-padded serial in front of every artifact filename, assigned from when the artifact was created. A one-time migration per repo, idempotent on a re-run.
 
-Three jobs, one skill, because all three answer "make this repo's GitHub configuration right": the outward-facing blurb people read, the label vocabulary the issue workflow runs on, and the settings-and-files baseline a new repo starts from.
+Four jobs, one skill, because all four answer "make this repo match convention": the outward-facing blurb people read, the label vocabulary the issue workflow runs on, the settings-and-files baseline a new repo starts from, and the naming of the artifacts the other kits write into it.
 
 ## When this fires
 
@@ -26,6 +27,7 @@ The user wants to configure a repo on GitHub. Route to a mode from what they ask
 - **about.** "Set the repo description", "add topics", "write an About blurb", "tag this repo", "update the repo's About".
 - **labels.** "Provision the workflow labels", "set up this repo's labels", "add the issuekit labels", "add priority labels", "add an `ai-review` label", "the `blocked` label is missing".
 - **setup.** "Set up this new repo", "configure this repo", "make this repo match my conventions", or a vague "set up this repo" / "configure repo metadata" — `setup` is the umbrella, and it subsumes the old "offer `about` then `labels`" answer.
+- **docs.** "Number my docs files", "renumber the docs", "add file number prefixes", "my docs don't sort by date", "migrate the doc filenames". `setup` does not run it: `setup` brings a fresh repo up to convention, and a fresh repo has no artifacts to renumber.
 
 **If no mode is clear, ask first.** Present the three modes and let the user pick before touching anything.
 
@@ -34,8 +36,11 @@ The mode bodies live in one file each under `modes/`. Route with the list above,
 - Mode `about` → read [modes/about.md](modes/about.md), then follow it.
 - Mode `labels` → read [modes/labels.md](modes/labels.md), then follow it.
 - Mode `setup` → read [modes/setup.md](modes/setup.md), then follow it.
+- Mode `docs` → read [modes/docs.md](modes/docs.md), then follow it.
 
 ## Preflight (every mode)
+
+**`docs` is the exception to this section and the next one.** It renames files in the working tree and calls GitHub not at all, so it needs neither `gh` nor a remote — it runs on a local-only repo. Its own file states the checks it does need. Everything below applies to `about`, `labels`, and `setup`.
 
 Before any GitHub call, confirm the tooling and target:
 
@@ -76,7 +81,7 @@ Check the guardrail flags **before** any mutation:
 - **Never** delete a repo's topics wholesale or its labels outside the canonical sets without an explicit ask; the default is additive and reconciling, not destructive.
 - The lifecycle and priority maps are a **shared contract with issuekit**: the same names across both namespaces, with the same colors and meanings, and repokit's descriptions canonical. The automation set is repokit's alone, because issuekit runs the tracker and `ai-review` acts on a pull request.
 - **repokit provisions the vocabulary; it never applies it.** No mode here ever puts a label on an issue or a PR. Deciding that #42 is `high` is a judgment about the work, which is issuekit `create` and `triage`'s job; asking for an AI review is a call the author makes on their own PR. repokit only guarantees the word exists to say it with. Keeping that line is what makes the label mode safe to re-run on a repo with a live tracker.
-- **repokit never commits.** `setup` writes scaffold files and leaves them unstaged; grouping and committing them is a commit skill's job, or the user's.
+- **repokit never commits.** `setup` writes scaffold files and leaves them unstaged and `docs` leaves its renames staged; grouping and committing either is a commit skill's job, or the user's.
 - **Labels can't enforce one-per-namespace, so the writer has to.** GitHub will happily let an issue carry `critical` and `low` at once, and nothing here can prevent it. Provisioning is the only half repokit owns; the mutual exclusion is enforced at write time by whoever applies the label, which is why that rule lives in issuekit rather than in this map.
 - Defer to what the repo already curates: an existing scheme in any namespace is handled in `labels`' existing-scheme check, a curated About/topics is reconciled per-field (never blind-overwritten) in `about`, and `setup` never overwrites an existing file. Offer the canonical sets as an addition, not a replacement.
 - Prefer `gh`'s structured JSON (`--json`/`--jq`, the topics API) over scraping human-readable output, because the JSON fields are a stable contract and the display text isn't.
