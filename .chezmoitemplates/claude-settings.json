@@ -139,5 +139,10 @@
   "tui": "fullscreen",
   "theme": "dark",
   "fileCheckpointingEnabled": false,
-  "terminalProgressBarEnabled": true
+  "terminalProgressBarEnabled": true,
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "low"
+    }
+  }
 }
