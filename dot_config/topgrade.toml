@@ -7,8 +7,9 @@
 # Steps another tool already owns:
 #   brew_formula, brew_cask -> brewupx (dot_zshrc)
 #   chezmoi                 -> czs, which also refreshes the Brewfile
-# Steps turned off on purpose: containers, vim, system (macOS software update)
-disable = ["brew_cask", "brew_formula", "chezmoi", "containers", "system", "vim"]
+# Steps turned off on purpose: containers, vim, system (macOS software update),
+# microsoft_office
+disable = ["brew_cask", "brew_formula", "chezmoi", "containers", "microsoft_office", "system", "vim"]
 
 # Cache the sudo credential at the start of the run. Without this a cask or a
 # softwareupdate step opens a password prompt in a pane nobody is watching, and
