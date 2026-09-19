@@ -2,7 +2,8 @@ tap "abue-ammar/tinycast", trusted: true
 tap "gromgit/brewtils", trusted: true
 tap "infisical/get-cli", trusted: true
 tap "peterldowns/tap", trusted: true
-tap "stablyai/orca"
+tap "pulumi/tap"
+tap "stablyai/orca", trusted: { casks: ["orca"] }
 # Run your GitHub Actions locally
 brew "act"
 # Display directories as trees (with optional color/HTML output)
@@ -207,6 +208,8 @@ brew "zoxide"
 brew "infisical/get-cli/infisical", trusted: true
 # Localias is a tool for developers to securely manage local aliases for development servers.
 brew "peterldowns/tap/localias", trusted: true
+# Pulumi - Modern Infrastructure as Code. Any cloud, any language 
+brew "pulumi/tap/pulumi", trusted: true
 # Password manager that keeps all passwords secure behind one password
 cask "1password"
 # Command-line interface for 1Password
@@ -219,12 +222,8 @@ cask "aldente"
 cask "android-file-transfer"
 # Android SDK component
 cask "android-platform-tools"
-# Terminal interface for Antigravity agents
-cask "antigravity-cli"
 # Allows connection to a computer remotely
 cask "anydesk"
-# IDE for running and orchestrating coding agents
-cask "bb"
 # Utility to create and modify archives
 cask "betterzip"
 # Send any size file between devices
@@ -261,16 +260,14 @@ cask "forklift"
 cask "free-download-manager"
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask "gcloud-cli"
-# Android emulator
-cask "genymotion"
 # Web browser
 cask "google-chrome"
 # Web browser
 cask "google-chrome@beta"
-# Native desktop AI assistant from Google
-cask "google-gemini"
 # Utility to hide menu bar items
 cask "hiddenbar"
+# Homebrew's official GUI
+cask "homebrew-app"
 # AI-powered speech-to-text transcription
 cask "hyperwhisper"
 # Free and open-source media player
@@ -295,8 +292,6 @@ cask "markdown-preview"
 cask "markedit"
 # Free up RAM manually and automatically
 cask "memory-cleaner"
-# Meet, chat, call, and collaborate in just one place
-cask "microsoft-teams"
 # App to write, plan, collaborate, and get organised
 cask "notion"
 # Calculator and converter application
@@ -307,8 +302,6 @@ cask "obs"
 cask "onyx"
 # Replacement for Docker Desktop
 cask "orbstack"
-# IDE for orchestrating AI coding agents across terminals and worktrees
-cask "stablyai/orca/orca", trusted: true
 # Self-hosted daemon for AI coding agents
 cask "paseo"
 # Utility to uninstall apps and remove leftover files from old/uninstalled apps
@@ -319,8 +312,6 @@ cask "pocket-casts"
 cask "proxifier"
 # HTTP debugging proxy
 cask "proxyman"
-# Control your tools with a few keystrokes
-cask "raycast"
 # App that enables mouse-free UI interaction
 cask "shortcat"
 # Screenshot measurement and annotation tool
@@ -355,18 +346,14 @@ cask "vorssaint"
 cask "wezterm"
 # Native desktop client for WhatsApp
 cask "whatsapp"
-# Network protocol analyzer
-cask "wireshark-app"
 # REST, GraphQL and gRPC client
 cask "yaak"
 # Mesh VPN client
 cask "zerotier-one"
-# Video communication and virtual meeting platform
-cask "zoom"
 mas "Battery Monitor", id: 836505650
+mas "Hidden Bar 2", id: 1452453066
 mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
 mas "Pastel", id: 413897608
 mas "TeraCopy", id: 1378806557
-mas "Xcode", id: 497799835
 npm "corepack"
