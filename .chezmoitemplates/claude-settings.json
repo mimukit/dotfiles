@@ -50,7 +50,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "sonnet",
   "hooks": {
     "Notification": [
       {
@@ -135,14 +135,14 @@
     "command": "~/.claude/statusline.sh"
   },
   "effortLevel": "medium",
-  "awaySummaryEnabled": false,
-  "tui": "fullscreen",
-  "theme": "dark",
-  "fileCheckpointingEnabled": false,
-  "terminalProgressBarEnabled": true,
   "modelSettings": {
     "claude-opus-5": {
       "effortLevel": "low"
     }
-  }
+  },
+  "awaySummaryEnabled": false,
+  "tui": "fullscreen",
+  "theme": "dark",
+  "fileCheckpointingEnabled": false,
+  "terminalProgressBarEnabled": true
 }
