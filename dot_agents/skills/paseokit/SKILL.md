@@ -59,11 +59,11 @@ paseo status        # CLI installed? daemon running and reachable?
 - **`gh` missing or unauthenticated** → titles degrade to the branch name and the tracker column reads "unknown". Nothing else degrades in `list`, `sync`, and `align`. **[`clean`](#mode-clean)'s disk half is the exception and it stops**, because its whole precondition is a proven merge and only the tracker can prove one; its registry reap still runs, behind its own preview and confirmation.
 - **A rejected `paseo` flag or subcommand** → the CLI moves fast. Check `paseo <command> --help` before concluding an operation is unsupported, and compare the two version numbers below before concluding the CLI is at fault. The goal is the contract, meaning the row registered, the row archived, the title set; the exact flag spelling is not.
 
-Verified against Paseo CLI **0.7.0** and daemon **0.7.0**. Re-check the seam below against a newer version before trusting a write.
+Verified against Paseo CLI **0.8.0** and daemon **0.8.0**. Re-check the seam below against a newer version before trusting a write.
 
 **Read the two version numbers separately.** `paseo status` prints `CLI` and `Daemon Version` as separate rows, and they drift apart: the CLI upgrades on the next install, and the daemon keeps running the code it started with until `paseo restart`. The CLI advertises every flag its own version knows, so a flag can parse locally and still fail at the daemon. When the two numbers differ, treat a rejected write as a version skew first and say so. **Do not run `paseo restart` to close the gap.** A restart kills every running agent, including the one reading this.
 
-Against daemon 0.7.0 the whole `project` group is implemented, `create`, `ls`, `rename`, and `delete` alike. A safe probe for any other verb is one the daemon accepts and acts on without matching anything, such as a well-formed id that exists nowhere.
+At the verified daemon version above the whole `project` group is implemented, `create`, `ls`, `rename`, and `delete` alike. A safe probe for any other verb is one the daemon accepts and acts on without matching anything, such as a well-formed id that exists nowhere.
 
 ## What Paseo knows about a workspace
 
@@ -220,7 +220,7 @@ Paseo's own worktrees need no special case. They already carry a row, and their 
 
 **Tombstones.** An archived row **suppresses re-registration**: someone archived that workspace deliberately, and re-adding it on the next run would undo the decluttering they just did. Name the tombstoned worktrees, restore them on one OK, and leave them alone otherwise.
 
-**There is still no `paseo workspace unarchive` in 0.7.0.** The subcommand set is `create`, `ls`, `rename`, and `archive`, and nothing else. "Restoring" a tombstone means creating a fresh row for the same path, so the archived row stays in `workspaces.json` and the restored workspace is a new `wks_…` id. Say that when you do it; do not report a resurrection.
+**There is still no `paseo workspace unarchive`.** The subcommand set is `create`, `ls`, `rename`, and `archive`, and nothing else. "Restoring" a tombstone means creating a fresh row for the same path, so the archived row stays in `workspaces.json` and the restored workspace is a new `wks_…` id. Say that when you do it; do not report a resurrection.
 
 ### Hand off
 
