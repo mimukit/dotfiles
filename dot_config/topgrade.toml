@@ -9,7 +9,9 @@
 #   chezmoi                 -> czs, which also refreshes the Brewfile
 # Steps turned off on purpose: containers, vim, system (macOS software update),
 # microsoft_office
-disable = ["brew_cask", "brew_formula", "chezmoi", "containers", "microsoft_office", "system", "vim"]
+#   mise                    -> the [commands] entry below. The built-in step runs
+#                              `mise self-update`, which fails on a brew install.
+disable = ["brew_cask", "brew_formula", "chezmoi", "containers", "microsoft_office", "mise", "system", "vim"]
 
 # Cache the sudo credential at the start of the run. Without this a cask or a
 # softwareupdate step opens a password prompt in a pane nobody is watching, and
@@ -21,3 +23,6 @@ assume_yes = true
 
 # Remove temporary and old files after the steps that support it.
 cleanup = true
+
+[commands]
+"mise" = "mise upgrade --yes"
