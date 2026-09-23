@@ -7,6 +7,14 @@
 README.md
 docs
 
+# iTerm2 writes its settings plist straight into this folder through the
+# ~/.config/iterm2/settings symlink, so the repo copy is always current. It is
+# a symlink target, not a dotfile.
+iterm2-settings
+# Same for iTerm2 Dynamic Profiles: rewritable profiles, linked from
+# ~/Library/Application Support/iTerm2/DynamicProfiles.
+iterm2-dynamic-profiles
+
 # editor/app scratch + state
 **/*.tmp
 .config/zed/.tmp*

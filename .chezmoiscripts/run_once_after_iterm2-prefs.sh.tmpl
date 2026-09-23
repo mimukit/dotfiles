@@ -1,0 +1,30 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/usr/bin/env bash
+#
+# Point iTerm2 at the settings folder chezmoi manages, on a new machine.
+#
+# iTerm2 reads the folder path from its own defaults domain
+# (~/Library/Preferences/com.googlecode.iterm2.plist), which chezmoi does not
+# track. Without this, a new Mac starts iTerm2 on stock settings and never reads
+# ~/.config/iterm2/settings.
+#
+# `run_once_` because the values never change. `after_` so the settings symlink
+# already exists when iTerm2 next starts.
+
+set -euo pipefail
+
+# A running iTerm2 writes its in-memory defaults back when it quits, which would
+# undo these writes. Skip and say so. chezmoi still records the run, so re-run
+# it by hand after quitting iTerm2:
+#   chezmoi execute-template < "$(chezmoi source-path)/.chezmoiscripts/run_once_after_iterm2-prefs.sh.tmpl" | bash
+if pgrep -xq iTerm2; then
+  echo "chezmoi: iTerm2 is running, quit it and re-run this script to set its settings folder" >&2
+  exit 0
+fi
+
+defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$HOME/.config/iterm2/settings"
+defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+# Save changes to the folder automatically, without the prompt on quit.
+defaults write com.googlecode.iterm2 NoSyncNeverRemindPrefsChangesLostForFile -bool true
+defaults write com.googlecode.iterm2 NoSyncNeverRemindPrefsChangesLostForFile_selection -int 2
+{{ end -}}

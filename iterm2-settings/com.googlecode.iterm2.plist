@@ -4034,13 +4034,13 @@ The script should do this: \(ai.prompt)</string>
 				<key>Alpha Component</key>
 				<real>1</real>
 				<key>Blue Component</key>
-				<real>0.14507603645324707</real>
+				<real>0.57063466494845361</real>
 				<key>Color Space</key>
 				<string>sRGB</string>
 				<key>Green Component</key>
-				<real>0.019615406170487404</real>
+				<real>0.64792042525773197</real>
 				<key>Red Component</key>
-				<real>0.13333648443222046</real>
+				<real>1</real>
 			</dict>
 			<key>Selection Color (Dark)</key>
 			<dict>
@@ -5445,7 +5445,7 @@ The script should do this: \(ai.prompt)</string>
 	<key>findMode_iTerm</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewPreferredModeKey</key>
-	<integer>7</integer>
+	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>
 	<false/>
 </dict>
