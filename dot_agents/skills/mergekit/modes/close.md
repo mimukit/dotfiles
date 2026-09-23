@@ -43,13 +43,31 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
    Teardown is **idempotent**: a worktree that is already gone reports "already gone" rather than erroring. A dirty worktree stops teardown, so show what would be lost instead of forcing the removal.
 
-6. **Hand off.**
+6. **Check the merged diff for database migrations.** Merged code is deployed code, and a migration that never runs against production leaves the schema behind the application. List the PR's files and look for the repo's migration path — `drizzle/`, `migrations/`, `db/migrate/`, `prisma/migrations/`, `alembic/versions/`, `supabase/migrations/`, or whatever this repo uses:
+
+   ```sh
+   gh pr diff <n> --name-only
+   ```
+
+   After a cascade, check every merged layer. Record the migration files you found, with their paths. When there are none, record that and say nothing about migrations in the hand-off.
+
+7. **Hand off.**
 
    **What changed.** Report the PR merged (number, title, merge commit), whether the approval was skipped and why, and what each half of the issue-lifecycle handoff did: the issue `close` closed, parent ticked, dependents unblocked, and then what `sync` reconciled beyond it. A sweep that found nothing is a result worth stating in a line; it's the difference between a clean tracker and one nobody looked at. **After a cascade, list every PR that landed and every issue that closed**, not just the one the reviewer named, and say which layers are still open above it.
 
    **Where it landed.** Say which worktrees were removed and which were deliberately left standing, with paths. An adopted worktree that survives is someone's live workspace; naming it is how they know it's still theirs.
 
    **Next.** A merge frees capacity, so point at what fills it, naming a kit only when it's installed: an issue this merge unblocked, from either the issuekit `close` or the issuekit `sync` pass, is the strongest candidate (**issuekit `start <n>`**), otherwise the next PR waiting on you (`list`), otherwise **statuskit** to re-orient. If a dependent was unblocked *and* another PR is waiting, the PR wins, because finishing outranks starting.
+
+   **Migrations.** When the merge carried migration files, close the hand-off with this reminder, as the last thing the reviewer reads:
+
+   > This merge adds 2 migration files:
+   > - `drizzle/0007_flaky_moon_knight.sql`
+   > - `drizzle/0008_smooth_silver_sable.sql`
+   >
+   > Run the migration against the production database. Then confirm that every new table and column exists in production.
+
+   Name each file. Do not run the migration, and do not offer to run it. When the merge carried no migration file, write nothing here.
 
 ### Fix path
 
