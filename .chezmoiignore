@@ -11,9 +11,6 @@ docs
 # ~/.config/iterm2/settings symlink, so the repo copy is always current. It is
 # a symlink target, not a dotfile.
 iterm2-settings
-# Same for iTerm2 Dynamic Profiles: rewritable profiles, linked from
-# ~/Library/Application Support/iTerm2/DynamicProfiles.
-iterm2-dynamic-profiles
 
 # A tool that does not expand a quoted "~/worktrees" makes a literal "~"
 # folder here. Without this line chezmoi applies it as ~/~.
