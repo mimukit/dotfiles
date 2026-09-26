@@ -1,9 +1,7 @@
 tap "abue-ammar/tinycast", trusted: true
-tap "gromgit/brewtils", trusted: true
 tap "infisical/get-cli", trusted: true
 tap "peterldowns/tap", trusted: true
 tap "pulumi/tap"
-tap "stablyai/orca", trusted: { casks: ["orca"] }
 # Run your GitHub Actions locally
 brew "act"
 # Display directories as trees (with optional color/HTML output)
