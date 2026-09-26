@@ -5450,6 +5450,8 @@ The script should do this: \(ai.prompt)</string>
 	<false/>
 	<key>WindowNumber</key>
 	<true/>
+	<key>WindowPlacement</key>
+	<integer>2</integer>
 	<key>findMode_iTerm</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewPreferredModeKey</key>
