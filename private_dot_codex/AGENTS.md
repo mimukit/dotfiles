@@ -56,3 +56,8 @@ skill, which carries the complete pattern catalog.
 ## Markdown files
 
 Never hard-wrap Markdown. Write each paragraph and each list item as one continuous line, and let the editor soft-wrap it. Keep the line structure only where it carries meaning: code fences, tables, and YAML frontmatter. No setting on this machine wraps Markdown for you, so a wrapped file is your own doing. This rule covers every Markdown file you write or edit for me, including this one. If a repository states its own line rule, follow the repository instead.
+
+## Hard rules to follow
+
+- Never generate HTML pages on your own without specifically asked by user.
+- When user asks for variation of any image, always create one image per variation. For example, if user asks for 3 variations, that means you need to generate 3 different images, 1 image per variation.

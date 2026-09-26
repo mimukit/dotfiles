@@ -1,4 +1,4 @@
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "medium"
 
 [plugins."documents@openai-primary-runtime"]
@@ -25,16 +25,21 @@ enabled = true
 [plugins."codex-app-tools@openai-bundled"]
 enabled = true
 
+[plugins."unified-computer-use@openai-bundled"]
+enabled = true
+
 [tui]
 status_line = ["model-with-reasoning", "project-name", "git-branch", "run-state", "context-used", "five-hour-limit", "weekly-limit", "used-tokens", "fast-mode", "task-progress"]
 status_line_use_colors = true
+screen_reader_detection_done = true
 
 [features]
 hooks = true
 js_repl = false
+memories = true
 
 [desktop]
-conversationDetailMode = "STEPS_COMMANDS"
+conversationDetailMode = "STEPS_PROSE"
 ambient-suggestions-enabled = true
 appearanceLightCodeThemeId = "codex"
 dock-icon-preference = "app-default"
@@ -57,3 +62,7 @@ skill = "#751ed9"
 
 [desktop.open-in-target-preferences]
 global = "sublimeText"
+
+[memories]
+generate_memories = true
+use_memories = true
