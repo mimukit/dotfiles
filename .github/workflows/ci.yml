@@ -39,7 +39,16 @@ jobs:
           mkdir -p rendered
           git ls-files -z | grep -zE '(modify_|run_).*\.tmpl$' | while IFS= read -r -d '' tmpl; do
             out="rendered/$(printf '%s' "$tmpl" | tr '/ ' '__' | sed 's/\.tmpl$//')"
-            chezmoi execute-template --source . < "$tmpl" > "$out"
+            body="$(chezmoi execute-template --source . < "$tmpl")"
+            # An OS-gated script (the iTerm2 one is darwin-only) renders to
+            # nothing on this Linux runner. chezmoi skips an empty script rather
+            # than running it, so skip it here too: shellcheck fails an empty
+            # file with SC2148.
+            if ! printf '%s' "$body" | grep -q '[^[:space:]]'; then
+              echo "skipped $tmpl (renders empty on this OS)"
+              continue
+            fi
+            printf '%s\n' "$body" > "$out"
             echo "rendered $tmpl"
           done
 
