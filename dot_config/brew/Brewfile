@@ -236,6 +236,8 @@ cask "claude"
 cask "claude-code@latest"
 # Screen capturing tool
 cask "cleanshot"
+# Image, video and clipboard optimiser
+cask "clop"
 # AI code review CLI
 cask "coderabbit"
 # OpenAI's coding agent that runs in your terminal
@@ -262,6 +264,8 @@ cask "gcloud-cli"
 cask "google-chrome"
 # Web browser
 cask "google-chrome@beta"
+# Chromium-based web browser
+cask "helium-browser"
 # Utility to hide menu bar items
 cask "hiddenbar"
 # Homebrew's official GUI
@@ -284,6 +288,8 @@ cask "linear"
 cask "local"
 # Trims video and audio files losslessly
 cask "losslesscut"
+# Archive manager
+cask "macpacker"
 # Markdown previewer with bundled Quick Look extension
 cask "markdown-preview"
 # Markdown editor
@@ -312,8 +318,6 @@ cask "proxifier"
 cask "proxyman"
 # App that enables mouse-free UI interaction
 cask "shortcat"
-# Screenshot measurement and annotation tool
-cask "shottr"
 # Music streaming service
 cask "spotify"
 # Text editor for code, markup and prose
