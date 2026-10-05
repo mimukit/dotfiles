@@ -28,20 +28,21 @@ Two things it deliberately is **not**:
 Every write is **consent-gated**, so detect, offer, then write only on a yes. A misfire costs one dismissible offer, never a spurious file.
 
 ### 1. Detect the moment
-A term is being used loosely or inconsistently, or a settled decision clears the three-part ADR bar. In flow, this surfaces mid-grill, mid-plan, or mid-implementation; you don't wait to be called.
+A term is being used loosely or inconsistently, or a settled decision clears the three-part ADR bar. In flow, this surfaces mid-grill, mid-plan, or mid-implementation; you don't wait to be called. Done when you can name the one term or the one decision to record, and for a decision, which of the three bar conditions each part of it meets.
 
 ### 2. Locate the existing artifacts
-Read the repo-root `CONTEXT.md` if it exists (or `CONTEXT-MAP.md` → the right context file for a multi-context project). If neither exists, create `CONTEXT.md` at the repo root when the first glossary term is accepted. For an ADR, scan `docs/adr/adr-*.md` and take the highest existing decision number.
+Read the repo-root `CONTEXT.md` if it exists (or `CONTEXT-MAP.md` → the right context file for a multi-context project). If neither exists, create `CONTEXT.md` at the repo root when the first glossary term is accepted. For an ADR, scan `docs/adr/` and take the highest existing decision number, whether the file is `NNNN-adr-*.md` or the older `adr-NNNN-*.md`. Then name every existing ADR the new decision replaces, and read each one's `Status`. Done when you hold the next free number and the list of superseded records (often empty).
 
 ### 3. Offer
-Show the proposed glossary entry or ADR and ask before writing. Keep the proposal tight enough to accept or redirect at a glance.
+Show the proposed glossary entry or ADR and ask before writing. When the ADR supersedes older records, show each old record's `Status` change in the same offer, because the new record and its back-links are one update and one yes covers both. Keep the proposal tight enough to accept or redirect at a glance. Done when the user has accepted, redirected, or declined.
 
 ### 4. Write on consent
 - **Glossary.** Add or adjust the term in place. Keep `CONTEXT.md` a *pure glossary*: what terms mean, nothing else. Be opinionated, so when several words compete, pick one canonical term and list the rest under `_Avoid_`.
-- **ADR.** Create `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md` at the next number, using a short lowercase kebab-case slug and the decision's ISO creation date (for example, `adr-0007-use-postgres-2026-07-23.md`). Minimal by default; add optional sections only when they carry real value. ADR content is **immutable** once shipped; the `Status` field is the one mutable exception, so a later ADR may mark the old record `deprecated` or `superseded by ADR-NNNN`.
+- **ADR.** Create `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md` at the next number, using a short lowercase kebab-case slug and the decision's ISO creation date (for example, `0007-adr-use-postgres-2026-07-23.md`). Minimal by default; add optional sections only when they carry real value. ADR content is **immutable** once shipped; the `Status` section is the one mutable part, so a later ADR may mark the old record `deprecated` or `superseded by ADR-NNNN`. An older record with no `Status` section gets one added for the flip; that addition is the same permitted edit.
+- **Check the ADR before you finish.** Re-list `docs/adr/` just before writing; if another file now holds your number, take the next free one and say so. Write the new ADR, then the `Status` flip on every record it supersedes. Done when no two files share a number, the new ADR's `Status` names each record it supersedes, and each of those records names the new one back.
 
 ### 5. Defer when unsettled
-If the term or decision isn't actually resolved, don't manufacture certainty. Use grillkit to settle it first when installed, or ask the user to settle it directly, then record the result.
+If the term or decision isn't actually resolved, don't manufacture certainty. Use grillkit to settle it first when installed, or ask the user to settle it directly, then record the result. Done when the user has settled it or chosen to drop the record.
 
 ### 6. Hand off
 
@@ -49,11 +50,11 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 Keep this short. domainkit usually fires *inside* someone else's work, so a long report is an interruption on top of an interruption.
 
-**What changed.** One line: the term added or adjusted, or the ADR written with its number and title.
+**What changed.** One line: the term added or adjusted, or the ADR written with its number and title, plus each older record whose `Status` flipped.
 
-**Where it landed.** Give the exact path (`CONTEXT.md`, or `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`).
+**Where it landed.** Give the exact path (`CONTEXT.md`, or `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`).
 
-**Next.** Normally, *return to what was interrupted*: name the grill, plan, or implementation this fired inside and pick it straight back up. Only when something genuinely follows from the write does it outrank that: a new ADR that supersedes an older one leaves the old record's `Status` stale, so offer that flip; a term that turned out to be contested isn't settled at all, so route to grillkit (when installed) or ask the user to settle it rather than leaving a guess on disk. Invoked directly with nothing to return to? Say what was written and stop, because there is no next step to invent.
+**Next.** Normally, *return to what was interrupted*: name the grill, plan, or implementation this fired inside and pick it straight back up. Only when something genuinely follows from the write does it outrank that: a supersession the user declined to flip leaves the old record's `Status` stale, so name that record; a term that turned out to be contested isn't settled at all, so route to grillkit (when installed) or ask the user to settle it rather than leaving a guess on disk. Invoked directly with nothing to return to? Say what was written and stop, because there is no next step to invent.
 
 ## The CONTEXT.md glossary format
 
@@ -80,7 +81,7 @@ _Avoid: <synonym to reject>, <another>_
 
 ## The ADR decision record format
 
-ADRs live in `docs/adr/` and use `adr-NNNN-<slug>-YYYY-MM-DD.md`, numbered sequentially with zero-padding: `adr-0001-use-postgres-2026-07-23.md`, `adr-0002-adopt-event-log-2026-07-24.md`, … The number is the authoritative decision order and the ISO suffix is the creation date; never rename an ADR merely because its status changes later. To number a new one, scan `docs/adr/` for the highest existing decision number and increment. Create the directory only when the first ADR is needed. Parallel branches may claim the same number; when that happens, renumber the later ADR during merge and update any references to it.
+ADRs live in `docs/adr/` and use `NNNN-adr-<slug>-YYYY-MM-DD.md`, numbered sequentially with zero-padding: `0001-adr-use-postgres-2026-07-23.md`, `0002-adr-adopt-event-log-2026-07-24.md`, … The number leads so a listing reads in decision order, matching the serial every other `docs/` artifact carries. The number is the authoritative decision order and the ISO suffix is the creation date; never rename an ADR merely because its status changes later. To number a new one, scan `docs/adr/` for the highest existing decision number and increment. A repo whose ADRs still use the older `adr-NNNN-<slug>-YYYY-MM-DD.md` shape keeps its numbers; write the new ADR in the new shape, and point the user at repokit's `docs` mode (when installed) to rename the older ones. Create the directory only when the first ADR is needed. Parallel branches may claim the same number; when that happens, renumber the later ADR during merge and update any references to it, including `Status` lines that name it.
 
 ```markdown
 # NNNN: <Title>
@@ -88,7 +89,7 @@ ADRs live in `docs/adr/` and use `adr-NNNN-<slug>-YYYY-MM-DD.md`, numbered seque
 <1–3 sentences: what the context was, what was decided, and why.>
 
 ## Status
-proposed | accepted | deprecated | superseded by ADR-NNNN
+proposed | accepted | accepted, supersedes ADR-NNNN | deprecated | superseded by ADR-NNNN
 
 ## Considered Options
 - <rejected alternative worth remembering, and why it lost>
@@ -97,7 +98,7 @@ proposed | accepted | deprecated | superseded by ADR-NNNN
 - <non-obvious downstream effect>
 ```
 
-A single paragraph, title plus the context/decision/why, is already a valid ADR. `Status`, `Considered Options`, and `Consequences` are **optional**; include one only when it adds value.
+Title, the context/decision/why paragraph, and `Status` make a complete ADR. `Status` is **required** on every new record, because supersession has to flip it. `Considered Options` and `Consequences` are **optional**; include one only when it adds value. A record that supersedes others says so in its own `Status` line: `accepted, supersedes ADR-NNNN`.
 
 **Write an ADR only when all three hold:**
 

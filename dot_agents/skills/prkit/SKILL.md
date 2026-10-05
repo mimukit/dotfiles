@@ -14,7 +14,23 @@ Turn the commits on the current branch into a clean GitHub pull request: a title
 
 ## When this fires
 
-The user wants to open a pull request: "open a PR", "create a pull request", "raise a PR", "submit this for review", "gh pr create". If they only want the PR title and body *drafted* (not opened), do everything except the final `gh pr create` and print the result instead.
+The user wants to open a pull request: "open a PR", "create a pull request", "raise a PR", "submit this for review", "gh pr create". A request for the title and body only ("draft the PR description") takes the [Draft-only route](#draft-only-route), which never pushes, commits, or edits a PR or an issue.
+
+## Preview and authorization
+
+prkit previews each mutation outside its [label exemption](#8-advance-the-linked-issue) and waits for an OK: creating or editing the PR, committing a handed-in path, and a force-push after a sync. **A caller that carries the user's recorded authorization satisfies the preview for the actions that authorization names.** afkkit is the case in point: the user's unattended request authorizes the commits on the issue's own branch, the push of that branch, and the PR, so prkit runs the handed-in QA-plan commit and `gh pr create` without a prompt, and names the authorization in the hand-off. An action outside the named scope still previews, and an unattended caller escalates it rather than answering for the user: a rebase of a published branch with its `--force-with-lease`, a push to another branch, a merge. prkit never infers an authorization the caller did not state.
+
+## Draft-only route
+
+The user wants the title and body, not the PR. This route reads and prints. The index, the refs, the remote, the PR, and the issue labels stay as they were.
+
+1. Record the opening state in one call: `git rev-parse HEAD && git diff --cached --binary | git hash-object --stdin && git for-each-ref | git hash-object --stdin`. `hash-object` without `-w` writes nothing.
+2. Run the read-only checks in [Preflight](#1-preflight). On the default branch or a detached HEAD, draft anyway, say that a branch is needed before the PR can open, and create nothing.
+3. Run [Gather context](#2-gather-context) without `git fetch`, because a fetch moves the remote-tracking refs. Read the remote base tip with `git ls-remote origin refs/heads/<base>`, compare it with `git rev-parse origin/<base>`, and say in the draft when the local base ref is behind.
+4. Apply [Write the title and body](#5-write-the-title-and-body) and the bundle selection and freshness check in [Embed proof artifacts](#6-embed-proof-artifacts-if-present).
+5. Print the title and the body as code blocks. When `gh pr view` shows an open PR on the branch, say that the draft would replace that PR's title and body.
+
+**Done when** the title and body are printed, a closing run of the record commands prints the same commit and the same two hashes, and no `git push`, `git commit`, `git rebase`, `gh pr create`, `gh pr edit`, or `gh issue edit` ran. Hand off in one line: say nothing changed, and name the next move, which is to ask prkit to open the PR from this draft.
 
 ## Procedure
 
@@ -48,7 +64,7 @@ git diff origin/<base>...HEAD --stat                     # files touched
 
 Diff against `origin/<base>` (the just-fetched remote tip), not a local `<base>` that may be behind. Otherwise the title, body, and file list are computed against commits that are no longer the merge target.
 
-Use the commits, branch name (e.g. `fix/login-123`), and diff to determine the scope, the type of change, and any issue reference (`#123`, `fixes #123`). If a linked issue clearly matters and you can't find it, ask rather than invent one.
+Use the commits, branch name (e.g. `issue-123-fix-login`), and diff to determine the scope, the type of change, and any issue reference (`#123`, `fixes #123`). If a linked issue clearly matters and you can't find it, ask rather than invent one.
 
 ### 3. Sync with the base branch
 Before pushing, make sure the branch is up to date with the base tip you just fetched. A PR opened from a stale branch either merges outdated code or lands with GitHub's "This branch has conflicts" banner:
@@ -65,11 +81,15 @@ git rev-list --left-right --count origin/<base>...HEAD   # "<behind>\t<ahead>"; 
 
 ### 4. Push the branch
 
-**First, commit any handed-in path.** When a caller hands prkit a file that must travel with the branch, most often a QA plan at `docs/qa/qa-<slug>-YYYY-MM-DD.md`, and that file is still uncommitted, commit it here rather than leaving it behind or spawning something else to do it. prkit is already the step that touches git, and it was given the path, so there is nothing to rediscover:
+**First, commit any handed-in path.** When a caller hands prkit a file that must travel with the branch, most often the manual QA plan that **qakit** wrote at `docs/qa/NNNN-qa-<slug>-YYYY-MM-DD.md` and named in its hand-off (directly, or through afkkit), and that file is still uncommitted, commit it here rather than leaving it behind or spawning something else to do it. prkit is already the step that touches git, and it was given the path, so there is nothing to rediscover:
 
 ```sh
-git add <handed-in path> && git commit -m "docs(qa): add manual QA plan for <feature>"
+git add -- <handed-in path> && \
+git commit -m "docs(qa): add manual QA plan for <feature>" -- <handed-in path> && \
+git show --name-only --format= HEAD
 ```
+
+The trailing pathspec commits that path alone. Anything else already staged stays staged and stays out of the commit. A pathspec commit takes the working-tree copy of the path, which is right here, because the handed-in file travels whole. **The `git show` line must print exactly the handed-in path.** Any other path in the output means the commit is wrong, so stop and report it before the push.
 
 Only a path the caller **named**. This is not a licence to sweep the working tree: uncommitted work nobody mentioned is still covered by the rule in [Notes](#notes), so point it out and offer, don't commit it silently.
 
@@ -90,7 +110,15 @@ If the branch was rebased ([Sync with the base branch](#3-sync-with-the-base-bra
 - **On a layer, `Closes #123` is written but inert until the retarget.** GitHub honors a closing keyword only on a PR that targets the repository's **default branch**, so on any other base the keyword is plain text and the issue link never registers. Keep writing `Closes #123` anyway, because the keyword takes effect by itself once the layer below merges and GitHub retargets this PR to trunk. Then say so in the stack map, in writing, so the fallback travels with the PR: name the issue this layer closes and state that the link registers after the retarget. A reviewer who sees no linked issue on the sidebar otherwise reads it as a missing reference and adds a duplicate one.
 
 ### 6. Embed proof artifacts (if present)
-This step is optional and runs only when a verifykit proof bundle exists. verifykit leaves a dated bundle at `docs/verify/verify-<slug>-YYYY-MM-DD/` (slug = the linked issue number, else the feature slug) with a ready-to-embed `proof.md`. If more than one matches, use the newest creation date; if multiple bundles share that date, ask which run to use. Splice the selected proof into the body under a **Proof** section. The images are already published to a hidden `refs/verify-assets/*` ref with SHA-pinned raw URLs that render inline, so there's no upload work here; just embed the fragment as-is. If no bundle exists, skip this entirely and open the PR exactly as before. If a bundle exists but its `proof.md` points at local paths (verifykit couldn't publish, e.g. on a private repo), don't embed dead links: add a short note listing the local artifact paths for manual attachment instead.
+This step is optional and runs only when a verifykit proof bundle exists. verifykit leaves a dated bundle at `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/` (slug = the linked issue number, else the feature slug; older bundles have no `NNNN-` serial) with a ready-to-embed `proof.md`. If more than one matches, use the highest serial, else the newest creation date; if that still leaves a tie, ask which run to use.
+
+**Embed the selected bundle only when it shows this branch head.** verifykit opens the bundle's `notes.md` with fixed lines: `commit: <full sha>`, `dirty: <yes|no>`, `url:`, and `captured:`. The bundle is fresh when it reads `dirty: no` and the recorded commit is `HEAD`, or differs from `HEAD` in docs only:
+
+```sh
+git diff --quiet <recorded commit> HEAD -- . ':!docs/qa' ':!docs/verify'   # exit 0 = no code change since the capture
+```
+
+The docs exclusion lets the QA-plan commit and the bundle's own commit land after the capture. A bundle with no `commit:` line, with `dirty: yes`, with a recorded commit that `git diff` cannot resolve (a rebase rewrote it), or with any code change since the capture is **stale**. Embed nothing from a stale bundle, and say in the hand-off which bundle was stale and why; a fresh verifykit run is the fix. Splice the selected fresh proof into the body under a **Proof** section. The images are already published to a hidden `refs/verify-assets/*` ref with SHA-pinned raw URLs that render inline, so there's no upload work here; just embed the fragment as-is. If no bundle exists, skip this entirely and open the PR exactly as before. If a bundle exists but its `proof.md` points at local paths (verifykit couldn't publish, e.g. on a private repo), don't embed dead links: add a short note listing the local artifact paths for manual attachment instead.
 
 ### 7. Create or update the PR
 First check for an existing PR on this branch so you update instead of duplicating:
@@ -140,30 +168,39 @@ gh issue edit <n> --remove-label in-progress --add-label in-review
 - **The transition covers two starting states and no others, and both replace.** An issue carrying `in-progress` gets the flip above. An issue carrying `ready` gets the same shape, `--remove-label ready --add-label in-review`, and you say in the hand-off that the issue arrived unstarted. `ready` is a legitimate arrival state because a PR can be opened on work nobody ran issuekit `start` for, which is the ordinary case when a human just built the thing. It is not the state `start` leaves behind: `start` replaces `ready` with `in-progress`, so an issue still labeled `ready` at PR-open time never went through it.
 - **Never add a lifecycle label beside another one.** issuekit's map carries exactly one status label at a time, so an issue reading `ready, in-review` is a broken row rather than a richer one. Every downstream reader takes the lifecycle label as a single value, and a second one makes statuskit, `sync`, and the `ready` guard disagree about the same issue.
 - **Any other lifecycle state is drift, not a transition.** For `blocked`, `needs-planning`, `triage`, `needs-info`, already `in-review`, or no lifecycle label at all, stop and change nothing. Report the state you found. Ask when a human is present; escalate when the run is unattended. A label nobody checked is worse than a label nobody set.
-- **Everything else in prkit still previews.** The exemption reaches label writes only. Creating the PR, committing a handed-in path, and force-pushing a sync are unchanged.
+- **Everything else in prkit still previews.** The exemption reaches label writes only. Creating the PR, committing a handed-in path, and force-pushing a sync follow [Preview and authorization](#preview-and-authorization).
 - If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"`, and don't mutate around the gap. The exemption skips the prompt, never the provisioning check.
 
 ### 9. Unblock what this PR makes stackable
 
-Opening a PR is the moment every issue waiting on *this* issue becomes workable, because the code now exists on a branch even though it hasn't merged. Those dependents can move `blocked → stacked` and be built on layers cut from this branch, instead of idling until review finishes. Run this only when the PR closes an issue that something else depends on:
+Opening a PR is the moment an issue waiting on *this* issue can become workable, because the code now exists on a branch even though it hasn't merged. Such a dependent can move `blocked → stacked` and be built on a layer cut from this branch, instead of idling until review finishes. Run this only when the PR closes an issue that something else depends on:
 
 ```sh
-gh issue view <n> --json blocking          # issues waiting on this one
+gh issue view <n> --json blocking                              # issues waiting on this one
+gh issue view <dep> --json blockedBy,labels                    # every prerequisite of one dependent
+gh pr list --state open --json number,headRefName,isDraft      # open PRs, read once
 gh issue edit <dep> --remove-label blocked --add-label stacked
 ```
 
+**A dependent flips only when every prerequisite permits it.** Check each dependent labeled `blocked` against all its prerequisites, not just this one. A prerequisite other than this issue permits the flip when it is closed, or when its open, non-draft PR sits on a branch this branch already contains (`git merge-base --is-ancestor origin/<head> HEAD`), because then one layer off this branch has every prerequisite in it. Find a prerequisite's PR by its `issue-<p>-` head branch. Below `gh` 2.94.0, read the `Blocked by #N` body lines instead of `blockedBy`.
+
+- **A prerequisite is open with no PR** → leave the dependent `blocked`, and report which prerequisite holds it.
+- **Another prerequisite has its own open PR on a branch this one does not contain** → the dependent would need two stack parents, and a layer has one. Leave it `blocked`, and report both PRs. Choose neither one.
+
 **Run it without asking**, under the same label exemption as [the `in-review` flip](#8-advance-the-linked-issue). These labels relabel a **different** issue than the one the user named, so state the whole consequence in one line:
 
-> PR #51 opened → #52 and #53 move `blocked → stacked`, so both can be started now on layers off `issue-51-oidc-provider`.
+> PR #51 opened → #52 and #53 move `blocked → stacked`, so both can be started now on layers off `issue-51-oidc-provider`. #54 stays `blocked`: #49 has no PR yet.
 
 - **`stacked` missing from the repo** → point at repokit or `gh label create stacked --color 006B75 --description "prerequisite is in flight with an open PR; workable now on a branch stacked on it"`, and don't mutate around the gap.
 - **No dependents, or a draft PR** → skip the step entirely. A draft is not ready to build on.
+
+**Done when** every dependent of this issue either moved to `stacked` with all its prerequisites checked, or stayed with its holding prerequisite or its competing stack parents named.
 
 ### 10. Hand off
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Report the PR created or updated (title and number), whether a sync rebase ran, whether a handed-in path was committed, whether a proof section was embedded, whether the linked issue was flipped to `in-review`, and which dependents moved to `stacked`.
+**What changed.** Report the PR created or updated (title and number), whether a sync rebase ran, whether a handed-in path was committed, whether a proof section was embedded or a bundle was skipped as stale, whether the linked issue was flipped to `in-review`, which dependents moved to `stacked`, and which stayed `blocked` and why. When a caller's authorization replaced the preview, name the caller and the actions it covered.
 
 **Where it landed.** Give the PR URL and the branch it points at. Mention that CI will run if configured. On a layer, name the branch it targets and say it is not trunk. On a layer, also report the closing-link check: say the issue link is inert for now, and say it registers after the layer below merges and GitHub retargets this PR.
 
@@ -174,6 +211,6 @@ _Write this section in the procedural register: one instruction per sentence, ac
 - **Never** merge, close, or force-push without an explicit ask. Creating or editing a PR is fine; `gh pr merge` is not, unless requested.
 - Uncommitted changes are not in a PR. If `git status` shows staged or unstaged work the user seems to want included, point it out and offer to commit first, rather than silently leaving it behind or committing it without asking.
 - If the branch is not ahead of the base (no commits), stop and say there's nothing to open a PR for.
-- **Proof embedding is optional and self-contained.** prkit only *reads* verifykit's `proof.md` and embeds it; it never runs the publish itself (that's verifykit's job, with its own bundled script). No verifykit bundle → no Proof section, and prkit works exactly as it always has.
+- **Proof embedding is optional and self-contained.** prkit only *reads* verifykit's `proof.md` and embeds it; it never runs the publish itself (that's verifykit's job, with its own bundled script). A stale bundle gets the same treatment as no bundle, plus one line in the hand-off naming it. No verifykit bundle → no Proof section, and prkit works exactly as it always has.
 - **Advancing the linked issue is optional and exempt from the preview rule.** The flip only happens when the PR references an issue, and prefers issuekit when installed, falling back to a plain `gh issue edit`. It runs unprompted from `in-progress` or `ready` and refuses every other state, because those two are the only ones a PR legitimately arrives from. The exemption is the step's, not the caller's: a human at the keyboard and an unattended orchestrator get exactly the same behavior, and prkit never widens it. No linked issue → prkit opens the PR exactly as before.
 - No shell or `gh` available (e.g. a browser-based agent)? Then you can't push or call `gh`. Instead read the diff the user provides and print the finished PR **title** and **body** as codeblocks for them to paste into the GitHub "New pull request" form.

@@ -32,6 +32,8 @@ gh issue close 42 --comment "Closed by #10 (merged)."
 
 Closing is a lifecycle transition too, so strip any active status label (`in-review`, `in-progress`, …) in the same action and a closed issue never carries a stale status (see [Labels: advance lifecycle state](#3-labels-advance-lifecycle-state-unblock-whats-freed)). Never auto-close, and always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess**, because closing the wrong issue is worse than leaving one open.
 
+This step is done when every merged PR in the sweep has a verdict: linked and closed, closed on approval, declined by the user, or asked about as ambiguous.
+
 ### 2. Repair a missing link on an existing open PR
 If an **open** PR should reference an issue but doesn't, add `Closes #N` to its body (editing the existing PR, not opening a new one):
 
@@ -56,34 +58,38 @@ gh pr view <pr> --json body -q .body > <file>
 gh pr edit <pr> --body-file <file>
 ```
 
-Preview each of these like any other mutation, and say which of the four cases each PR fell into.
+Preview each of these like any other mutation, and say which of the four cases each PR fell into. This step is done when every open PR in the sweep sits in one of the four cases, and each repair is applied or declined.
 
 ### 3. Labels: advance lifecycle state, unblock what's freed
-Move issues through the [lifecycle labels](../SKILL.md#lifecycle-labels-every-mode) as PRs advance: an issue whose PR just opened → `in-review`; and, the dependency payoff, when an issue that was a **blocker** closes, find the issues that depend on it and swap them `blocked` → `ready`, optionally commenting that the prerequisite landed:
+Move issues through the [lifecycle labels](../SKILL.md#lifecycle-labels-every-mode) as PRs advance: an issue whose PR just opened → `in-review`; and, the dependency payoff, when an issue that was a **blocker** closes, set each of its dependents with [the transition rule](../SKILL.md#promoting-a-dependent). The rule rechecks every open prerequisite of the dependent, so `ready` appears only when the last one has landed. Optionally comment that the prerequisite landed:
 
 ```sh
-gh issue edit 44 --remove-label blocked --add-label ready
+gh issue edit 44 --remove-label blocked --add-label ready     # the rule found no open prerequisite
 gh issue comment 44 --body "Unblocked: #43 (the prerequisite) merged."
 gh issue edit 42 --remove-label in-review   # closing → strip the active status label; the closed state is the signal
 ```
 
-**`sync` is the repair sweep for `stacked`, not its primary writer.** A dependent becomes stackable the moment its prerequisite's PR opens, and the skill that opens that PR sets the label there, where it is fresh. `sync` catches everything that path missed: a PR opened by hand or on GitHub, a run where the flip was declined, a label that has since gone stale. Three moves, each run without a prompt:
+**`sync` is the repair sweep for `stacked`, not its primary writer.** A dependent becomes stackable the moment its prerequisite's PR opens, and the skill that opens that PR sets the label there, where it is fresh. `sync` catches everything that path missed: a PR opened by hand or on GitHub, a run where the flip was declined, a label that has since gone stale. Each sweep recomputes every `blocked` and `stacked` issue with [the transition rule](../SKILL.md#promoting-a-dependent), and the result is one of three moves, each run without a prompt:
 
 ```sh
-# prerequisite's PR opened → the dependent is workable on a layer
+# every open prerequisite has an open PR in one chain → the dependent is workable on a layer
 gh issue edit 44 --remove-label blocked --add-label stacked
-# prerequisite merged → the dependent no longer needs a layer
+# every prerequisite merged → the dependent no longer needs a layer
 gh issue edit 44 --remove-label stacked --add-label ready
-# prerequisite's PR closed unmerged → the dependent is a real wait again
+# a prerequisite's PR closed unmerged → the dependent is a real wait again
 gh issue edit 44 --remove-label stacked --add-label blocked
 ```
 
+When the open prerequisites have PRs on separate branches, the rule keeps the label and the hand-off names the incompatible parents.
+
 **A stack merge closes several issues at once**, because merging one PR in a stack merges every unmerged PR below it. So reconcile the whole cascade rather than the one PR someone named: read every merged PR in that stack, close each issue it closes, and then run the promotions above for whatever those closures freed. Handling only the top PR leaves the layers underneath looking unlanded when their code is already on trunk.
+
+This step is done when every open `blocked` and `stacked` issue carries the label the transition rule computes for it, or is named in the hand-off as unknown or as having incompatible parents.
 
 **Relabel without asking**, per [the label exemption](../SKILL.md#preflight-every-mode), and list every move in the hand-off. The closes and body edits around them still wait for an OK. If a label the map needs isn't provisioned, stop and point the user at **repokit** or the `gh label create` line, because issuekit uses labels and doesn't create them. If the repo predates this map and runs its own status scheme, follow that instead and say you did.
 
 ### 4. Hand off
-**What changed.** Report issues closed, PR bodies repaired, and issues advanced or **unblocked** (`blocked` → `ready`). Name every label move, because those ran without a prompt. Say plainly if nothing needed repairing; a clean sweep is a real result.
+**What changed.** Report issues closed, PR bodies repaired, and issues advanced or **unblocked** (`blocked` or `stacked` → `ready`, `blocked` → `stacked`). Name every label move, because those ran without a prompt. Name each dependent left alone, with its reason: an unknown PR query, or incompatible stack parents. Say plainly if nothing needed repairing; a clean sweep is a real result.
 
 **Where it landed.** Give the **actionable set**: a table of every open issue that is `in-progress` or `ready` *after* the sync, so the user sees at a glance what's being worked and what they can pick up next in a fresh worktree:
 

@@ -10,7 +10,7 @@ Read `jotpad/INDEX.md` and report the pad in one line below the table: the count
 
 There is no stale marker. A tag most rows would wear inside a year is a verdict on a repo whose whole point is that ideas sit, and the crown below already promotes the cold ones.
 
-Then crown one move:
+Then crown one move. Take the first row that matches; the last row matches every state, so exactly one move is always crowned:
 
 | # | State | Move → |
 |---|-------|--------|
@@ -18,7 +18,7 @@ Then crown one move:
 | 2 | a `live` jot carries three or more entries | `promote` on that jot |
 | 3 | an `active` idea carries no open question | `session` on it, to find one |
 | 4 | a `building` idea carries an open question | `session` on it |
-| 5 | every idea is `parked` or `closed`, and no `live` jot exists | say there is no next move, and offer `capture` |
+| 5 | no row above matches | say there is no next move, and offer `capture` |
 
 **Within rule 1 the crown goes to the coldest idea, not the warmest.** Cold plus an open question means the user stopped mid-thought, which is the recoverable case, and it is the row a table sorted by recency buries. Ranking on recency would make the crown restate row one.
 
@@ -26,7 +26,7 @@ Then crown one move:
 
 ### Single-idea scope, one idea named
 
-Read `IDEA.md`, the last two or three `NOTES.md` entries, and a **listing** of `docs/` without reading the artifacts. Print what the idea is, where it stands, and the open questions. Then crown one move:
+Read `IDEA.md`, the last two or three `NOTES.md` entries, and a **listing** of `docs/` without reading the artifacts. Print what the idea is, where it stands, and the open questions. Then crown one move, taking the first row that matches:
 
 | # | State | Move → |
 |---|-------|--------|
@@ -35,5 +35,6 @@ Read `IDEA.md`, the last two or three `NOTES.md` entries, and a **listing** of `
 | 3 | the idea is a business and has no verdict | `validate` |
 | 4 | the idea is settled enough to shape work | plan it in the project repo |
 | 5 | nothing is open and no next question exists | `close`, naming which verdict fits |
+| 6 | no row above matches | `session` on the idea, to pick the next question |
 
 **Done when** the printed state matches the files read and exactly one move is crowned. Then go to [Hand off](../SKILL.md#hand-off).

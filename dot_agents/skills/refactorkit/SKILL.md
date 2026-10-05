@@ -1,7 +1,7 @@
 ---
 name: refactorkit
 description: >-
-  Survey an existing codebase for the structural change worth making, then rank the candidates, crown one, and write it up as a reviewable proposal. Use when the user says "where should I refactor", "this code is hard to change", or "audit the module boundaries". It proposes and never edits code.
+  Survey an existing codebase for the structural change worth making, then rank the candidates, crown one, and write it up as a reviewable proposal. Use when the user says "where should I refactor", "this code is hard to change", or "audit the module boundaries".
 license: MIT
 allowed-tools: Bash, Read, Grep, Glob, Write, Task, Agent
 metadata:
@@ -10,7 +10,7 @@ metadata:
 
 # refactorkit
 
-The survey you run on a codebase you already have. refactorkit reads the repo, meaning its churn, its module shapes, and its tests, finds where the *structure* is costing you, ranks the candidates against two gates, crowns exactly one, and writes it up as a proposal somebody can argue with.
+The survey you run on a codebase you already have. refactorkit reads the repo, meaning its churn, its module shapes, and its tests, finds where the *structure* is costing you, ranks the candidates against two gates, crowns at most one, and writes it up as a proposal somebody can argue with.
 
 It is a single procedure, optionally scoped to a subtree (`/refactorkit src/payments`). There are no modes: everything it does, it does the same way on every run.
 
@@ -56,7 +56,7 @@ A **closed set**. These four are what refactorkit looks for, and it looks for no
 | Untested coupling | behaviour you can only test by standing up its collaborators | tests that construct more collaborators than they make assertions, or an untested unit whose neighbours are all tested | subagent |
 | Poor locality | one conceptual change fans out across many files | files that repeatedly change in the same commits while living in different parts of the tree | **main session** |
 
-**Signals are shapes, never names.** Do not hunt for `*Mapper`, `*Adapter`, `*DTO`, `*Service`, or any other suffix. Those conventions belong to one or two language communities and mean nothing in a Go, Rust, Elixir, or PHP repo, and a named example is precisely what an agent pattern-matches on instead of reading. Derive the repo's own conventions first (the guardrails read below usually hands them to you), then look for the *structure* described above under whatever names this codebase happens to use.
+**Signals are shapes.** Match the structure in the table, whatever the code calls it, because naming conventions differ across language communities and the shape does not. Derive the repo's own conventions first (the guardrails read below usually hands them to you), then look for the *structure* described above under whatever names this codebase happens to use.
 
 ## The two gates
 
@@ -124,7 +124,10 @@ Give every agent the same fixed return shape, because the main session has to ra
 - **Drop** any record missing a gate verdict. Dropped, not repaired, because an unevidenced gate is exactly what the deletion test exists to catch, and repairing it in the main session means asserting a verdict on code you didn't read.
 - **Dedupe** across areas; the same seam often surfaces from both sides of it.
 - **Rank** on strength, then leverage, then lowest blast radius.
-- **Crown exactly one.** Never a `weak` candidate, whatever else is on the list. The rest become runners-up, in order.
+- **Crown exactly one when any non-`weak` candidate survives.** Never a `weak` candidate, whatever else is on the list. The rest become runners-up, in order.
+- **When every survivor is `weak`, crown none.** That result is "no candidate worth doing", and it follows [When nothing clears the gates](#when-nothing-clears-the-gates), with the weak candidates listed in the terminal table.
+
+**Done when** every record is dropped, deduped, or ranked, and the result is one crowned candidate or an explicit "no candidate worth doing".
 
 Crowning one is the work. A list of five equal-looking options is the state you were already in before running this.
 
@@ -134,7 +137,7 @@ Print a compact table first (candidate, pattern, strength, blast radius), then t
 
 **Every report carries a coverage line**, in the terminal and in the file: *"ranked 1,240 files by churn, read the top 40 across 4 areas."* A cap nobody can see is a lie about completeness, and it's the difference between "there's nothing structurally wrong here" and "I looked at 3% of it."
 
-**The artifact** goes to `docs/refactor/refactor-<slug>-YYYY-MM-DD.md`, built from a lowercase type prefix, a short lowercase kebab-case subject slug, and the ISO creation date at the end. Keep that creation date stable when the file is edited; a re-run on the same subject **updates the same file in place** rather than spawning a dated copy. When the repo already has an established home or naming scheme for proposal documents, that convention wins.
+**The artifact** goes to `docs/refactor/NNNN-refactor-<slug>-YYYY-MM-DD.md`, built from a four-digit serial, a lowercase type prefix, a short lowercase kebab-case subject slug, and the ISO creation date at the end. To get the serial `NNNN`, list `docs/refactor/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Keep the whole name stable when the file is edited; a re-run on the same subject **updates the same file in place** rather than spawning a second copy. When the repo already has an established home or naming scheme for proposal documents, that convention wins.
 
 It contains the coverage line, the ranked table, then one section per candidate covering the problem, the proposed shape, why it is deeper, both gate verdicts, and the blast radius, with a **Mermaid before/after diagram for the crowned candidate** at minimum. GitHub and most editors render Mermaid natively, which is what makes a generated HTML report unnecessary.
 
@@ -146,15 +149,15 @@ This file is **durable and committable**, since it's a proposal meant to be revi
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Report the file written, and explicitly that no source file was touched. **Where it landed.** Give the path. **Next.** Take the crowned candidate to a grilling: the write-up is already plan-shaped, and what it lacks is interrogation rather than drafting. Name **grillkit** when it's installed; otherwise say plainly that the move is to interrogate the proposal yourself, covering the assumptions, the failure paths, and the blast radius, before anybody builds it.
+**What changed.** Report the file written, and explicitly that no source file was touched. **Where it landed.** Give the path. **Next.** Turn the crowned candidate into a plan with phases. Name **plankit** when it's installed, with the proposal file as its input; otherwise write the plan yourself, one phase per safe intermediate state, each with a check that proves it. The plan then goes to **grillkit** for interrogation and to **implementkit** for the build, in that order.
 
-Runners-up: route to a decision-record skill (**domainkit** when installed) when the proposal supersedes an existing record, and to a build skill (**implementkit** when installed, otherwise just building it) once the shape is settled.
+Runner-up: route to a decision-record skill (**domainkit** when installed) when the proposal supersedes an existing record.
 
-**On an empty result, say there is no next move.** See below.
+**On an empty or all-weak result, say there is no next move.** See below.
 
 ## When nothing clears the gates
 
-A clean result is a real outcome, and refactorkit reports it as one: name the coverage, say nothing cleared the gates, and **write no file**.
+A clean result is a real outcome, and refactorkit reports it as one: name the coverage, say nothing cleared the gates, and **write no file**. An all-`weak` result is the same outcome: list the weak candidates in the terminal table, say no candidate is worth doing, and write no file.
 
 This matters more than it looks. A survey obliged to produce findings will manufacture them, and manufactured architecture advice reads exactly like the real thing: same vocabulary, same confidence, same shape. The deletion test is only a genuine gate if "nothing here" is a legal answer.
 

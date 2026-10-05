@@ -7,10 +7,12 @@
 ### 1. Resolve the head
 
 ```sh
-gh pr view <n> --json headRefName,headRepositoryOwner,isCrossRepository,author,title,body,url
+gh pr view <n> --json headRefName,headRefOid,headRepositoryOwner,isCrossRepository,author,title,body,url
 ```
 
 A **cross-repository (fork) PR** is read-only from here: you can review and merge it, but you cannot push fixes to the contributor's branch. Say that plainly at setup time rather than letting it surface as a confusing push failure later.
+
+Record `headRefOid`. It is the **reviewed head**, the commit the reviewer is about to judge, and [`close`](./close.md#merge-path) merges that commit and no other. Ends when the head branch, the reviewed head SHA, and the fork status are known.
 
 ### 2. Get a worktree, adopting first and creating only if needed
 
@@ -28,6 +30,8 @@ So: resolve the head branch, look it up, and **reuse the worktree that already h
 
 The worktree lands wherever gitkit's convention puts it, outside the repository rather than in a `.worktrees/` directory inside it. An in-repo worktree gets swept into docker build contexts, bind mounts, and file watchers, and every one of those failures surfaces far from its cause. Nothing here needs a `.git/info/exclude` entry.
 
+Ends when the worktree path is known, it sits at the reviewed head, and its dirty state is reported.
+
 ### 3. Measure the base-branch gap and report it
 
 Fetch, then measure how far the branch has drifted:
@@ -37,13 +41,15 @@ git fetch origin
 git rev-list --left-right --count origin/<base>...HEAD    # "<behind>\t<ahead>"; left > 0 means behind
 ```
 
-**Report the two numbers and stop there.** Do not rebase, do not merge the base in, do not push. The reviewer decides whether the drift matters, and runs **gitkit `sync`** inside the worktree when it does.
+**Report the two numbers and stop there.** This step ends when both numbers are reported. Do not rebase, do not merge the base in, do not push. The reviewer decides whether the drift matters, and runs **gitkit `sync`** inside the worktree when it does.
 
 The reason the sync waits: a sync rewrites a published branch and marks every unresolved review thread outdated. [The review pack](#5-print-the-review-pack) prints that thread count beside the behind count, so the reviewer weighs both before they act. Without gitkit, the plain fallback is a rebase onto the base followed by `git push --force-with-lease`, and the reviewer runs it themselves.
 
 ### 4. Set the project up
 
 Detect the manifest (`package.json`, `pyproject.toml`, `go.mod`, `Gemfile`, `Cargo.toml`, …) and run the install the repo actually uses: the lockfile tells you which package manager, the scripts tell you the dev command. Prefer a project-local run or dev skill when one exists. **Never invent a command**: if you cannot determine how to start the app, say so and ask, rather than guessing at a `dev` script that doesn't exist. Copy `.env.example` to `.env` only if that is the repo's documented setup and the file is absent.
+
+Ends on an observed result. For a server, that is the app answering on its port. For anything else, it is the project's own observable: a CLI that prints its `--help`, a library whose build passes. Otherwise it ends on a reported reason the project cannot start, with the command and its output.
 
 ### 5. Print the review pack
 
@@ -57,7 +63,7 @@ Everything the reviewer needs, assembled once so they don't go hunting:
 - Any follow-up nits the PR body itself records.
 - CI status per check, and the behind/ahead counts against `origin/<base>`.
 
-**Name what is missing.** "No QA plan in this repo's conventional location" is information; printing nothing where a QA plan would go is not.
+**Name what is missing.** "No QA plan in this repo's conventional location" is information; printing nothing where a QA plan would go is not. Ends when every item above is printed or named as missing, and the pack shows the reviewed head SHA.
 
 ### 6. Hand off
 

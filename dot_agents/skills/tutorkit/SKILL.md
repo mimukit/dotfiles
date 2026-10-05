@@ -1,10 +1,10 @@
 ---
 name: tutorkit
 description: >-
-  Teach a topic across many sessions, with one learning repo holding a folder per topic, lessons pitched at what you already know, and spaced retrieval that makes it stick. Use when the user says "teach me X", "tutor me on X", "I want to learn X", "explain how X works", "quiz me on what I learned", "what's due for review", "test me", "am I ready", "exam me on X", "place me on X", "where am I with my learning", "what am I studying", "learning status", "show my progress", or runs "/tutorkit". Tuned for software engineering topics and works for any other.
+  Teach a topic across many sessions, with one learning repo holding a folder per topic, lessons pitched at what you already know, and spaced retrieval that makes it stick. Use when the user says "explain how X works", "teach me X", "quiz me on what's due", "am I ready on X", "where am I with my learning", or runs "/tutorkit".
 license: MIT
 disable-model-invocation: true
-allowed-tools: Bash, Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, AskUserQuestion, Task, Agent
+allowed-tools: Bash, Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, AskUserQuestion
 metadata:
   internal: false
 ---
@@ -60,7 +60,7 @@ Create the repo on first use and run `git init` in it. The progress history is g
 
 Two modes are exceptions, and both are bounded. `drill` resolves its slugs from `REVIEW.md` rather than from the ask, then opens the `CUES.md` of those topics only. It never reads their lessons, and it never globs. Interleaving needs more than one topic in view; it does not need more than one file per topic.
 
-`status` is the stricter exception: it reports on every topic and opens no topic folder at all. That is possible because `INDEX.md` and `REVIEW.md` already carry every field the dashboard prints. **A cross-topic view that opens topic folders is a design failure, not a trade-off**, because the two router files exist precisely so this read stays flat as the user's topic count grows.
+`status` is the stricter exception: it reports on every topic and opens no topic folder at all. That is possible because `INDEX.md` and `REVIEW.md` already carry every field the dashboard prints, or the dates to derive it from. **A cross-topic view that opens topic folders is a design failure, not a trade-off**, because the two router files exist precisely so this read stays flat as the user's topic count grows.
 
 **When cwd is the learning repo itself, treat it as the learning repo and not as a grounding source.** The two roles never overlap, so a `lesson` run from inside the learning repo skips the grounding question rather than offering to teach the user about their own notes.
 
@@ -80,13 +80,17 @@ Status is `active` or `learned`. Three routing outcomes, all cheap:
 - It matches nothing and the user wants depth → create the folder and open a track.
 - It matches nothing and the user wants an answer → run `explain` and write nothing.
 
-`REVIEW.md` holds one row per topic, never per cue: `2026-08-18 · postgres-mvcc · 4 due · min step: 3d`. `drill` reads it, sees which topics are due, and opens only those `CUES.md` files. Storing cue text here instead would duplicate the answers and let them drift from the lessons that own them.
+`REVIEW.md` holds one row per topic, never one per cue: `postgres-mvcc · due: 2026-08-18, 2026-08-18, 2026-08-21, 2026-09-08 · min step: 3d`. The `due` cell lists every cue's due date in that topic, sorted, and nothing else about the cue. **Derive the due count at read time**: count the dates on or before today. Never store a count, because a stored count is true only on the day it was written; a cue that comes due tomorrow would never show up in it. `drill` reads the row, sees which topics are due, and opens only those `CUES.md` files. Storing cue text here instead would duplicate the answers and let them drift from the lessons that own them.
 
 **`min step` is the lowest interval step any cue in that topic has reached**, and it earns its place by making one question answerable from the router alone: has this track finished? A topic whose lowest cue sits at `60d` has passed the schedule half of the `learned` gate, so `status` can crown [`exam`](modes/exam.md) without reading a single `CUES.md`. Store the minimum rather than an average, because the gate is *every* cue at `60d` and one cue at `1d` fails it.
 
-**Both files are caches, and a cache needs a repair path.** Rewrite the affected row whenever you touch a topic. Rebuild both by scanning `topics/` whenever you find a folder they do not list. Without the self-heal, one hand edit misroutes silently forever.
+**Both files are caches, and a cache needs a repair path.** Repair runs only where a mode already has the topic folder open, so it never breaks the one-folder guard:
 
-A `REVIEW.md` row with no `min step` is a row written before this field existed. Read that topic's `CUES.md` once, write the field, and move on. Repairing one row costs one file read; refusing to repair it costs the same read on every later run.
+- **Every mode that opens a topic folder rewrites that topic's row in both files**, from the folder's own `CUES.md` and `MISSION.md`, whether or not the row looked wrong.
+- **A slug with a folder on disk but no `INDEX.md` row** routes as if the row existed. `lesson`, `drill`, or `exam` on that slug opens the folder and writes the row.
+- **`status` opens no topic folder, so it repairs nothing.** It names each folder missing from the routers and each row with a missing or old-format field, and says to run `lesson` on that slug.
+
+A `REVIEW.md` row with no `min step`, or with a stored count in place of due dates, was written before the current format. The next mode that opens that topic writes the row in the current format. Without the self-heal, one hand edit misroutes silently forever.
 
 ### The stylesheet
 
@@ -179,7 +183,9 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 Then offer a commit of the learning repo. Never run it without a yes.
 
-**A `status` run closes differently, because its whole output is a hand-off.** The dashboard already names the crowned move, so do not print the move twice. State that nothing changed, or name the single router row you repaired. Do not offer a commit on a run that wrote nothing.
+**A `status` run closes differently, because its whole output is a hand-off.** The dashboard already names the crowned move, so do not print the move twice. State that nothing changed, and name each row that needs repair. Do not offer a commit.
+
+**An `explain` run closes short, because it wrote nothing.** State that nothing changed. When the user accepted the track offer, crown `lesson` on that topic. When they declined it, say there is no next step. Do not offer a commit.
 
 Two sibling routes exist, and both are narrow. Name a sibling skill only when it is installed, and otherwise describe the action plainly. Route to a research skill when the question turns out to be a tool decision rather than a knowledge gap. Route to a prototype skill when the only honest answer is to build the thing and find out.
 
@@ -189,4 +195,4 @@ Two sibling routes exist, and both are narrow. Name a sibling skill only when it
 - **`status` reports; it never grades.** Printing a due count is a fact read. Judging whether the user knows a topic is [`exam`](modes/exam.md), and it needs an answer from the user before it can say anything. A dashboard that inferred mastery from a `min step` column would manufacture the exact signal it claims to report.
 - **Predict before you explain, every time.** The temptation is to skip it on an easy topic. The prediction is the diagnosis, and teaching without it is teaching blind.
 - **Never assert an unsourced claim as fact.** A confident wrong explanation is worse than no lesson, because the user will build on it.
-- **No writable filesystem** (a browser-based agent)? Say so plainly, print the lesson as a code block for the user to save, and note that spacing cannot persist without state. Do not pretend to schedule a cue you cannot write. `status` still runs when the filesystem is readable, because it writes nothing but a repair; say that the repair was skipped.
+- **No writable filesystem** (a browser-based agent)? Say so plainly, print the lesson as a code block for the user to save, and note that spacing cannot persist without state. Do not pretend to schedule a cue you cannot write. `status` and `explain` still run, because neither writes.

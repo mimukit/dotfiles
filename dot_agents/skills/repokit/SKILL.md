@@ -1,7 +1,7 @@
 ---
 name: repokit
 description: >-
-  Set up a GitHub repo's metadata and configuration through the gh CLI: an inferred one-line About description + topics from the repo's own contents, the workflow labels (issuekit's lifecycle and priority sets, plus an `ai-review` trigger label for AI PR review tools), and a full new-repo setup that also applies the house repo settings (merge-commit-only, delete-branch-on-merge) and scaffolds the baseline files (LICENSE, README, .gitignore, AGENTS.md), plus a one-time migration that renumbers the repo's docs/ artifacts into creation order. Use when the user says "repokit", "set the repo description", "add topics/tags", "write an About blurb for this repo", "provision the workflow labels", "set up this repo's labels", "add priority labels", "configure this repo's metadata", "set up this new repo", "make this repo match my conventions", "number my docs files", "renumber the docs", or "my docs don't sort by date", meaning anything about a repo's About panel, its label vocabulary, bringing a fresh repo up to convention, or the naming of the files under docs/.
+  Configure a GitHub repo through gh in four modes: an inferred About description and topics, the workflow labels (issuekit's lifecycle and priority sets plus `ai-review`), a new-repo setup (house settings, baseline files, About, labels), and a docs/ renumbering into creation order. Use when the user says "set the repo description", "add topics", "provision the workflow labels", "set up this new repo", or "renumber the docs".
 license: MIT
 disable-model-invocation: true
 allowed-tools: Bash, Read, Write
@@ -29,7 +29,7 @@ The user wants to configure a repo on GitHub. Route to a mode from what they ask
 - **setup.** "Set up this new repo", "configure this repo", "make this repo match my conventions", or a vague "set up this repo" / "configure repo metadata" — `setup` is the umbrella, and it subsumes the old "offer `about` then `labels`" answer.
 - **docs.** "Number my docs files", "renumber the docs", "add file number prefixes", "my docs don't sort by date", "migrate the doc filenames". `setup` does not run it: `setup` brings a fresh repo up to convention, and a fresh repo has no artifacts to renumber.
 
-**If no mode is clear, ask first.** Present the three modes and let the user pick before touching anything.
+**If no mode is clear, ask first.** Present the four modes and let the user pick before touching anything.
 
 The mode bodies live in one file each under `modes/`. Route with the list above, read that one file, and follow it. Everything in this root applies to every mode and is not restated in the mode files.
 

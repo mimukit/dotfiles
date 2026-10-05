@@ -1,7 +1,7 @@
 ---
 name: uikit
 description: >-
-  Build production UI that reads as a deliberate choice for this project rather than an LLM default, and audit shipped UI for the tells that give it away. Use when the user says "build this page", "make this UI not look AI-generated", "this looks like slop", "design this screen", "audit our UI", "make the frontend look good", or "/uikit". Reads a project's DESIGN.md when one exists; never writes it.
+  Build production UI that reads as a deliberate choice for this project rather than an LLM default, and audit shipped UI for the tells that give it away. Use when the user says "build this page", "make this UI not look AI-generated", "this looks like slop", "design this screen", "audit our UI", "make the frontend look good", or "/uikit". Reads a project's DESIGN.md when one exists.
 license: MIT
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 metadata:
@@ -22,7 +22,6 @@ The whole skill hangs off one idea: **taste is spent only where nothing else con
 - **Not a taste library.** No bundled palettes, no font pairings, no style catalog. A lookup table of 161 palettes is exactly how every project styled from it ends up looking like every other one.
 - **Not the code reviewer.** Convention-fit, correctness, and completeness are a general review's job. uikit's audit is visual and interaction-level only.
 - **Not a gate.** The pre-flight critiques its own output; it never fails a build. Taste is not a pass/fail check, and a build that can fail for it fails on something unfalsifiable.
-- **Not an environment provisioner.** It never installs a browser, never starts a dev server it wasn't told to start, never seeds data.
 
 ## When this fires
 
@@ -59,7 +58,7 @@ Rung 1 or 2 with a rung 3 palette is the single most damaging thing this skill c
 
 ```
 Design read · surface: product · audience: internal ops staff · rung: 2 (shipped components)
-· signature: the save affordance, where rows commit on change and confirm in place, no page-level Save
+· signature: the dirty state, where each changed row shows its old value struck through until Save
 · density: compact
 ```
 
@@ -75,13 +74,15 @@ Design read · surface: product · audience: internal ops staff · rung: 2 (ship
 
 **One element per surface. Exactly one.** The thing a person would describe if asked what the screen was like. Everything around it stays quiet and disciplined, so spend your boldness in one place, and cut any decoration that doesn't serve the brief.
 
+**The signature works inside settled behavior.** Read the plan, issue, or request first. Every behavior it specifies (a Save action, a confirm step, a field, a flow order) ships as specified, and the signature lives in what the spec leaves open: presentation, feedback, layout, motion. A signature idea that would change specified behavior goes in the hand-off as a suggestion, and the build picks a signature that fits.
+
 This is deliberately *not* framed as "take a creative risk." Asked to be bold, a model retrieves what boldness looks like, and what it retrieves is the **average** of every bold thing it has seen, which today means one of three looks: warm cream (near `#F4F1EA`) with a high-contrast serif and a terracotta accent; near-black with a single acid-green or vermilion accent; or a broadsheet layout with hairline rules, zero radius, and dense columns. All three are legitimate for *some* brief. None of them are a choice when they appear regardless of subject.
 
 "Name the one thing this screen is remembered by" has no average to regress toward. It is also the only version that survives a pre-flight, which can check that **exactly one signature exists** and that **its materials are legal at the declared rung**, but cannot check whether a risk was taken.
 
 Worked examples:
 
-- **Rung 2, a settings page.** Default output: card, label-left/toggle-right rows, "Save changes" bottom-right. Correct and forgettable. Signature: *there is no Save button*, so each row commits on change and confirms in place with an inline undo. Zero new tokens; the risk is real, because a slow network now has to be handled honestly.
+- **Rung 2, a settings page whose spec names a Save action.** Default output: card, label-left/toggle-right rows, "Save changes" bottom-right. Correct and forgettable. Signature: *the dirty state*, so each changed row shows its old value struck through beside the new one, and the Save bar counts the pending changes. Zero new tokens, and Save still works exactly as specified. Autosave would be a stronger signature only when the spec leaves the save model open; here it goes in the hand-off as a suggestion.
 - **Rung 3, a booking tool for a letterpress print shop.** Default output: Inter, slate-900, three feature cards, violet CTA. Signature: *the price list is a type specimen sheet*, with sizes shown at their real sizes, ranged left on a baseline grid, and a palette drawn from paper stock and ink.
 
 ### Never block on the design read
@@ -94,9 +95,11 @@ Worked examples:
 
 Walk [the ladder](#the-precedence-ladder) and name the rung that matched. Detect the stack from the project's manifest and config rather than assuming, naming the framework, styling system, component library, and whether it's Tailwind v3 or v4, because [that distinction changes what renders](stack.md). Greenfield or undeclared, default to **Tailwind v4 + shadcn/ui** and say out loud that it's a default.
 
+This step is done when the rung, the stack, and every behavior the request specifies are named.
+
 ### 2. State the design read
 
-[Five words](#the-design-read), one line, before any code exists.
+[Five words](#the-design-read), one line, before any code exists. This step is done when all five words have a value and the signature changes no specified behavior.
 
 ### 3. Build
 
@@ -107,13 +110,17 @@ Walk [the ladder](#the-precedence-ladder) and name the rung that matched. Detect
 - **Write the strings as design material.** Follow `DESIGN.md`'s voice rules when it has them. Otherwise: active voice, sentence case, name things by what people control rather than how the system is built. A control says what happens ("Save changes", not "Submit") and keeps the same verb through the whole flow, so a button that says "Publish" produces a toast that says "Published." Errors name the fix, not the failure. An empty screen is an invitation to act.
 - **Match complexity to the direction.** Maximalist needs elaborate execution; minimal needs precision in spacing and type. Elegance is executing the chosen direction well, not choosing the smaller one.
 
+This step is done when every specified behavior renders, and every new component names the existing one it reuses or extends, or the reason it is new.
+
 ### 4. Pre-flight
 
-Run [self-critique](#self-critique). It is a critique, not a gate: findings get fixed or get named, and the build is not blocked either way.
+Run [self-critique](#self-critique). It is a critique, not a gate: findings get fixed or get named, and the build is not blocked either way. This step is done when each of the four written checks has a result.
 
 ### 5. Hand off
 
 _Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
+**Called by a build skill** (implementkit, afkkit, or another kit that runs uikit as a step)? Return three items to the caller and stop: the design read verbatim, the changed file paths, and the pre-flight result with anything left unfixed. Skip the three beats below, because the caller owns the next move.
 
 **What changed.** Report the components and pages written or edited, one line each, and the composition decisions (what was reused, what was extended, what was newly written and why).
 
@@ -133,11 +140,11 @@ In order, taking the first that applies:
 2. **The UI files in the working tree or the branch diff**, when uncommitted or branch changes exist and no path was named. Note that a plain diff never shows untracked files, so list those separately and read them too.
 3. **Ask**, when neither resolves. Don't sweep a whole repository by reflex; that's unbounded on any real application.
 
-State the target in one line before reading anything.
+State the target in one line before reading anything. This step is done when the target line names every path in scope.
 
 ### 2. Sweep
 
-Run [the catalog](#the-anti-slop-catalog), filtered to the surface, so `product` entries don't fire on a marketing page and `marketing` entries don't fire on a settings screen. Then run [the accessibility floor](#the-accessibility-floor), which fires on both.
+Run [the catalog](#the-anti-slop-catalog), filtered to the surface, so `product` entries don't fire on a marketing page and `marketing` entries don't fire on a settings screen. Then run [the accessibility floor](#the-accessibility-floor), which fires on both. This step is done when every file in the target has been checked against every filtered catalog entry and every floor rule, or is counted as skipped.
 
 ### 3. Report
 

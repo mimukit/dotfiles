@@ -1,7 +1,7 @@
 ---
 name: designkit
 description: >-
-  Derive a project's design system from the UI it already ships and keep it true as the code moves, producing a spec-compliant DESIGN.md at the repo root, validated by the official linter. Use when the user says "write a DESIGN.md", "document our design system", "extract our design tokens", "our design system is out of date", "audit our design tokens", "what colors does this project actually use", or "/designkit". Not a UI generator, not a palette library.
+  Derive a project's design system from the UI it already ships and keep it true as the code moves, producing a spec-compliant DESIGN.md at the repo root, validated by the official linter. Use when the user says "write a DESIGN.md", "document our design system", "extract our design tokens", "our design system is out of date", "audit our design tokens", "what colors does this project actually use", "sync DESIGN.md to our Tailwind theme", or "/designkit".
 license: MIT
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 metadata:
@@ -14,12 +14,12 @@ A design system that lives in someone's head, or in Figma, is invisible to the a
 
 designkit does the half the ecosystem left empty. Every other tool hands you a design system from *somewhere else*, whether a file reverse-engineered from Stripe or a palette retrieved from a product-type lookup table. **designkit derives yours from the UI you already shipped, and tells you later when it has gone stale.**
 
-That makes the grounding rule the whole skill: **every token must be a value that appears in your codebase.** Clustering forty near-identical greys into a scale is derivation. Picking a nicer neighbouring hex because it rounds better is invention, and it is the one thing designkit never does.
+That makes the grounding rule the whole skill: **every token must be a value that appears in your codebase.** The one exception is a repo with no UI at all, where there is nothing to derive from; there, every token is a value you supplied (see [`init`'s interview](#2-interview-only-when-theres-nothing-to-read)), and designkit still invents none. Clustering forty near-identical greys into a scale is derivation. Picking a nicer neighbouring hex because it rounds better is invention, and it is the one thing designkit never does.
 
 ## What designkit is not
 
 - **Not a UI generator.** It records the system; it writes no components, no pages, no application CSS. A skill that both defines the taste and applies it can't be held to the grounding rule.
-- **Not a taste library.** It ships no palettes, no font pairings, no style catalog. If your project has no design system, designkit proposes one *from your own values* or says it can't; it never imports someone else's.
+- **Not a taste library.** It ships no palettes, no font pairings, no style catalog. If your project has no design system, designkit proposes one from the values your code already uses, or, with no UI at all, from the values you supply; when neither exists it says so. It never imports someone else's.
 - **Not a spec implementation.** Linting, contrast checking, token export, and the schema itself belong to the official CLI. designkit shells out and reports; it is not a second, worse implementation.
 - **Not a design critique.** Whether the system is any *good* is a human's call. designkit reports what is there, including when what's there is a mess.
 - **Not the glossary or the decision log.** Domain vocabulary and architecture decisions belong elsewhere; a design token is neither.
@@ -29,8 +29,18 @@ That makes the grounding rule the whole skill: **every token must be a value tha
 - **`init`.** "Write a DESIGN.md", "document our design system", "we have no design tokens", "what colors does this project actually use". Derives the file from the codebase.
 - **`update`.** "The design system changed", "update DESIGN.md", or a design pass right after UI work lands. Applies what the code now says.
 - **`audit`.** "Is our DESIGN.md still accurate", "check the design system against the code", "what's drifted". Read-only sweep. **Writes nothing, ever.**
+- **`sync`.** "Sync DESIGN.md to our Tailwind theme", "export our tokens", or the follow-up `init` names when the file and the token home disagree. Writes the project's existing token home from `DESIGN.md`.
 
 **If no mode is clear, ask.** `audit` is free and `init` rewrites the project's design contract; never guess between them.
+
+What each mode may write:
+
+| Mode | Writes | Gate |
+|---|---|---|
+| `init` | `DESIGN.md`; the swatch sheet and its `.gitignore` line | the proposal |
+| `update` | token and prose edits in `DESIGN.md`; the swatch sheet and its `.gitignore` line when a gated change needs one | new sections, deletions, and drift outside the target |
+| `audit` | nothing | none |
+| `sync` | the existing token home (Tailwind theme, `:root` block) or a DTCG export file | every write |
 
 ## The artifact
 
@@ -126,7 +136,7 @@ The eleven lint rules run on every file: `broken-ref` (error), `contrast-ratio`,
 
 ## The extraction engine
 
-One engine, shared by all three modes. `init` writes its output, `update` diffs and applies it, `audit` diffs and reports it. There is no manifest of watched paths to maintain, and therefore no change that goes unnoticed because a glob failed to cover it.
+One engine, shared by `init`, `update`, and `audit`. `init` writes its output, `update` diffs and applies it, `audit` diffs and reports it. `audit` skips [Show the work](#show-the-work), the engine's only write. There is no manifest of watched paths to maintain, and therefore no change that goes unnoticed because a glob failed to cover it.
 
 ### Find the token home
 
@@ -163,6 +173,7 @@ Each token carries one of three states, and the classification is shown at the c
 | `extracted` | the value appears in the code as-is, used enough to be systematic |
 | `consolidated` | clustered from N near-duplicates; **list them**, so the merge is reviewable and reversible |
 | `omitted` | not derivable from the code; goes in the spec's native `omitted` field, never invented |
+| `supplied` | given by the user in `init`'s interview, in a repo with no UI to extract from |
 
 **`omitted` is a feature, not a failure.** The field exists precisely to declare deliberate exclusions and to suppress missing-section warnings. A DESIGN.md that honestly omits elevation beats one that invents a shadow scale.
 
@@ -176,6 +187,8 @@ Tune the cluster threshold to the project and **state the threshold you used**, 
 
 ### Show the work
 
+This step runs in `init`, and in `update` only when a gated change needs review. `audit` skips it, because it writes a file.
+
 Before writing anything, emit a **disposable swatch sheet**: a plain HTML page of color chips, type specimens, spacing bars, and radii, each labelled with its token name, its state, and the values it absorbed. Reviewing "forty greys became six" as a YAML diff is not realistic; as swatches it takes seconds.
 
 This is **review scaffolding, not a deliverable.** Write it to a gitignored scratch path, add that path to `.gitignore` if it isn't covered, name it in the consent ask, and don't keep it. It is emphatically not the generated UI this skill refuses to write; it's a proof sheet for a decision.
@@ -184,19 +197,19 @@ This is **review scaffolding, not a deliverable.** Write it to a gitignored scra
 
 ### 1. Ground it
 
-Run [the extraction engine](#the-extraction-engine). Name the rung that matched, the number of distinct values found per category, and the dark-mode verdict, before proposing anything.
+Run [the extraction engine](#the-extraction-engine). Name the rung that matched, the number of distinct values found per category, and the dark-mode verdict, before proposing anything. This step is done when every category (color, type, spacing, radius, shadow, state, dark mode) has a count or a "none found".
 
 ### 2. Interview only when there's nothing to read
 
-No UI in the repo means nothing to extract. Ask for the essentials (brand intent, an existing palette, type preferences) and say plainly in the report and in the file's Overview that the result is **proposed, not extracted**. Anything still unknown is `omitted`.
+No UI in the repo means nothing to extract. Ask for the essentials (brand intent, an existing palette, type preferences). Every value the user gives becomes a `supplied` token; designkit adds no value of its own. Say plainly in the report and in the file's Overview that the result is **proposed, not extracted**. Anything still unknown is `omitted`. Skip this step when the engine found UI. This step is done when every schema category holds `supplied` tokens or is `omitted`.
 
 ### 3. Propose, and gate on it
 
-Show the swatch sheet plus the `extracted` / `consolidated` / `omitted` breakdown, the cluster threshold, and every inconsistency found. **This is the gate that matters**, because the user accepts, trims, or redirects before a file exists.
+Show the swatch sheet plus the `extracted` / `consolidated` / `omitted` breakdown, the cluster threshold, and every inconsistency found. **This is the gate that matters**, because the user accepts, trims, or redirects before a file exists. This step is done when the user accepts the proposal, with or without trims.
 
 ### 4. Write, stamp, validate
 
-Write `DESIGN.md` at the repo root, append the stamp, then run `lint` and report its findings verbatim, including any that remain. A warning you chose to accept is reported as accepted, never suppressed.
+Write `DESIGN.md` at the repo root, append the stamp, then run `lint` and report its findings verbatim, including any that remain. A warning you chose to accept is reported as accepted, never suppressed. This step is done when `lint` exits `0`, or every remaining finding is reported, or the lint gap is named.
 
 ### 5. Hand off
 
@@ -206,31 +219,31 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 **Where it landed.** Give `DESIGN.md` at the repo root, the swatch sheet's scratch path (and that it's disposable), and the lint result.
 
-**Next.** Read the file. It's a claim about your project's visual identity and it's the one thing here a human should actually check. Then commit it with **commitkit** when installed, otherwise `git add DESIGN.md` and commit. If the project has a token home and the file's values differ from it, [token sync](#token-sync) is the follow-up; if it doesn't, there is nothing to sync and no next step to invent.
+**Next.** Read the file. It's a claim about your project's visual identity and it's the one thing here a human should actually check. Then commit it with **commitkit** when installed, otherwise `git add DESIGN.md` and commit. If the project has a token home and the file's values differ from it, [`sync`](#mode-sync) is the follow-up; if it doesn't, there is nothing to sync and no next step to invent.
 
 ## Mode: `update`
 
 ### 1. Resolve the target
 
-Uncommitted working-tree changes first (`git status --porcelain` non-empty → `git diff HEAD`, plus untracked files, which `git diff` never shows). Otherwise the branch diff against the base ref, from **gitkit** when it's installed, else the repo's default branch via `gh repo view --json defaultBranchRef`. **Never assume `main`.** Say which target you chose in one line.
+Uncommitted working-tree changes first (`git status --porcelain` non-empty → `git diff HEAD`, plus untracked files, which `git diff` never shows). Otherwise the branch diff against the base ref, from **gitkit** when it's installed, else the repo's default branch via `gh repo view --json defaultBranchRef`. **Never assume `main`.** Say which target you chose in one line. The target scopes what `update` applies, in [Apply, with restraint](#3-apply-with-restraint). This step is done when the target line names the range and lists the changed UI files, untracked ones included.
 
 ### 2. Re-extract and diff
 
-Run the engine against the current code and diff its result against the committed `DESIGN.md`. Where the stamped SHA is still reachable, also run `npx @google/design.md diff <baseline> <current>` for the structured token-level comparison.
+Run the engine against the current code and diff its result against the committed `DESIGN.md`. Where the stamped SHA is still reachable, also run `npx @google/design.md diff <baseline> <current>` for the structured token-level comparison. Re-extract the whole codebase, not only the target, so a usage count stays true. Then sort each drift: **in target** when its value occurs in a changed hunk or untracked file of the target, **outside target** otherwise. This step is done when every drift is sorted.
 
 ### 3. Apply, with restraint
 
 A changed brand color edits the color token. It does not regenerate the file. **State which sections are affected and which are deliberately untouched before editing**, because the untouched list is the load-bearing half, and it's what shows the skill knew what it was leaving alone.
 
-Edits to existing tokens and prose land directly; they're bounded by that restraint and land in a reviewable diff. **New sections and deletions are consent-gated.** A skill that rewrites a design system because one button changed is worse than no skill.
+Edits to existing tokens and prose land directly when the drift is in target; they're bounded by that restraint and land in a reviewable diff. **New sections, deletions, and outside-target drift are consent-gated.** Outside-target drift is older than this change, so list it and apply it only on a yes; otherwise route it to `audit`. A skill that rewrites a design system because one button changed is worse than no skill. This step is done when every in-target drift is applied and every gated item has a verdict.
 
 ### 4. Re-stamp and validate
 
-Re-stamp with the current ref and SHA, run `lint`, report.
+Re-stamp with the current ref and SHA, run `lint`, report. This step is done when the stamp names the current SHA and the lint result is reported.
 
 ### 5. Hand off
 
-**What changed.** Report tokens edited (one line each, naming the value that moved), sections proposed and their verdict, and sections deliberately untouched.
+**What changed.** Report tokens edited (one line each, naming the value that moved), sections proposed and their verdict, outside-target drift and its verdict, and sections deliberately untouched.
 
 **Where it landed.** Give `DESIGN.md`, and the lint result.
 
@@ -244,7 +257,9 @@ Three checks:
 
 - **Lint.** Run `npx @google/design.md lint`, findings reported as-is.
 - **Drift.** The check only designkit can do, because the linter validates the file against *itself* and has no view of the codebase. Two directions: tokens in the file that no longer appear in the code, and values in the code that no token covers.
-- **Baseline.** Run `npx @google/design.md diff` against `git show <stamped-sha>:DESIGN.md`, when the SHA is reachable.
+- **Baseline.** Run `npx @google/design.md diff` against `git show <stamped-sha>:DESIGN.md`, when the SHA is reachable. Write the baseline copy to the system temporary directory (`mktemp`), never into the repo.
+
+Run the extraction engine without its swatch sheet. The audit is done when each of the three checks has a result or a named gap.
 
 ### The report
 
@@ -266,9 +281,17 @@ Open with a coverage line, naming how many files were scanned and how many skipp
 
 **Next.** Crown the single worst drift and route it to [`update`](#mode-update), or to [`init`](#mode-init) when the file is missing rather than wrong. **"Nothing has drifted" is a valid, stated result**, so say the system is current and stop.
 
-## Token sync
+## Mode: `sync`
 
-**On consent, and only where a token home already exists.** designkit never introduces a token system to a project that doesn't have one, because that's a build-tooling decision, not a documentation one.
+**On consent, and only where a token home already exists.** designkit never introduces a token system to a project that doesn't have one, because that's a build-tooling decision, not a documentation one. With no token home, say so and stop; there is nothing to sync.
+
+### 1. Find the home and the gap
+
+Run the engine's [Find the token home](#find-the-token-home) and name the rung. Compare each `DESIGN.md` token with the home's value. This step is done when every token is marked same, different, or absent from the home.
+
+### 2. Export and write, on consent
+
+Show the token changes the write would make, and ask once. On a yes, write by the table below:
 
 | Token home | How |
 |---|---|
@@ -277,6 +300,16 @@ Open with a coverage line, naming how many files were scanned and how many skipp
 | SCSS maps, CSS-in-JS, WordPress `theme.json` | `export --format dtcg`, then route to a translator such as Style Dictionary |
 
 The seam is **transformation, not framework**: if the official exporter already emits the shape, designkit writes it; if it needs real conversion, designkit emits DTCG and names the tool. Hand-rolled converters drift the moment either format moves.
+
+This step is done when every different or absent token is written, or exported as DTCG with the translator named, or the user declined.
+
+### 3. Hand off
+
+**What changed.** Report the token home written, one line per token that moved, or that the user declined.
+
+**Where it landed.** Give the token home path, or the DTCG export path and the translator to run.
+
+**Next.** Commit the token home and `DESIGN.md` together with **commitkit** when installed, otherwise `git commit`.
 
 ## Degrade loudly
 
@@ -291,7 +324,7 @@ No filesystem at all (a browser-based agent)? Print the finished `DESIGN.md` as 
 ## Notes
 
 - **The grounding rule outranks completeness.** A sparse, honest file beats a full, invented one. When the choice is between omitting a scale and guessing at it, omit and say so.
-- **Consent by operation.** The `init` proposal, new sections, deletions, and any token sync all ask. Edits to existing tokens in `update` don't, because they're bounded by the restraint rule and land in a reviewable diff. `audit` asks for nothing, because it changes nothing.
+- **Consent by operation.** The per-mode table in [When this fires](#when-this-fires) is the source. In-target edits to existing tokens in `update` don't ask, because they're bounded by the restraint rule and land in a reviewable diff. `audit` asks for nothing, because it changes nothing.
 - **Report warnings, never suppress them.** If a lint warning survives, it goes in the report with the reason it was accepted.
 - **Existing project convention wins.** A repo with its own token names, its own file location, or its own design-doc layout gets followed, and designkit says which convention it followed.
 - **The spec is alpha.** Sections, schema keys, and rules move. Read them from the CLI at run time; when the bundled fallback is what ran, say so.

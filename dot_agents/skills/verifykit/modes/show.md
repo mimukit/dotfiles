@@ -1,15 +1,15 @@
 ## Mode `show`: put the screen in front of the operator
 
-The operator is present, so the output is an image path they can open now. Nothing is recorded for a later reader: no GIF, no bundle, no `notes.md`, no publish, no `.gitignore` edit.
+The operator is present, so the output is an image path they can open now. Nothing is recorded for a later reader: no GIF, no bundle, no `notes.md`, no publish, no `.gitignore` edit. Screenshots go to the system temporary directory, so the repo stays untouched.
 
 ### 1. Resolve the output directory
 
 Take the first that resolves:
 
 1. the system temporary directory: `mktemp -d` on POSIX, `%TEMP%` on Windows;
-2. otherwise `docs/verify/show-<slug>-YYYY-MM-DD/` inside the repo, which sits under the `docs/verify/` line that `proof` mode adds to `.gitignore`.
+2. otherwise `docs/verify/` inside the repo. This writes files into the working tree. Check `git check-ignore -q docs/verify/x`: when the path is not ignored, the screenshots appear as untracked files, and the hand-off must say so.
 
-Inside it, create one run directory named `show-<slug>-YYYY-MM-DD/` (the slug from the shared procedure, today's ISO date). Keep the date stable when re-running the same slug on the same day; later captures overwrite by file name.
+Inside it, create one run directory named `show-<slug>-YYYY-MM-DD/` (the slug from the shared procedure, today's ISO date). Under `docs/verify/`, prefix it with the next serial, `NNNN-show-<slug>-YYYY-MM-DD/`: list `docs/verify/`, take the highest leading four-digit serial, and add one, starting at `0001`. Keep the name stable when re-running the same slug on the same day; later captures overwrite by file name. This step is done when the run directory exists and you know whether it sits in the repo.
 
 ### 2. Drive and screenshot
 
@@ -19,7 +19,7 @@ Walk each selected flow along its primary happy path as a user would. Write a **
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Nothing in the repo. Say so, and name the capture backend used and any auth boundary the run stopped at.
+**What changed.** Say "nothing in the repo" when the screenshots went to the temporary directory. When they went to `docs/verify/`, say that the run wrote screenshots into the working tree, and say whether git ignores them or shows them as untracked. Name the capture backend used and any auth or action boundary the run stopped at.
 
 **Where it landed.** Print one line per screenshot: the absolute path, then the state it shows. Print every path, so the operator opens each one without a search.
 

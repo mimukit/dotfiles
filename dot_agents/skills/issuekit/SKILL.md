@@ -1,7 +1,7 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle in five modes: create issues from a plan or description, start a `ready` issue into its own worktree, close one out once its PR merges, sync PR↔issue links after merge, and triage the tracker for lifecycle, priority, and title gaps. Use when the user says "create issues from this plan", "file an issue", "open a GitHub issue", "log this as a task", "add this to the backlog", "make issues for these TODOs", "start issue #42", "close #42", "sync my issues", "triage the backlog", "set the priority on #42", "relabel #42", "rename issue #42", or "fix the titles on these issues". It runs the tracker only; it writes no plan and no code.
+  Own the GitHub issue lifecycle in five modes: create issues from a plan or description, start a `ready` or `stacked` issue into its own worktree, close one out once its PR merges, sync PR↔issue links and dependents after merge, and triage the tracker for lifecycle, priority, and title gaps. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "sync my issues", "triage the backlog", "set the priority on #42", "#42 is grilled, mark it ready", or "fix the titles on these issues".
 license: MIT
 allowed-tools: Bash, Read, Edit, Write, Skill
 metadata:
@@ -13,10 +13,10 @@ metadata:
 Own the GitHub issue lifecycle through the [`gh` CLI](https://cli.github.com), in five explicit **modes**:
 
 - **`create`.** Turn a plan document or a plain description into well-formed issues.
-- **`start`.** Take a `ready` issue into its own worktree and flip it `in-progress`.
+- **`start`.** Take a `ready` or `stacked` issue into its own worktree and flip it `in-progress`.
 - **`close`.** Once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down.
 - **`sync`.** Reconcile and repair the PR↔issue relationship *after* the fact (issues a merged PR should have closed, a missing link on an existing PR, a dependent still marked `blocked` by an issue that landed).
-- **`triage`.** Report the health of the tracker, then offer fixes you approve.
+- **`triage`.** Report the health of the tracker, then apply the fixes you approve, including the `needs-planning → ready` promotion once a grill settled an issue.
 
 One skill, five jobs, because they're the same job at five points in a dev workflow: file the work, pick it up, land it, keep everything in sync as PRs merge, and keep the tracker honest.
 
@@ -30,7 +30,7 @@ The user wants to act on GitHub issues. Route to a mode from what they ask:
 - **start.** "Start issue #42", "begin #42", "pick up #42", "spin up a worktree for #42", "I'm working on 42 now".
 - **close.** "Close #42", "close out #42", "wrap up #42 now the PR merged", "tear down #42's worktree", "#42 landed, clean it up".
 - **sync.** "Sync my issues", "this PR merged but the issue is still open", "link this PR to #42", "unblock what #42 was holding up".
-- **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority", "relabel #42", "rename issue #42", "fix the titles on these issues", "these titles don't follow the convention".
+- **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority", "relabel #42", "rename issue #42", "fix the titles on these issues", "these titles don't follow the convention", "#42 is grilled, mark it ready".
 
 **If no mode is clear, ask first.** Present the modes as options and let the user pick before doing anything, and don't guess between creating and mutating the tracker.
 
@@ -52,9 +52,9 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 
 **Safety stance, for the whole skill.** Creating, closing, relabeling issues and editing PR bodies are outward-facing mutations. **Preview every mutation and get an OK before it runs, so nothing changes on GitHub unprompted.** Never merge PRs.
 
-**Label writes are exempt, in every mode and for every caller.** Adding or removing a label on an issue or a PR runs straight through, with no preview and no prompt, whether a person is at the keyboard or an orchestrator drives the run. This covers both namespaces, [lifecycle](#lifecycle-labels-every-mode) and [priority](#priority-labels-every-mode). A label is cheap, visible, and reversible with one command, so a prompt on each write costs more attention than the write is worth, and a declined write leaves the tracker lying about work that already happened. **State every label write in the preview that accompanies it, and report what the labels became in the hand-off**, so the change is still auditable.
+**Label writes are exempt in `create`, `start`, `close`, and `sync`, for every caller.** Adding or removing a label on an issue or a PR runs straight through, with no preview and no prompt, whether a person is at the keyboard or an orchestrator drives the run. This covers both namespaces, [lifecycle](#lifecycle-labels-every-mode) and [priority](#priority-labels-every-mode). A label is cheap, visible, and reversible with one command, so a prompt on each write costs more attention than the write is worth, and a declined write leaves the tracker lying about work that already happened. **State every label write in the preview that accompanies it, and report what the labels became in the hand-off**, so the change is still auditable.
 
-The exemption reaches the labels and nothing else. Every other outward-facing mutation keeps the rule above: `create` previews the issues it files, `close` previews the close and the worktree teardown, `sync` previews each pairing and each body edit, and `triage` previews every close and comment it proposes. Never merge PRs.
+The exemption reaches the labels and nothing else. Every other outward-facing mutation keeps the rule above: `create` previews the issues it files, `close` previews the close and the worktree teardown, and `sync` previews each pairing and each body edit. **`triage` is outside the exemption.** Its label writes record no work that happened; each is a judgment the report proposes (a classification, a rank, a promotion), so `triage` reports first and applies every fix, labels included, only on the user's approval. Never merge PRs.
 
 ## Title convention (every issue this skill creates)
 
@@ -139,9 +139,34 @@ The flags need `gh` 2.94.0 or newer. **Below that, degrade rather than refuse:**
 **When a needed label is missing**, check once with `gh label list`, then report the gap instead of mutating around it:
 
 > Label `blocked` isn't in this repo. Provision the workflow labels with **repokit**, or add just this one:
-> `gh label create blocked --color D93F0B --description "has an unmet prerequisite (see 'Blocked by #N' in the body)"`
+> `gh label create blocked --color D93F0B --description "has an unmet prerequisite that has not started"`
 
 Apply a label only once it exists (`gh issue edit <n> --add-label <label>`). The write itself needs no prompt, per [the label exemption](#preflight-every-mode); name it in the preview it rides with and report it in the hand-off.
+
+### Promoting a dependent
+
+**One transition rule sets a dependent's label, and every mode that moves or checks a dependent applies it.** When a prerequisite's state changes, recompute each dependent's label from **all** of its open prerequisites, never from the one that just moved. Issue C depends on A and B: A merging leaves C `blocked` while B has not started.
+
+Find the dependents through the native edge, the store named in [Recording a dependency](#recording-a-dependency), and read each one's full prerequisite set the same way:
+
+```sh
+gh issue view 43 --json blocking -q '[.blocking[].number]'      # who waits on #43
+gh issue view 44 --json blockedBy,labels                          # everything #44 waits on
+```
+
+Below `gh` 2.94.0, read the `Blocked by #N` body lines instead and say once that the native edge was unavailable. Then take the first row that matches:
+
+| open prerequisites | new label |
+|---|---|
+| none | `ready` |
+| every one has an open PR, and those PRs form one chain (each PR's base is the next one's head) | `stacked`, on the top PR of that chain |
+| every one has an open PR, and the PRs do not form one chain | keep the current label, and report the incompatible parents |
+| at least one has no open PR | `blocked` |
+
+- **A prerequisite's change moves only `blocked` and `stacked` dependents.** A `needs-planning` dependent keeps its label, because the grill gate holds it, not the dependency. An `in-progress` or `in-review` dependent keeps its label, because its work has started.
+- **A layer has one parent branch.** When the open PRs sit on separate branches, no single base satisfies them all. Name each candidate parent PR in the report and let the user decide; never pick one.
+- **Every move is a replace.** Remove the current lifecycle label in the same call that adds the new one: `gh issue edit 44 --remove-label blocked --add-label ready`.
+- **A PR query that fails leaves the dependent alone.** Report it as unknown and name the failed call; an error is not evidence that no PR exists.
 
 ---
 

@@ -13,7 +13,7 @@ Three facts that command cannot give you matter more than the ones it can, so ga
 - **A QA plan and proof.** Look for the artifacts your repo's conventions produce (a QA plan doc, a proof bundle, whatever the PR body links). Absence is a fact worth printing, not a silence.
 - **Stack position.** A PR whose base is another feature branch is a layer, and that is the single most important thing to know before opening it: its diff is only its own slice, and merging it merges everything below it. Mark the layer and its depth (`layer 2 of 3`), and group a stack's PRs together in the table rather than scattering them by update time.
 
-Print one table, most-ready first, with drafts and PRs authored by others clearly marked. **Do not crown a "next" PR**, because ranking work is a project-status job, and a reviewer's queue is theirs to order. Within a stack, print bottom layer first: that is merge order, and the bottom is the only layer that can land alone.
+Print one table, most-ready first, with drafts and PRs authored by others clearly marked. Ends when every open PR has a row, and each row carries all four facts above or names the one it could not read. **Do not crown a "next" PR**, because ranking work is a project-status job, and a reviewer's queue is theirs to order. Within a stack, print bottom layer first: that is merge order, and the bottom is the only layer that can land alone.
 
 ### Hand off
 

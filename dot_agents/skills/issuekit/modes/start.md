@@ -10,21 +10,33 @@ Pick an issue up: guard that it's actually workable, get it a worktree, and move
 gh issue view <n> --json labels,title,state,blockedBy
 ```
 
-This one guard carries more weight than its size suggests, and it is the reason `start` lives here rather than in a worktree skill. An issue only reaches `ready` two ways: a human grilled its decisions settled, or issuekit `sync` promoted it `blocked → ready` when its prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free**: no unattended worker can get ahead of the tracker, and none can get ahead of human judgment.
+This one guard carries more weight than its size suggests, and it is the reason `start` lives here rather than in a worktree skill. An issue only reaches `ready` two ways: a human said a grill settled its decisions (at `create`, or through the `triage` promotion), or `sync` or `close` promoted it when its last prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free**: no unattended worker can get ahead of the tracker, and none can get ahead of human judgment.
 
-**`stacked` passes the same gate for the same reason, and then earns a second check.** An issue reaches `stacked` only from `blocked`, and it reached `blocked` from a grilled breakdown, so the human-grill gate is already satisfied. What is *not* satisfied is the dependency half, because the prerequisite has not landed, it is merely in flight. So a `stacked` issue gets a live verification before anything is cut:
+**`stacked` passes the same gate for the same reason, and then earns a second check.** An issue reaches `stacked` only from `blocked`, and it reached `blocked` from a grilled breakdown, so the human-grill gate is already satisfied. What is *not* satisfied is the dependency half, because the prerequisite has not landed, it is merely in flight. So a `stacked` issue gets a live verification before anything is cut. Read every open prerequisite from `blockedBy`, then search each one's PRs in **every** state, because the refusals below have to tell merged, closed, and missing apart:
 
 ```sh
-gh pr list --search "<blocker>" --state open --json number,headRefName,state
+gh pr list --search "<blocker>" --state all --json number,state,headRefName,baseRefName,closingIssuesReferences,body
 ```
+
+**A search hit is not a link.** Keep a PR only when its `closingIssuesReferences` names the blocker, or, for a PR whose base is not the default branch, its body carries `Closes #<blocker>`; a layer PR's resolved field stays empty until GitHub retargets it. Each prerequisite then resolves to one of four states, and the open state wins when several PRs link it:
+
+- **present** → a linked open PR exists. Its `headRefName` is the candidate parent branch.
+- **landed** → no open PR, and a linked PR merged.
+- **abandoned** → no open or merged PR, and a linked PR closed unmerged.
+- **absent** → no linked PR in any state.
+
+A query that errors is **unknown**, not absent. Refuse, name the failed call, and change nothing.
+
+The issue passes only when [the transition rule](../SKILL.md#promoting-a-dependent) still computes `stacked` from these states, which gives the one parent branch the next steps cut from.
 
 **The label is discovery; this check is the gate.** `stacked` is written by another skill at PR-open time and repaired by `sync`, so between those moments it can be wrong in exactly the way that costs the most: the PR was closed unmerged, or it merged and its branch was deleted. Cutting a layer from a branch that is gone fails much later and far from its cause.
 
-Refuse a `stacked` issue when the prerequisite's PR is closed, merged, or missing, and say which:
+Refuse a `stacked` issue when the rule computes anything else, and name the prerequisite and its state:
 
-- **PR merged** → the prerequisite landed, so this is no longer stacked work. Point at `sync`, which promotes it `stacked → ready` and lets a normal start cut from the base ref.
-- **PR closed unmerged** → the prerequisite was abandoned. The issue is `blocked` again, not stackable. Say so and stop.
-- **No PR found** → the label is drift. Point at `sync` to repair it.
+- **every prerequisite landed** → this is no longer stacked work. Point at `sync`, which promotes it `stacked → ready` and lets a normal start cut from the base ref.
+- **a prerequisite abandoned** → the issue is `blocked` again, not stackable. Say so and stop.
+- **a prerequisite absent** → the label is drift. Point at `sync` to repair it.
+- **open PRs on separate branches** → no single parent exists. Name each candidate parent PR and stop; the user picks the stack.
 
 Never soften this into a warning. A refusal here costs one command; a worktree cut from a dead branch costs a confusing debugging session days later.
 
@@ -32,14 +44,16 @@ That last part is load-bearing for an orchestrator that calls `start` itself wit
 
 Refuse with the reason, not a bare error:
 
-- **`needs-planning`** → the decisions aren't settled; it needs a human grill session first.
+- **`needs-planning`** → the decisions aren't settled. Route to a human grill session (**grillkit** when installed), then to `triage` for the `needs-planning → ready` promotion.
 - **`blocked`** → name the prerequisite and its state. When that prerequisite turns out to have an open PR, the issue should be `stacked`, so point at `sync` to promote it rather than starting it here.
 - **`in-progress`** → it's already started; go to the adopt path below rather than treating this as a failure.
 - **closed, or no lifecycle label** → say which, and offer `triage` to classify it.
 
+This step is done when the issue passed the guard with its label and, for `stacked`, its parent branch named, or the run has stopped with the refusal reason.
+
 ### 2. Derive the branch name
 
-**gitkit owns branch naming**, so hand it the issue number and title and use what comes back. For an issue titled in the [`type(scope): summary` convention](../SKILL.md#title-convention-every-issue-this-skill-creates), that yields `issue-<n>-<slug>`: the prefix stripped, the summary kebab-cased and capped. Don't re-derive the shape here; a second copy of the slug rules drifts from the one gitkit uses to *find* the worktree later, and then lookup silently stops matching.
+**gitkit owns branch naming**, so hand it the issue number and title and use what comes back. For an issue titled in the [`type(scope): summary` convention](../SKILL.md#title-convention-every-issue-this-skill-creates), that yields `issue-<n>-<slug>`: the prefix stripped, the summary kebab-cased and capped. Don't re-derive the shape here; a second copy of the slug rules drifts from the one gitkit uses to *find* the worktree later, and then lookup silently stops matching. This step is done when gitkit has returned one branch name.
 
 A `stacked` issue takes the same branch name. A layer is an ordinary branch, and it is named after the issue it builds, not after its position in the stack.
 
@@ -49,7 +63,7 @@ Call gitkit for the branch. It looks the branch up first and **adopts an existin
 
 **A `stacked` issue passes gitkit one extra fact: the base is the prerequisite's head branch**, taken from the PR the guard just verified, rather than the repo's base ref. gitkit states this as the one deliberate exception to its sibling-branch ban and gives the layer its own worktree, so nothing else about this step changes. Ask gitkit to add the layer to the stack so GitHub renders the chain; without the stack extension it falls back to a plain branch off the parent, which is the same topology with no stack map.
 
-issuekit does not choose the path, the base ref, or the git commands. If gitkit isn't installed, say so and stop rather than improvising a worktree convention, because a worktree in the wrong place is worse than none, since everything downstream then looks in the right place and finds nothing.
+issuekit does not choose the path, the base ref, or the git commands. If gitkit isn't installed, say so and stop rather than improvising a worktree convention, because a worktree in the wrong place is worse than none, since everything downstream then looks in the right place and finds nothing. This step is done when gitkit has returned a worktree path, marked as created or adopted.
 
 ### 4. Flip the label `ready → in-progress`
 
@@ -60,11 +74,11 @@ gh issue edit <n> --remove-label stacked --add-label in-progress   # the stacked
 
 **Run it without asking**, per [the label exemption](../SKILL.md#preflight-every-mode), which applies to every caller. Report the flip in the hand-off rather than proposing it first. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
 
-A `stacked` issue flips exactly the same way. If either label is missing from the repo, [report the gap](../SKILL.md#lifecycle-labels-every-mode) and point at **repokit**, because the exemption skips the prompt, never the provisioning check.
+A `stacked` issue flips exactly the same way. If either label is missing from the repo, [report the gap](../SKILL.md#lifecycle-labels-every-mode) and point at **repokit**, because the exemption skips the prompt, never the provisioning check. This step is done when the issue carries `in-progress` and no other lifecycle label.
 
 ### 5. Hand off
 
-**What changed.** Report the label move (`ready → in-progress`, or that it was left alone on the adopt path).
+**What changed.** Report the label move (`ready → in-progress`, `stacked → in-progress`, or that it was left alone on the adopt path).
 
 **Where it landed.** Give the branch and the worktree path, and whether it was created fresh or adopted.
 

@@ -35,14 +35,16 @@ It is distinct from a generic correctness linter: reviewkit leads with **convent
 Ground the review in an actual diff, because reviewing from memory is worthless. Detect the target from git state, then state your pick and let the user override:
 
 - **Uncommitted changes present** (`git status --porcelain` is non-empty) → review the working tree: `git diff HEAD` (include staged with `git diff --staged`). This is the default after a fresh coding session. **`git diff` does not show untracked files**, so a brand-new file an agent never staged is invisible to it, and a whole new module silently escaping review is the worst possible miss. List them with `git status --porcelain` (the `??` entries) or `git ls-files --others --exclude-standard`, and `Read` each one in full as part of the change: **every untracked source file, no exceptions**. The only untracked files you may skip are ones nobody wrote: lockfiles, build output, vendored dependencies, compiled assets, snapshots. Note them as generated, spot-check that they're actually generated rather than hand-edited, and move on.
-- **Clean tree, branch ahead of its base** → review the branch diff. **Get the base branch from gitkit**, which owns that resolution. Don't assume `main`, and don't re-derive it here; a wrong base silently yields an empty diff or one containing half the repo's history, and both look like a real review target. Then run `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
+- **Clean tree, branch ahead of its base** → review the branch diff. **Get the base branch from gitkit**, which owns that resolution. Don't assume `main`, and don't re-derive it here; a wrong base silently yields an empty diff or one containing half the repo's history, and both look like a real review target. Without gitkit, take the remote default branch from `git symbolic-ref --short refs/remotes/origin/HEAD` (strip the `origin/` prefix), else the first of `main` or `master` that `git rev-parse --verify` resolves, and say in the target line which fallback you used. Then run `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
 - **If the invocation names a target** ("review the branch", "review my staged changes") → honor it directly, skip detection.
 
 Say which target you chose and why in one line, then proceed. If neither applies (clean tree, no branch ahead), ask what to review rather than guessing.
 
-**Validate before reviewing.** Confirm the target resolves (`git rev-parse <ref>` for a named base) and the diff is actually non-empty. If the ref doesn't resolve or the diff is empty, stop and say so, because reviewing a bad or empty range produces fabricated findings, not a review.
+**Validate before reviewing.** Confirm the target resolves (`git rev-parse <ref>` for a named base) and the change is actually non-empty: the tracked diff plus the untracked files you listed. A change made only of new untracked files has an empty `git diff` and is still a full review target. If the ref doesn't resolve, or both the diff and the untracked list are empty, stop and say so, because reviewing a bad or empty range produces fabricated findings, not a review.
 
 Read the diff in full before judging anything, **once**. The four passes below are four questions asked of one reading, not four readings; don't re-run `git diff` at the top of each pass. If a pass needs a detail you didn't retain, pull that hunk (`git diff HEAD -- <path>`), not the whole diff again. The same applies to the neighboring code you compare against in [Convention-fit](#2-pass-1-convention-fit): read the sibling that establishes the pattern, not every file in the directory.
+
+This step is done when the target line is stated, the ref resolves, every changed file and every non-generated untracked file has been read, and the stated intent is written down (or recorded as absent).
 
 Note the change's *stated intent*, from the commit messages, the branch name, the plan or issue it references, or the user's own words, because half the review is asking "did it do what was asked, all of it, and *only* that?" Capture that intent concretely: it's the spec both [Requirement-completeness](#4-pass-3-requirement-completeness) and the scope-creep check in [Agent-slop signatures](#3-pass-2-agent-slop-signatures) measure against.
 
@@ -65,6 +67,8 @@ Does the change look like the rest of *this* repository wrote it? Agents default
 
 Named smells that show up here (Fowler's vocabulary, so use the label when it fits, since it's sharper than a paragraph): *Mysterious Name* (unclear naming), *Shotgun Surgery* (one logical change smeared across many files), *Divergent Change* (one module edited for several unrelated reasons).
 
+The pass is done when every changed file has been compared against at least one sibling or documented convention, and each check above has a finding or a recorded clean result.
+
 ### 3. Pass 2: Agent-slop signatures
 
 Hunt the tells of machine-generated code, the padding that looks productive but earns its keep nowhere:
@@ -78,6 +82,8 @@ Hunt the tells of machine-generated code, the padding that looks productive but 
 
 Named smells that show up here: *Speculative Generality* (abstraction for needs that don't exist, so delete it and inline until a real second caller appears), *Duplicated Code* (the same logic pasted across hunks instead of shared), *Primitive Obsession* (a bare string/int standing in for a domain concept), *Middle Man* / *Message Chains* (layers that only delegate, or `a.b().c().d()` navigation). Speculative Generality especially is the signature agent smell.
 
+The pass is done when every hunk has been checked against each signature above, and every new export, helper, and dependency has a confirmed caller or a finding.
+
 ### 4. Pass 3: Requirement-completeness
 
 Agents under-deliver as often as they over-deliver: they stub a branch, skip an edge of the ask, or solve the easy 80% and leave the rest silently unfinished. Measure the change against the intent captured in [Pick the review target](#1-pick-the-review-target), meaning the plan, issue, or user's words, and report the gaps:
@@ -88,6 +94,8 @@ Agents under-deliver as often as they over-deliver: they stub a branch, skip an 
 - **Wrong interpretation.** The change does *something*, but not the thing that was asked; it solved a nearby, easier problem.
 
 If there's no captured intent to measure against (no plan, issue, or clear request), say so and skip this pass rather than inventing a spec. Don't guess at requirements the user never stated.
+
+The pass is done when every requirement in the captured intent is marked met, partial, or missing, each with the hunk that shows it.
 
 ### 5. Pass 4: Correctness
 
@@ -106,6 +114,8 @@ A passing test suite is not evidence of a tested change, because agents write te
 - **Is the scenario visible in the test**, or buried in setup/fixtures/mocks so thoroughly that the test proves the mock works and nothing else?
 - **Does it cover the failure paths the change introduced**, not just the happy path the feature demo walks?
 - **Does it prove the stated requirement**, or an easier neighbor of it?
+
+The pass is done when every changed code path has a finding or a recorded clean result for each check above, and every new or changed test has answered the five questions.
 
 ### 6. Report the findings
 
@@ -129,16 +139,29 @@ Never soften a verdict because the change is mostly good or the author worked ha
 
 Close with the **coverage note**: one short paragraph naming what this review did *not* verify, meaning the unverified areas collected during the passes, plus whether you ran the tests and whether this was a fresh-eyes review or a self-review (per [Review with fresh eyes](#review-with-fresh-eyes)). A reader who knows the concurrency path went unexamined can go look; a reader who assumes it was covered cannot. When a gap is serious enough that a real problem could be hiding in it (an unreviewed security boundary, a migration nobody can validate here), say the change is **blocked on outside review** rather than issuing a verdict the evidence doesn't support.
 
-Do not edit source or apply fixes. If the user wants the fixes made, hand off: they run an implement-style skill, or fix by hand and re-run reviewkit.
+Do not edit source or apply fixes. Routing the fixes belongs to [Hand off](#8-hand-off).
 
 ### 7. Optional: save the report
 
-After showing the review, offer to save it (don't save unprompted). If the user wants a durable copy, e.g. to paste into a PR description, write it to `docs/reviews/review-<branch-or-feature-slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case slug and the review's ISO creation date (for example, `review-auth-refactor-2026-07-23.md`). Keep that date stable if the same report is edited. For a genuine same-day collision between distinct reviews, make the slug more specific; only as a last resort insert a sequence immediately before the date (`review-auth-refactor-02-2026-07-23.md`). Create `docs/reviews/` if needed. Keep the saved file identical to what you printed, with a one-line header noting the date and the reviewed range. If there's no filesystem, skip this step and leave the inline report as the deliverable.
+After showing the review, offer to save it (don't save unprompted). If the user wants a durable copy, e.g. to paste into a PR description, write it to `docs/reviews/NNNN-review-<branch-or-feature-slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case slug, and the review's ISO creation date (for example, `0002-review-auth-refactor-2026-07-23.md`). To get the serial `NNNN`, list `docs/reviews/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Keep the whole name stable if the same report is edited. Create `docs/reviews/` if needed. Keep the saved file identical to what you printed, with a one-line header noting the date and the reviewed range. If there's no filesystem, skip this step and leave the inline report as the deliverable.
+
+### 8. Hand off
+
+Close with three short beats, after the report:
+
+- **What changed.** Say that reviewkit edited no source. State whether the report was saved.
+- **Where it landed.** Give the saved report path, or say the report is inline only. Name the reviewed range.
+- **Next.** Crown one move from the verdict:
+  - **ready** → write the manual QA plan with **qakit** when it is installed (`/qakit`). Otherwise, commit with **commitkit**, otherwise `git commit`.
+  - **ready-with-fixes** or **needs-work** → apply the findings with **implementkit**'s fix round and hand it this report. Otherwise, fix the findings by hand. Then run reviewkit again.
+  - **blocked on outside review** → name the area and the person or check that must clear it. Nothing else is next until that review is done.
+
+Route to the next kit; do not invoke it.
 
 ## Notes
 
 - **Read-only by contract.** reviewkit runs git and read/search commands to understand the change, and at most the repo's own test command to check correctness. It never edits source, never commits, never pushes. Its only write is the optional report file in [Optional: save the report](#7-optional-save-the-report), and only when the user asks for it.
-- **`Skill` is in the tool list for gitkit, and for nothing else.** reviewkit *calls* gitkit to resolve the base ref when it reviews a branch diff, because a wrong base yields an empty diff or half the repo's history, and both look like a real review target. The implement-style skill named in the findings hand-off is routed to, never invoked.
+- **`Skill` is in the tool list for gitkit, and for nothing else.** reviewkit *calls* gitkit to resolve the base ref when it reviews a branch diff, because a wrong base yields an empty diff or half the repo's history, and both look like a real review target. The kits named in [Hand off](#8-hand-off) are routed to, never invoked.
 - **Scale to the diff.** A one-line fix gets a quick pass-through and a one-line verdict; a large feature branch gets the full treatment. Don't pad a small change with ceremony.
 - **Not a substitute for tests or CI.** It's a judgment pass on top of them, tuned for how agent-written code fails. Report what the automated gates already cover as covered; spend the review on what they miss. This is the same reason the [review-target ground rules](#1-pick-the-review-target) skip tooling-enforced rules.
 - **No shell or git?** Ask the user to paste the diff *and* the original ask, then run the four passes on what they provide and print the report as a codeblock for them to save themselves.

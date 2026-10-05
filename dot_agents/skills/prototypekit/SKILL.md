@@ -69,7 +69,7 @@ Ambiguous and the user isn't reachable? Default by what surrounds the code and s
 git rev-parse --git-path info/exclude    # resolve the real path; never hardcode .git/info/exclude
 ```
 
-Ask git for that path rather than assuming it, because in a linked worktree `.git` is a *file*, not a directory, so the literal path doesn't exist. Append `*.prototype.*` and `*.prototype/` only if they aren't already listed. Both patterns ship, because the file glob won't match a directory on its own.
+Ask git for that path rather than assuming it, because in a linked worktree `.git` is a *file*, not a directory, so the literal path doesn't exist. Append `*.prototype.*` and `*.prototype/` only if they aren't already listed. Both patterns ship, because the file glob won't match a directory on its own. **Record which lines you appended.** A pattern that was already listed belongs to whoever put it there, and disposal leaves it alone.
 
 **Say you did it in the same line** you say where the prototype is going, so the user knows the guard is in place before any code lands.
 
@@ -114,7 +114,7 @@ Write **Built** straight from the scope box, so it names the cases driven and tr
 
 Land it in whatever asked the question:
 
-- **A plan document.** **Strike the open question and add a row to its settled-decisions section**, citing the prototype. Don't leave an answered question sitting under "Open questions"; that misrepresents the plan's state to everything downstream that reads it. This is prototypekit's **one edit to a tracked file**, it's deliberate, and it only ever touches a file the user named.
+- **A plan document.** **Strike the open question and add a row to its settled-decisions section**, citing the prototype. Don't leave an answered question sitting under "Open questions"; that misrepresents the plan's state to everything downstream that reads it. This is prototypekit's **one edit to a tracked file**, it's deliberate, and it only ever touches a file the user named. A new settled decision is a material edit, so when the plan carries a `Grilled:` line, delete that line in the same edit and say so; the plan needs a re-grill.
 - **An issue.** Leave a comment.
 - **Neither.** Report in the chat.
 
@@ -125,18 +125,21 @@ Land it in whatever asked the question:
 **Offer the park first**, as one ask, with the literal command. It is off by default, because the premise of this skill is that the answer matters and the code doesn't:
 
 ```sh
-git checkout -b prototype-<slug> && git add -f <files> && git commit -m "prototype: <question>" && git checkout -
+git diff --cached --name-only    # record the staged set first
+git checkout -b prototype-<slug> && git add -f <files> && git commit -m "prototype: <question>" -- <files> && git checkout -
 ```
+
+The path list after `--` limits the commit to the prototype files, so work the user had already staged stays staged and stays out of the park. After the park, run `git diff --cached --name-only` again and confirm it matches the recorded set. The checkout back removes the parked files from the working tree, so the delete below finds them gone.
 
 **Then delete, confirmed per file.** List every file you created this session and confirm each one individually. This is not ceremony: an excluded file is untracked, so git cannot recover it, which makes the delete final in a way most deletes aren't. **Never touch a file you didn't create in this session.**
 
-Remove the exclude entry **only when every prototype file is gone.** Any file the user keeps gets reported by absolute path with its exclude line left in place, which is what keeps the leftover local-only and findable instead of quietly commit-able.
+Remove the exclude entry **only when every prototype file is gone**, and remove only the lines you recorded as appended. Any file the user keeps gets reported by absolute path with its exclude line left in place, which is what keeps the leftover local-only and findable instead of quietly commit-able.
 
 ### 8. Hand off
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Report the files created, which were deleted and which the user chose to keep, whether the exclude entry was removed or retained, and whether the park happened.
+**What changed.** Report the files created, which were deleted and which the user chose to keep, which exclude lines you removed and which you left, whether the park happened, and whether you removed a `Grilled:` line.
 
 **Where it landed.** Give the verdict's destination by path (the plan file and the row it added, the issue, or the chat), and the absolute path of anything still on disk.
 

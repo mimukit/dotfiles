@@ -1,7 +1,7 @@
 ---
 name: testkit
 description: >-
-  Retrofit an automated test suite onto a working codebase that has none: rank the untested surface, crown a slice, stand up a runner, and write tests that were each watched to fail before they were kept. Use when the user says "this project has no tests", "add test coverage", or "what should I test first". It never fixes the bugs it finds and never restructures code to make it testable.
+  Retrofit an automated test suite onto a working codebase that has none: rank the untested surface, crown a slice, stand up a runner, and write tests that were each watched to fail before they were kept. Use when the user says "this project has no tests", "add test coverage" to code that already runs, or "what should I test first". Tests for code still being built belong to implementkit.
 license: MIT
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write, AskUserQuestion
 metadata:
@@ -29,11 +29,11 @@ Every rule below exists to make those two mandatory rather than aspirational.
 
 ## When this fires
 
-"Write tests for this", "this repo has no tests", "add test coverage", "set up testing", "what should I test first", "our coverage is terrible", "/testkit".
+"Write tests for this" about code that already runs, "this repo has no tests", "add test coverage", "set up testing", "what should I test first", "our coverage is terrible", "/testkit".
 
 Boundaries against the kits that sit closest:
 
-- **Not test-driven development on new work.** A build skill's TDD mode owns red-then-green for code that does not exist yet. testkit's entire premise is that the code is already there and already runs.
+- **Not tests for new work.** When the request is tests for code that does not exist yet, or for the feature being built right now, route it to a build skill: **implementkit** in TDD mode for test-first, or in tests-after mode for tests right after the build. Without implementkit, say the tests belong with the build. testkit's entire premise is that the code is already there and already runs, so its branch is the retrofit.
 - **Not a manual QA plan.** A QA skill writes steps a human executes by hand. Nothing testkit produces is run by a person.
 - **Not browser proof for a pull request.** A visual-verification skill drives a browser once and captures images. testkit writes specs that a test command reruns forever.
 - **Not diagnosis.** A debugging skill chases one symptom to its cause and may produce one failing test as a reproduction. testkit builds a suite.
@@ -61,7 +61,7 @@ An optional scope argument narrows what gets ranked in either mode. It never cha
 
 ## The ledger
 
-One file per repository: `docs/tests/testplan-<repo>-YYYY-MM-DD.md`, where the date is its **creation** date and stays fixed forever. `audit` creates it. Every run after that updates it in place. A scoped run appends under a scoped heading in the same file, and it never spawns a second one.
+One file per repository: `docs/tests/NNNN-testplan-<repo>-YYYY-MM-DD.md`, where the date is its **creation** date and the whole name stays fixed forever. To get the serial `NNNN`, list `docs/tests/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. `audit` creates it. Every run after that finds it by `testplan-<repo>-`, with or without a leading serial, and updates it in place. A scoped run appends under a scoped heading in the same file, and it never spawns a second one.
 
 One file is what makes run N+1 cheap. A brownfield retrofit does not finish in one session, and a skill that writes a fresh dated survey per slice leaves a pile of surveys and no resumable state at all.
 
@@ -71,7 +71,8 @@ It carries:
 - what each run covered, with its date and its declared-versus-actual count;
 - what was deferred, and why;
 - **testability blockers**, meaning code that cannot be tested without restructuring;
-- **unproven tests**, meaning pre-existing tests that survived a mutation they should have caught.
+- **unproven tests**, meaning pre-existing tests that survived a mutation they should have caught;
+- **over-broad tests**, meaning pre-existing tests that failed under a mutation aimed at a behaviour they do not name.
 
 Durable and committable. testkit never commits it.
 
@@ -87,6 +88,8 @@ Find what source exists, what tests exist, and what those tests actually reach. 
 
 Exclude before ranking, not after: generated code, vendored trees, thin configuration, and pure delegation. They inflate a count and prove nothing.
 
+The step is done when every source file sits either in the candidate list or in a named exclusion class.
+
 ### 2. Rank
 
 One read of the history gives both signals at once: `git log --format= --name-only --since=<about a year>` yields how often each file changes and which files keep changing *together*.
@@ -99,6 +102,8 @@ Rank on four signals:
 - **Testability cost.** Divide by this. A behaviour that needs three services standing up costs more than its rank suggests.
 
 **No git history**, meaning a shallow clone or not a repository, means no ranking. Scan by structure instead and say plainly that the prioritisation was skipped, so nobody reads the coverage claim as more than it is.
+
+The step is done when every candidate has a rank, or the run has said that ranking was skipped and why.
 
 ### 3. Crown one slice
 
@@ -122,6 +127,8 @@ Take it from the ledger, from the user, or from an inline ranking when neither e
 
 The ledger's ranking is stamped with the commit it was computed against. Compare `HEAD`. **Re-rank when the commits since that sha touched files in the ledger's top slice.** Otherwise trust it *out loud*, naming the sha you trusted. A durable ranking outlives the code it ranked, so an August ordering will happily drive a November run at whatever used to be hot.
 
+The step is done when the run has named the slice, its source, and either the sha it trusted or the fresh ranking.
+
 ### 2. Stand up a runner, if there is none
 
 Skip this when the repo already has one.
@@ -133,6 +140,8 @@ Skip this when the repo already has one.
 - **Land one green smoke test before writing anything real.** A retrofit that opens with forty tests against an unproven harness debugs the harness through the tests.
 
 **When no standard runner can be wired up**, because the language, build system, or dependency situation defeats it, report the specific obstacle and stop. **Never improvise a harness.** A hand-rolled test loop is something nobody else can run, maintain, or replace, and it would be the most durable thing this skill ever left behind.
+
+The step is done when one smoke test passes through the repo's entry point, or the run has stopped on a named obstacle.
 
 ### 3. Declare the size before writing anything
 
@@ -161,6 +170,8 @@ Making both sides cost the same is the entire mechanism. A free label gets stamp
 
 **A contradiction becomes a skipped test plus a report**, never a source edit, never a weakened assertion. See [It never fixes, and it never restructures](#it-never-fixes-and-it-never-restructures).
 
+The step is done when each of the M declared behaviours has a test with a provenance comment, or a skipped test plus a report.
+
 ### 5. Verify every target before running against it
 
 **Nothing runs against a datastore or service testkit has not verified as disposable.**
@@ -187,7 +198,14 @@ The code already exists, so red-then-green is unavailable. The substitute: break
 
 **A valid break is a semantic mutation, never a deletion.** Change a returned value, flip a comparison, drop a branch, skip a write. Deleting the function or the file makes *everything* fail, including a test that asserts nothing, so it proves the import path resolves and nothing else. Use the smallest edit that changes the behaviour the test claims to check.
 
-**Run the narrowest selection the runner supports.** The target test plus the others in its file. Never the full suite. Confirm the expected one goes red **and its neighbours stay green**, because that second half is free, and it catches an assertion that reaches too far. Where the runner cannot select a file or a pattern, lower the declared behaviour count and say why.
+**Run the narrowest selection the runner supports.** The target test plus the others in its file. Never the full suite. Confirm the expected one goes red, then read every neighbour that also went red. Where the runner cannot select a file or a pattern, lower the declared behaviour count and say why.
+
+**A red neighbour is one of two things, and the gate tells them apart.**
+
+- **Valid overlap.** The neighbour's own named behaviour depends on the mutated code, so it should fail. Two tests of one pricing function both fail when the rounding flips. Keep both, and record the overlap in the mutation row.
+- **Overly broad assertion.** The neighbour names a different behaviour, and it failed because it asserts more than that behaviour: a whole object, a full snapshot, an unrelated field. When testkit wrote that test this run, narrow the assertion to its named behaviour and run the gate again for it. When the test is pre-existing, record it in the ledger as *over-broad* and leave it alone.
+
+The test is the neighbour's name and provenance comment against the mutation: if the behaviour it names cannot be correct with the mutation in place, the overlap is valid.
 
 **The gate is never skipped for slowness.** A slow suite is the condition that makes the gate valuable, so an exemption would open in precisely the situation that most tempts you through it. Full-suite runs happen exactly twice, at the done-gate, and nowhere else.
 
@@ -199,11 +217,13 @@ The code already exists, so red-then-green is unavailable. The substitute: break
 
 Mutations are edits to tracked source. **The user may have had uncommitted work when the run started, and reverting a mutation must never revert it.**
 
-- **Snapshot first.** Take `git stash create` before the first mutation. It writes an unreferenced commit object and touches no ref and no file, which is what makes it free, and also what makes it invisible, so print the SHA and its `git stash apply <sha>` recovery line in the hand-off on every run. Git prunes unreachable objects on its own schedule; say so rather than overselling the net.
-- **Record every mutation**, meaning the file, the diff, and the behaviour it was testing.
-- **Revert by reverse-applying the recorded diff. Never restore a file.** `git checkout -- <file>` is the reflex move and the one that silently destroys a pre-existing uncommitted edit. The ban has **no exception** for files that looked clean at baseline, because a ban with exceptions to reason about is not a ban.
+- **Take a baseline first.** Keep the ledger in a directory outside the working tree. Before the first mutation, run `git stash create`, and record `git rev-parse HEAD`, `git diff --binary --cached`, and `git status --porcelain=v1 --untracked-files=all` in the ledger.
+- **Record whether the snapshot exists.** `git stash create` writes an unreferenced commit of tracked changes and touches no ref and no file. On a clean tree, and on a tree whose only changes are untracked files, it prints nothing. Write `none` then, and never print a recovery line for an object that does not exist. When it exists, print the SHA and its `git stash apply <sha>` recovery line in the hand-off. Git prunes unreachable objects on its own schedule; say so rather than overselling the net.
+- **Preserve untracked files separately.** The snapshot never covers them. Before a mutation touches an untracked source file, copy it into the ledger.
+- **Record every mutation as its own patch, against the state just before it.** Before each mutation, copy the file to a fresh `mutation-NN/` directory in the ledger. After it, diff that copy against the file. Before the first mutation on a file, also keep a `.base` copy. A patch taken against an older copy carries earlier mutations too, and reversing it reverts them twice. Keep a row per mutation: the file, the patch, and the behaviour it was testing.
+- **Revert by reverse-applying the recorded patch with `patch -R`. Never restore a file.** `git checkout -- <file>` is the reflex move and the one that silently destroys a pre-existing uncommitted edit. The ban has **no exception** for files that looked clean at baseline, because a ban with exceptions to reason about is not a ban.
 - **On a reverse-apply conflict, stop the run and report.** Do not force. Do not fall back to a restore.
-- **Verify the tree matches the baseline** before declaring done. Name by path anything deliberately left in place.
+- **Verify the baseline before declaring done.** Every mutated file matches its `.base` copy, HEAD and the index match their records, and the untracked-file list matches apart from the test files testkit created. Every untracked file a mutation touched matches its ledger copy. Name by path anything deliberately left in place.
 - **Never revert, stash, or discard a change testkit did not make.**
 
 ## The done-gate
@@ -237,9 +257,9 @@ _Write this section in the procedural register: one instruction per sentence, ac
 - the **files** created and changed, including the runner wiring;
 - the **gate result**, meaning the commands that ran, that every kept test was observed red, and that the suite passed two consecutive runs;
 - **deletions**, meaning tests testkit wrote and then removed because they stayed green;
-- **unproven** pre-existing tests, by path;
-- the **baseline snapshot**: `baseline snapshot: <sha> · recover with git stash apply <sha>`;
-- **tree state**, meaning the source is clean of mutations, or the paths that still carry one.
+- **unproven** and **over-broad** pre-existing tests, by path;
+- the **baseline snapshot**: `baseline snapshot: <sha> · recover with git stash apply <sha>`, or `baseline snapshot: none (no tracked change at start) · mutation patches in <ledger>`;
+- **tree state**, meaning the result of each baseline check: mutated files, index, and untracked files, or the paths that still carry a mutation.
 
 Leave every change **unstaged**. Do not `git add`. Do not commit. Do not draft a commit message.
 

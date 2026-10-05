@@ -4,7 +4,7 @@
 
 ### 1. Check the machine half
 
-Run each check and record its state as present or missing. Do not install anything yet.
+Run each check and record its state as present or missing. Do not install anything yet. This step is done when every row has a state.
 
 | Item | Check | Install on miss |
 |------|-------|-----------------|
@@ -12,18 +12,21 @@ Run each check and record its state as present or missing. Do not install anythi
 | `playwright-cli` on `PATH` | `command -v playwright-cli` | `npm install -g @playwright/cli@latest` |
 | Driver workspace | `playwright-cli --version` succeeds | `playwright-cli install` |
 | A browser | System Chrome, else a driver-installed browser | `playwright-cli install-browser` |
+| `ffmpeg` on `PATH` | `command -v ffmpeg` | Print the platform's package command (`brew install ffmpeg`, `sudo apt install ffmpeg`, `winget install ffmpeg`); `setup` does not run it. Until it is present, `proof` captures screenshots only, with no GIF |
 
 The npm package is `@playwright/cli`. The unscoped `playwright-cli` package is deprecated; never install it. Install globally, because the capture modes probe `PATH` with `command -v`, and a project-local install is invisible to that probe.
 
 ### 2. Confirm and install the misses
 
-When at least one item is missing, list every miss and its install command in **one** `AskUserQuestion`, and run the installs only on a yes. A global npm install and a browser download change the machine, and this skill runs on machines that are not the author's. On a no, report the misses as skipped and continue to the repo half.
+When at least one item is missing, list every miss and its install command in **one** `AskUserQuestion` (ffmpeg and Node are listed with their print-only commands), and run the installs only on a yes. A global npm install and a browser download change the machine, and this skill runs on machines that are not the author's. On a no, report the misses as skipped and continue to the repo half.
 
 Then ask once whether to install the driver's bundled agent skills with `playwright-cli install --skills -g`. Recommend no, and give the reason: a second skill on the same browser verbs double-triggers with verifykit. Record the answer in the report.
 
+This step is done when every miss is installed, printed, or skipped, and the bundled-skills answer is recorded.
+
 ### 3. Prove the machine half
 
-Take one screenshot of `about:blank` into the system temporary directory (`mktemp -d` on POSIX, `%TEMP%` on Windows) with the driver. The checklist proves each binary exists; only this screenshot proves the browser launches. Record the absolute path. When the screenshot fails, report the machine half as failed with the driver's error and continue to the repo half.
+Take one screenshot of `about:blank` into the system temporary directory (`mktemp -d` on POSIX, `%TEMP%` on Windows) with the driver. The checklist proves each binary exists; only this screenshot proves the browser launches. Record the absolute path. When the screenshot fails, report the machine half as failed with the driver's error and continue to the repo half. This step is done when the screenshot path or the driver error is recorded.
 
 ### 4. Check the repo half
 
@@ -37,6 +40,8 @@ Run each check and record its state. Skip this half when the current directory i
 | Push access to `refs/verify-assets/*` | `git push --dry-run origin HEAD:refs/verify-assets/setup-probe` | Report skipped with the push error |
 
 The dry run leaves no ref behind on the remote or locally. The `.gitignore` line is the one repo mutation `setup` makes, and the capture modes need it before their first `proof` run.
+
+This step is done when every repo item is marked present, fixed, or skipped, or the half is skipped as not a git repository.
 
 ### 5. Hand off
 

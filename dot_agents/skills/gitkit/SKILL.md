@@ -1,7 +1,7 @@
 ---
 name: gitkit
 description: >-
-  The shared git layer every other skill borrows: where a worktree lives and what it's called, how to create/adopt/tear one down, which branch is the base, whether to rebase or merge, how to sync a feature branch with its base and force-push it, how to sweep merged worktrees and branches away, how to recover work that looks lost, and how to stack a branch on one still in review. Use when the user says "spin up a worktree for this", "make me a worktree", "where's the worktree for #42", "tear down this worktree", "clean up my merged worktrees", "what's the base branch here", "should I rebase or merge", "sync this branch with main", "this PR is behind, bring it up to date", "I lost a commit", "recover my work after a bad rebase", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
+  The shared git layer other skills borrow: the worktree path, name, and lifecycle, the base branch, rebase versus merge, branch sync, merged-branch cleanup, lost-work recovery, and stacked branches. Use when the user says "make me a worktree for #42", "where's the worktree for this branch", "tear down this worktree", "what's the base branch here", "should I rebase or merge", "sync this branch with main", "clean up my merged worktrees", "I lost a commit", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -106,8 +106,9 @@ Always look first. **If a worktree already exists for the branch, adopt it: repo
 When there is none:
 
 ```sh
+WT="${WORKTREE_ROOT:-$HOME/worktrees}/$(basename "$REPO")/$(printf '%s' "$BRANCH" | tr / -)"   # slashes flatten to dashes
 git -C "$REPO" fetch origin --prune
-git -C "$REPO" worktree add -b "$BRANCH" "$WORKTREE_ROOT/$(basename "$REPO")/$BRANCH" "$BASE"
+git -C "$REPO" worktree add -b "$BRANCH" "$WT" "$BASE"
 ```
 
 - Fetch first, always. Branching off a stale base is silent and only surfaces as conflicts later.
@@ -115,22 +116,45 @@ git -C "$REPO" worktree add -b "$BRANCH" "$WORKTREE_ROOT/$(basename "$REPO")/$BR
 - Drop `-b` when the branch already exists locally (a same-repo PR you have fetched, a branch you made earlier); `git worktree add <path> <branch>` checks it out.
 - For a **fork** pull request, fetch the head into a local branch first with `git fetch origin "pull/<n>/head:pr-<n>-<slug>"`, then add the worktree on that branch, no `-b`.
 
-Report the path and the branch. Creating a worktree does not imply doing anything in it.
+Then record what gitkit made, because a later session has no other way to tell its own worktrees from someone else's:
+
+```sh
+touch "$(git -C "$WT" rev-parse --absolute-git-dir)/gitkit-created"   # gitkit made this worktree
+git -C "$REPO" config "branch.$BRANCH.gitkitCreated" true             # only after -b: gitkit made the branch too
+```
+
+- **Both records live in git's own storage**, so they need no state file. The worktree marker sits in the worktree's admin directory under `.git/worktrees/`, and `git worktree remove` deletes it with the worktree. The branch key sits in the branch's config section, and `git branch -d` deletes it with the branch.
+- **Write the branch key only when this run passed `-b`.** A branch that already existed belongs to whoever made it, and an adopted worktree gets no marker.
+- **No record means not gitkit's.** A worktree or branch made before this rule existed, or made by hand, reads as adopted, and [Remove](#remove) leaves it alone.
+
+Report the path and the branch. Creating a worktree does not imply doing anything in it. Ends when the worktree exists at `$WT` on `$BRANCH` and its records are written.
 
 ### Remove
 
 ```sh
+test -e "$(git -C "$WT" rev-parse --absolute-git-dir)/gitkit-created"   # gitkit made this worktree?
+git -C "$REPO" config --get "branch.$BRANCH.gitkitCreated"              # gitkit made this branch?
 git -C "$REPO" worktree remove "$WT"
-git -C "$REPO" branch -d "$BRANCH"     # only a branch you created, and only if merged
+git -C "$REPO" branch -d "$BRANCH"
 ```
 
-Three rules, each one guarding against a real way to lose work:
+**This is the one removal rule in the collection.** Every skill that removes a worktree or deletes a branch, whether a sweep here, a workspace tool's cleanup, or an issue close-out, follows it and cites it rather than restating its own. Four rules, each one guarding against a real way to lose work:
 
 - **A dirty worktree stops teardown.** Show exactly what would be lost (uncommitted changes, untracked files, unpushed commits) and let the human decide. Never reach for `--force` on their behalf.
-- **Never remove a worktree you adopted rather than created.** If it was already there when you arrived, it is someone else's context; you have no idea what is open in it.
-- **Never delete a branch you did not create.** Use `-d` (not `-D`) so git itself refuses an unmerged branch.
+- **Remove only a worktree whose marker says gitkit created it.** A worktree without the marker was adopted: it is someone else's context, and you have no idea what is open in it.
+- **Delete only a branch whose `gitkitCreated` key is set, and delete it with `-d`.** Git itself then refuses an unmerged branch, so a wrong verdict fails loudly instead of deleting the work.
+- **One confirmation per removal.** Each worktree and each branch is its own decision, so a list of them takes one answer per row and never one answer for the set.
 
-Already gone? Report "already gone" and succeed. Teardown is idempotent in the same spirit as adopt.
+**The squash exception is the only `-D` gitkit runs.** A squash-merged branch never passes `-d`, because the squash commit has no ancestry link back to the branch. Use `-D` only when `gh` reports a merged pull request for the branch and that pull request's `headRefOid` equals the local branch tip:
+
+```sh
+gh pr list --head "$BRANCH" --state merged --json number,headRefOid --jq '.[0]'
+git -C "$REPO" rev-parse "$BRANCH"     # must equal headRefOid, or -D is off the table
+```
+
+The equal SHA proves that every commit on the branch is in the merged pull request. A tip that moved after the merge holds commits the merge never saw, so the branch stays and the report names it. Name the pull request number in that row's confirmation.
+
+Already gone? Report "already gone" and succeed. Teardown is idempotent in the same spirit as adopt. Ends when each confirmed worktree and branch is gone, or its refusal is reported.
 
 ### List
 
@@ -195,7 +219,9 @@ The runnable form of the rule above. A sync has **two halves, in this order**: f
 7. **Prove the branch still works.** Run the repository's own test and build gate. Report a failure with its output and stop before the push. Ends with a pass, or a stop.
 8. **Push with a lease.** Run `git push --force-with-lease origin "$BRANCH"`. A rejected lease means somebody pushed while you rebased: fetch, show the new commits, and ask before any retry. Ends when the remote branch matches the local one.
 
-**Hand off.** Report the commits taken from `origin/$BRANCH`, the base, the behind and ahead counts, the files whose conflicts you resolved, the gate result, and the pushed branch. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
+#### Hand off
+
+Report the commits taken from `origin/$BRANCH`, the base, the behind and ahead counts, the files whose conflicts you resolved, the gate result, and the pushed branch. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
 
 ### The merge exception
 
@@ -220,7 +246,7 @@ Sweep away the worktrees and branches whose work has landed, on your machine and
 
 Two things make it more than a `git branch --merged` loop, and both live in **[clean.md](./clean.md)**: a squash-merged branch is invisible to ancestry, so "merged" needs three detections rather than one; and the per-item confirmation is deliberate, because a sweep's rows are not equally safe to delete. Read that file when a run actually sweeps.
 
-The [Remove](#remove) rules govern every removal the sweep makes. It never deletes a branch with `-D`, never touches a worktree it adopted, and stops on a dirty one. On `origin` it never deletes the base branch and never deletes the head of an open pull request.
+The [Remove](#remove) rules govern every removal the sweep makes. It confirms each row on its own, uses `-D` only under the squash exception, never touches a worktree without gitkit's marker, and stops on a dirty one. On `origin` it never deletes the base branch and never deletes the head of an open pull request.
 
 ## `rescue`
 

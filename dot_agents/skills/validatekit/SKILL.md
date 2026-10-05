@@ -1,10 +1,10 @@
 ---
 name: validatekit
 description: >-
-  Pressure-test a SaaS or startup idea before you build it, with a few forcing questions, an optional market and competitor scan, an honest verdict graded on the evidence you can actually produce, the narrowest wedge worth testing, and one real-world assignment. Use when the user says "validate my idea", "is this worth building", "should I build this", "pressure-test my startup idea", "will anyone pay for this", or runs "/validatekit", and proactively whenever someone describes a new product or business idea and wants to know whether to build it.
+  Validate a SaaS or startup idea before you build it, with a few forcing questions, an optional market and competitor scan, an honest verdict graded on the evidence you can actually produce, the narrowest wedge worth testing, and one real-world assignment. Use when the user says "validate my idea", "should I build this", "will anyone pay for this", or runs "/validatekit".
 license: MIT
 disable-model-invocation: true
-allowed-tools: Read, Write, WebSearch, AskUserQuestion, Task, Agent
+allowed-tools: Read, Write, Glob, WebSearch, AskUserQuestion, Task, Agent
 metadata:
   internal: false
 ---
@@ -25,7 +25,7 @@ validatekit is the gate in front of the build. Every planning and shipping tool 
 
 The default failure mode of an AI asked about someone's idea is encouragement, and encouraging feedback is worthless feedback. Hold the line:
 
-**Banned during the diagnostic.** "That's an interesting approach." "There are many ways to think about this." "You might want to consider…" "That could work." "I can see why you'd think that." Each of these dodges a position. Replace every one with a stance plus the evidence that would change it.
+**Take a position on every answer.** Each reply states a stance plus the evidence that would change it, in the shape of the Do column below.
 
 **Push past the first answer.** The first answer is the pitch, rehearsed, smooth, and optimized for the listener. The second answer is where reality lives. When an answer is thin, ask again rather than moving on.
 
@@ -44,7 +44,7 @@ The default failure mode of an AI asked about someone's idea is encouragement, a
 ## Procedure
 
 ### 1. Reflect the idea back
-Before the first question, restate the idea in your own words: who it's for, what it does, what has to be true for it to matter. A misread surfaces now instead of poisoning six questions.
+When the invocation names a file (an ideas repo's `IDEA.md`, a pitch draft), read that file first as the idea statement. Before the first question, restate the idea in your own words: who it's for, what it does, what has to be true for it to matter. A misread surfaces now instead of poisoning six questions.
 
 ### 2. Route
 Two checks, fast:
@@ -58,8 +58,10 @@ Pick the set for their stage, then work the list in [The forcing questions](#the
 | Stage | Ask |
 |-------|-----|
 | Pre-product | Q1, Q2, Q3, Q4 |
-| Has users, not paying | Q4, Q5, Q6, because "users but no revenue" is a buyer-access failure until proven otherwise |
-| Has paying customers | Q5, Q6, Q7 |
+| Has users, not paying | Q1, Q4, Q5, Q6, because "users but no revenue" is a buyer-access failure until proven otherwise |
+| Has paying customers | Q1, Q5, Q6, Q7 |
+
+Every set includes Q1, because the Validated state needs demand reality graded. For a paying-customer founder Q1 is usually one short answer: who pays, and what they did to start paying.
 
 Rules for running them:
 
@@ -80,6 +82,8 @@ When web search is available, spend it here. Look for:
 Search category terms and named competitors freely, because those are public companies. Do **not** put the user's own product name or an unlaunched concept into a search engine without asking first.
 
 Record what you actually found, with sources and dates, and record what you went looking for and couldn't find, because an absent signal is a finding, not a blank. This feeds the premises, the market read, and the wedge. No search available? Skip it silently and say the verdict rests on founder evidence alone.
+
+**Done when** each of the four look-fors above has at least one sourced finding with its date, or a line that records what you searched for and did not find.
 
 ### 5. State the premises
 Name the load-bearing assumptions the idea rests on, as flat claims, and make the user take a position on each:
@@ -145,7 +149,7 @@ The evidence table is what stops the verdict being a vibe, because the founder c
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-Ask whether they want this written to a file. **Only on yes**, write `docs/validation/validation-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case slug from the idea's core noun (ask if none is obvious), and the ISO creation date at the end. Create the directory if needed. Keep that date stable on later edits and update the same file in place; on a genuine same-day collision between distinct ideas, make the slug more specific, and only as a last resort insert a sequence before the date (`validation-invoice-ocr-02-2026-07-31.md`). Put a stamp near the top for downstream provenance:
+Ask whether they want this written to a file. **Only on yes**, write `docs/validation/NNNN-validation-<slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case slug from the idea's core noun (ask if none is obvious), and the ISO creation date at the end. To get the serial `NNNN`, list `docs/validation/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Create the directory if needed. Keep the whole name stable on later edits and update the same file in place. Put a stamp near the top for downstream provenance:
 
 ```
 Validation: <Validated | Unproven | Contradicted> · YYYY-MM-DD

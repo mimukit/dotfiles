@@ -81,7 +81,7 @@ Handle the namespaces **independently**, because a repo very often has a mature 
 
 **Priority names collide harder than lifecycle names, so check meaning and not just spelling.** `ready` and `in-review` are workflow-shaped words that mostly mean this one thing; `critical`, `high`, and `low` are generic English and a repo may already be using them for something else entirely: bug **severity** (how badly it breaks), effort or T-shirt **size**, risk, or a customer tier. A name match is not a meaning match. When the repo already has a `critical` or `high`, read its description and a couple of the issues carrying it before assuming it's the same axis, and if it turns out to be severity, say so plainly. Severity and priority are genuinely different things (a critical crash nobody hits can be `low`), so the honest fix is to name the collision and let the user decide whether to rename theirs, rename ours, or map onto it.
 
-Absent any existing scheme in a namespace, go straight to the diff for that one.
+Absent any existing scheme in a namespace, go straight to the diff for that one. This step is done when each of the three namespaces has an answer: no existing scheme, map onto theirs, or add the canonical set.
 
 ## 2. Diff against the canonical sets and preview
 Sort each canonical label, from **all three** sets, into one of three buckets and show the plan before touching anything, grouped by namespace so the user can approve one and decline another:
@@ -91,6 +91,8 @@ Sort each canonical label, from **all three** sets, into one of three buckets an
 - **Matches.** Present and correct → leave alone.
 
 Labels **outside** the canonical sets (GitHub's defaults like `bug`/`enhancement`, or the repo's own) are **left untouched**, and you never delete a label unless the user explicitly asks.
+
+This step is done when every canonical label in a namespace being provisioned sits in exactly one bucket, and the user has approved or declined each namespace's plan.
 
 ## 3. Apply, echoing the commands
 On approval:
@@ -102,10 +104,10 @@ gh label create critical --color B60205 --description "drop everything; preempts
 gh label create ai-review --color 34495E --description "run the repo's AI review tooling on this PR"
 
 # update a drifted label (rewrites color/description in place)
-gh label edit blocked --color D93F0B --description "has an unmet prerequisite (see 'Blocked by #N' in the body)"
+gh label edit blocked --color D93F0B --description "has an unmet prerequisite that has not started"
 ```
 
-`gh label create --force` also upserts (create-or-overwrite) if you'd rather not branch on existence, but prefer the explicit create/edit split so the preview in [Diff against the canonical sets and preview](#2-diff-against-the-canonical-sets-and-preview) stays honest about what's new versus changed.
+`gh label create --force` also upserts (create-or-overwrite) if you'd rather not branch on existence, but prefer the explicit create/edit split so the preview in [Diff against the canonical sets and preview](#2-diff-against-the-canonical-sets-and-preview) stays honest about what's new versus changed. This step is done when every approved create and update has run with its command echoed, and each command GitHub refused is reported with its error.
 
 ## 4. Hand off
 **What changed.** Report what was created, updated, and left as-is, per namespace, and confirm which of the three sets the repo now carries in full. Provisioning one set and skipping another is a normal outcome, not a partial failure, so say which, and nobody goes looking for a missing set later.

@@ -119,6 +119,8 @@ _Verified against `main`@`a1b2c3d` on 2026-08-06._
 
 Both halves earn their place. `audit` diffs from the SHA while it is still reachable, and falls back to the date when a rebase or squash-merge has orphaned it, so it is precise when it can be and degrades instead of lying when it can't.
 
+**A stamp asserts that every claim on the page was verified, and its SHA is a commit on the default branch.** Stamp a page only after a pass that checked the whole page, not only the claims a change moved. On a feature branch the verified commit does not exist on the default branch yet, so leave the old stamp in place (a new page gets none) and name the page in the hand-off as due a stamp after merge. The operator stamps it on the default branch after the merge, and until then `audit` keeps reporting it as due.
+
 **A page with no stamp is not stale, it is unverified.** That's how adopted pages are marked: a page found under rung 2 gets a manifest entry with `documents:` globs and `adopted: true`, and no stamp. wikikit can see it and route to it, and has never checked a claim on it. It earns its first stamp the first time a verification pass genuinely covers it. Adoption is a mapping act, not an authorship claim over prose a human wrote.
 
 ## Grounding: verify before you write
@@ -148,12 +150,12 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 
 ## Writing standards
 
-The rules that separate documentation from generated filler, stated as bans:
+The rules that separate documentation from generated filler:
 
-- **No restating the code.** A page that narrates what a function does line by line is worse than the function.
-- **No documenting the aspirational.** If it isn't in the repo, it isn't in the docs.
-- **No unmixed modes.** A how-to answers one goal and does not explain the architecture; an explanation does not become a tutorial halfway down.
-- **No ceremonial preamble.** Cut "This document provides an overview of…". Start at the first useful sentence.
+- **Document intent and use, and leave the mechanics to the code.** A page that narrates what a function does line by line is worse than the function.
+- **Document only what the repo contains today.** If it isn't in the repo, it isn't in the docs.
+- **One Diátaxis mode per page.** A how-to answers one goal and leaves the architecture to the explanation page; an explanation stays an explanation to the end.
+- **Open at the first useful sentence.** An overview of what the document is about is a sentence the reader skips.
 - **Every command copy-pasteable and verified.** Real flags, real paths, real names.
 - **Task-shaped how-to titles**, so "Deploy to staging", not "Deployment".
 

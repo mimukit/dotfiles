@@ -36,9 +36,11 @@ curl -s -o /dev/null -w '%{http_code}' -L --max-time 10 https://rdap.org/domain/
 # npm package: 404 = free
 curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://registry.npmjs.org/<name>
 
-# GitHub org or user handle: exit non-zero / 404 = free
-gh api /users/<name>
+# GitHub org or user handle: exit 0 = taken; "HTTP 404" on stderr = free
+gh api /users/<name> --silent
 ```
+
+**Read only the listed answers as verdicts.** A domain or npm status other than 200 or 404 (a 429, a 5xx, `000` on a timeout) is **unknown**. For `gh api`, only exit 0 means taken, and only a nonzero exit whose stderr says `HTTP 404` means free. Any other failure is unknown: `gh help exit-codes` lists 1 for any failure, 2 for a cancel, and 4 for missing authentication, and none of those proves the handle is free. Retry an unknown probe once. A name with an unknown result after the retry is neither removed nor crowned as free; report the namespace as unknown and name the reason.
 
 Check `.com` plus whichever second TLD the project's surface implies (`.dev` for a developer tool, `.ai` for a model product, the country TLD for a local audience). Skip a namespace the project will never occupy: a CLI-only tool does not need an npm name, and an internal tool needs no domain.
 
@@ -109,15 +111,15 @@ Run [the probes](#the-probes-both-modes) over the picks. **Any hit removes that 
 
 **Regenerate only when the list runs out.** Once every one of the 12 is probed and taken, run [Mine roots and build candidates](#3-mine-roots-and-build-candidates) again with the taken roots excluded, and show the new list the same way. **Two generation passes is the cap.**
 
-**Done when** at least one probed name is free, or the user stops the loop, and every probed name carries a result for every probe that ran.
+**Done when** at least one probed name is free in every probed namespace, or the user stops the loop, and every probed name carries a free, taken, or unknown result for every probe that ran.
 
 ### 5. Crown, then search once
 
 Crown the free name that ranks highest on the rubric. Then run **one** web search, on that name alone, for the existing product or live trademark the registries miss. Fetch the top hit when the search result is ambiguous about what the thing is.
 
-A hit re-crowns the next free name and states the conflict in a line. When the batch left no runner-up, say so and send the user back to the pick loop. This is the only search in the run: the registries are exact-match and cheap, the web is fuzzy and expensive, so it earns one call at the point the answer changes a decision.
+A hit re-crowns the next free name and states the conflict in a line, and the new crown gets its own search before you report it. Repeat until a crowned name survives its search. When no free runner-up is left, say so and send the user back to the pick loop. Search only the crowned name: the registries are exact-match and cheap, the web is fuzzy and expensive, so a search earns its call only at the point the answer changes a decision.
 
-**Done when** the crowned name has been searched and either survives or has been replaced.
+**Done when** the final crowned name has been searched and survives, or no free name is left to crown.
 
 ### 6. Hand off
 
@@ -131,7 +133,7 @@ Print the probed names as a ranked table before the three beats:
 
 **What changed.** Report the resolved convention, the crowned name and the one-sentence reason, how many batches the user probed, and whether a second generation pass ran. Name each probed name the registries took, with the probe that killed it. List the candidates that stayed unprobed, so the user can come back to them.
 
-**Where it landed.** namekit writes no file by default. Write `docs/names/names-<slug>-YYYY-MM-DD.md` only when the user asks, where `<slug>` is the project's short kebab-case name and the date is the file's creation date. Keep that date stable on a later edit. Follow the host repository's own artifact convention when it documents one. With no filesystem, print the document as a codeblock and give the filename.
+**Where it landed.** namekit writes no file by default. Write `docs/names/NNNN-names-<slug>-YYYY-MM-DD.md` only when the user asks, where `<slug>` is the project's short kebab-case name and the date is the file's creation date. To get the serial `NNNN`, list `docs/names/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Keep the whole name stable on a later edit. Follow the host repository's own artifact convention when it documents one. With no filesystem, print the document as a codeblock and give the filename.
 
 **Next.** Crown one move. The name is chosen and nothing owns it yet, so the move is to claim the namespaces the project actually needs, in the order the interview's typed-surface answer implies. Name **repokit** to set a new repo's About panel and topics when it is installed, otherwise `gh repo create`. When the name came out of an idea session, name **ideakit** as the runner-up so the decision lands back in that idea's log. namekit never registers a domain, publishes a package, or creates an org.
 
@@ -164,7 +166,7 @@ Apply the same owner exception: a namespace resolving to the user's own owner re
 
 ### Hand off
 
-**What changed.** Report one line per name with its result in each namespace, and mark the namespaces the user already owns. Name the probes that were skipped.
+**What changed.** Report one line per name with its result in each namespace (free, taken, unknown, or yours). Give the reason for each unknown. Name the probes that were skipped.
 
 **Where it landed.** Nothing was written and nothing was registered. Say so plainly.
 
@@ -175,7 +177,5 @@ Apply the same owner exception: a namespace resolving to the user's own owner re
 ## Notes
 
 - **namekit names the thing and stops.** No logo, no tagline, no positioning, no brand identity, and no renaming of an existing codebase's identifiers.
-- **The `kit` naming convention belongs to `skillkit`.** namekit works to whatever convention the user resolves and never teaches that one, so the rule stays in one place.
-- **No config file and no environment variable.** The convention lives in the prompt or in names the user already has. State that is not visible in the conversation is state that goes stale.
 - **Social handles stay out.** Headless checks against social platforms are rate-limited and return false negatives, and a wrong "taken" is worse than no answer.
 - Prefer a probe's status code over scraping a page, because the status code is a stable contract and the page is not.

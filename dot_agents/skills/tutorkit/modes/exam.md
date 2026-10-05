@@ -10,13 +10,13 @@ Pose **3–5 scenario predictions, broad to narrow**, graded on the same three-l
 
 This reuses the prediction device the skill already owns rather than inventing a second assessment mechanism. Self-report is the weakest signal available, and a single transfer problem fails a genuine beginner flat on first contact.
 
-Write `placed: <rung>` and **every wrong belief, in the user's own words** into `PROGRESS.md`. Those wrong beliefs become lesson 1's target.
+Write `placed: <rung>` and **every wrong belief, in the user's own words** into `PROGRESS.md`. Those wrong beliefs become lesson 1's target. Done when `PROGRESS.md` holds the rung and every wrong belief the predictions exposed.
 
 ### At track end, the transfer test
 
 Pose a problem the user has not seen, which needs the concept without naming it. Solving only the taught shape means the surface was learned, not the concept.
 
-**A topic goes `learned` in `INDEX.md` only when both gates pass:** the transfer test is solved, **and** every cue has reached step `60d`. `exam` is the only mode that writes that status. The transfer test alone would close a topic whose cues still sit at `1d`; cues at `60d` alone measure recall of taught shapes. When one gate passes and the other does not, say which one held it and leave the status `active`.
+**A topic goes `learned` in `INDEX.md` only when both gates pass:** the transfer test is solved, **and** every cue has reached step `60d`. `exam` is the only mode that writes that status. The transfer test alone would close a topic whose cues still sit at `1d`; cues at `60d` alone measure recall of taught shapes. When one gate passes and the other does not, say which one held it and leave the status `active`. Done when both gates have a pass or fail result, and the status in `INDEX.md` matches them.
 
 **A `learned` topic keeps its cues.** Retiring them at close is exactly when forgetting starts. They keep coming due, and the fill order in `drill` stops them displacing a live track.
 

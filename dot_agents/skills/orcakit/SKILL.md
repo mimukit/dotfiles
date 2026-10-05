@@ -73,10 +73,16 @@ Everything below turns on this distinction:
 
 | kind | where it lives | who created it | how it goes away |
 |---|---|---|---|
-| **git-native** | under `$WORKTREE_ROOT` (default `~/worktrees/<repo>/<branch>`) | gitkit / issuekit `start` / a human, with `git worktree add` | **git removes it**; Orca drops the entry on its own |
+| **git-native** | under `$WORKTREE_ROOT` (default `~/worktrees/<repo>/<branch>`) | gitkit / issuekit `start`, with `git worktree add` | **git removes it**; Orca drops the entry on its own |
 | **Orca-native** | under Orca's worktree base path (default `~/orca/workspaces/<repo>/<name>`) | `orca worktree create` | **`orca worktree rm`**, so hooks and terminals are handled |
 
-Classify by path prefix. That's a heuristic, not a fact Orca records, so it is a *reason to confirm before deleting*, never a thing to act on silently. [`align`](#mode-align) exists to collapse the two locations into one and retire the guesswork.
+Classify in this order, and stop at the first match:
+
+1. **gitkit's marker says git-native.** A worktree that gitkit created carries a `gitkit-created` file in its admin directory, found with `test -e "$(git -C "$WT" rev-parse --absolute-git-dir)/gitkit-created"`.
+2. **Orca's base path says Orca-native**, but only while that base path differs from `$WORKTREE_ROOT/<repo>`.
+3. **Anything else is unknown kind.** That covers a worktree made by hand, and any unmarked worktree once [`align`](#mode-align) has put both kinds under one root. Report it and skip it in `clean`; never guess its kind from a path both tools share.
+
+The path prefix is a heuristic, not a fact Orca records, which is why the marker comes first. `align` makes the prefixes overlap on purpose, so after `align` the marker is the only test that still separates the two kinds.
 
 ## Mode: `list`
 
@@ -150,7 +156,7 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 ## Mode: `clean`
 
-Reclaim the workspaces whose work already landed. Every removal is irreversible, so the shape is fixed: **gather, qualify, preview everything at once, take one confirm, then remove.**
+Reclaim the workspaces whose work already landed. Every removal is irreversible, so the shape is fixed: **gather, qualify, preview everything at once, confirm each row, recheck it, then remove it.**
 
 ### 1. Qualify
 
@@ -174,28 +180,31 @@ These are hard skips. Each appears in the preview under **skipped**, with its re
 - **unpushed commits**, or a branch with no upstream at all;
 - **the main worktree**, always;
 - **the worktree you're currently inside**, because you never delete the floor you're standing on;
+- **unknown kind**, per [Two kinds of workspace](#two-kinds-of-workspace), because neither removal path is safe on a guess;
 - **live Orca terminals**, found with `orca terminal list --worktree "branch:$BRANCH" --json`. Offer `orca terminal stop --worktree "branch:$BRANCH"` as a separate, explicitly confirmed step; never stop someone's running process as a side effect of tidying.
 
 A merged PR does **not** imply an empty worktree. Scratch files, a stashed experiment, and a follow-up commit that never got pushed are none of them in the PR, and all of them live there.
 
+Ends when every workspace is a candidate, a skip with its reason, or a tracker-drift row.
+
 ### 3. Preview and confirm
 
-One table, all candidates, each with the evidence that qualified it (PR number, merge date, issue state) and its kind (git-native or Orca-native). Skips listed below it with reasons. Then a single question, naming the count:
+One table, all candidates, each with the evidence that qualified it (PR number, merge date, issue state), its kind (git-native or Orca-native), and its `lastActivityAt`. Skips listed below it with reasons.
 
-> Remove 6 workspaces (4 git-native, 2 Orca-native)? 3 more were skipped, see above.
+**Then confirm each removal on its own.** gitkit owns the removal rule, and it resolves to one confirmation per worktree and per branch, with `-d` except for a gh-proven squash merge; without gitkit, ask once per row and delete with `-d`. Name the workspace, the branch, and the PR in each question. Ends when every candidate row has the user's own answer.
 
-One OK covers the batch. If the user wants a subset, take the subset; don't re-prompt row by row.
+### 4. Recheck, then remove, by kind
 
-### 4. Remove, by kind
+**Recheck activity immediately before each removal.** Time passes between the preview and the answer, and the user may have opened the workspace in it. Re-read the row with `orca worktree show --worktree "branch:$BRANCH" --json`, `orca terminal list --worktree "branch:$BRANCH" --json`, and `git -C "$WT" status --porcelain`. Skip the row and report why when `lastActivityAt` moved past the preview's value, a live terminal appeared, or the tree is no longer clean.
 
-**git-native** → hand it to **gitkit**'s teardown, which looks the worktree up by branch and removes it with native git:
+**git-native** → hand it to **gitkit**'s teardown, which looks the worktree up by branch and removes it under its [removal rule](#3-preview-and-confirm). If gitkit isn't installed, these two commands are the whole of it:
 
 ```sh
 git -C "$REPO" worktree remove "$WT"
-git -C "$REPO" branch -d "$BRANCH"     # -d, never -D
+git -C "$REPO" branch -d "$BRANCH"
 ```
 
-Then **stop**. Do not also call `orca worktree rm`, because Orca drops a discovered entry by itself, and a second removal on a path that's already gone just produces a confusing error. If gitkit isn't installed, the two commands above are the whole of it.
+Then **stop**. Do not also call `orca worktree rm`, because Orca drops a discovered entry by itself, and a second removal on a path that's already gone just produces a confusing error.
 
 **Orca-native** → Orca owns it, so Orca removes it:
 
@@ -206,6 +215,8 @@ orca worktree rm --worktree "path:$WT" --run-hooks --json
 This is the one place orcakit runs a vendor command that also performs the git removal, and the reason is specific: Orca created this checkout, has an archive hook and terminal sessions bound to it, and its `rm` sequences all three. Removing it with git first orphans Orca's metadata and skips the hook. The exception is confined to workspaces Orca created, and it never extends to a gitkit worktree.
 
 **Never `--force`.** Every removal here is already gated on a clean tree and a merged PR; if git refuses anyway, that refusal is information. Report it and move to the next row.
+
+Ends when every confirmed row is removed, or skipped by the recheck, or refused, and each outcome is recorded.
 
 ### 5. Hand off
 
@@ -221,7 +232,7 @@ This is the one place orcakit runs a vendor command that also performs the git r
 
 ## Mode: `align`
 
-Stop Orca creating worktrees somewhere gitkit will never look. Orca's default is `~/orca/workspaces/<repo>/<name>`; gitkit's convention is `$WORKTREE_ROOT/<repo>/<branch>` (`~/worktrees` unless the environment says otherwise). Two roots means every sweep has to classify by path forever.
+Stop Orca creating worktrees somewhere gitkit will never look. Orca's default is `~/orca/workspaces/<repo>/<name>`; gitkit's convention is `$WORKTREE_ROOT/<repo>/<branch>` (`~/worktrees` unless the environment says otherwise). Two roots split the user's worktrees across two places. After `align`, both kinds share one root, so the path stops telling them apart, and [`clean`](#mode-clean) classifies by gitkit's marker instead, per [Two kinds of workspace](#two-kinds-of-workspace).
 
 ```sh
 orca project setups --json                                  # find the setup id for the repo
@@ -254,8 +265,8 @@ This is the one `orca worktree create` in the skill, and it exists only to read 
 ## Notes
 
 - **orcakit is machine-local and always optional.** No Orca on the box means no-op, and nothing else in the workflow may depend on it. gitkit, issuekit, and the rest never call it, because they'd break on every machine without the app. It's a janitor you run, not a link in a chain.
-- **`paseokit` is the sibling, not the successor.** It reconciles the same worktrees into [Paseo](https://paseo.sh), whose model is the exact inverse: Paseo discovers nothing and prunes nothing, so paseokit registers and reaps, while orcakit enriches and cleans up. Both are machine-local and optional, and **neither ever calls the other**.
+- **`paseokit` is the sibling, not the successor.** It reconciles the same worktrees into [Paseo](https://paseo.sh), whose model is the inverse: Paseo discovers nothing, and prunes only the rows whose directory is gone, so paseokit registers and reaps, while orcakit enriches and cleans up. paseokit owns the Paseo version facts. Both are machine-local and optional, and **neither ever calls the other**.
 - **Worktree facts belong to gitkit.** The default path convention appears here only as a declared portability fallback for machines without gitkit; everything else, meaning branch naming, base-ref resolution, and teardown rules, lives there, and any *other* copy of a gitkit fact here is the bug.
 - **Tracker facts belong to issuekit.** orcakit reads issue and PR state to judge a workspace; it writes none of it.
-- **Destructive steps preview and confirm; read-only ones run straight through.** `list` never asks. `link` previews a batch. `clean` previews a batch and takes one OK. `align` confirms before it creates its throwaway.
+- **Destructive steps preview and confirm; read-only ones run straight through.** `list` never asks. `link` previews a batch. `clean` previews every candidate, then confirms each removal on its own, per gitkit's removal rule. `align` confirms before it creates its throwaway.
 - **No shell available?** Then you can't reach the `orca` CLI or `gh`. Reason from what the user gives you and **print the exact commands** as a codeblock for them to run, and never report a workspace linked or removed that you could not perform.

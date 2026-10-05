@@ -20,7 +20,7 @@ The plan is organized around **setup**, not around dimensions. Setup is what a m
 
 ## When this fires
 
-The user finishes building something and wants to verify it by hand: "write a QA plan", "manual test plan", "how do I test this feature", "give me a testing checklist", "/qakit", or a bare "QA this" after a coding session. qakit produces a plan a **human** runs, and it never writes or runs test code. If the user wants *automated* tests (unit, integration, E2E), that's a separate concern for a test-suite skill; say so and don't produce a manual plan for it.
+The user finishes building something and wants to verify it by hand: "write a QA plan", "manual test plan", "how do I test this feature", "give me a testing checklist", "/qakit", or a bare "QA this" after a coding session. qakit produces a plan a **human** runs. It writes no test code. It runs the project's existing test, lint, and build commands only as agent-verifiable checks, so the human never re-types a command a machine can confirm (see [Run the automated checks yourself](#5-run-the-automated-checks-yourself)). If the user wants *new automated* tests (unit, integration, E2E), say so and stop without a manual plan: tests for new work belong to **implementkit** in TDD mode, and a codebase with no tests at all belongs to **testkit**. Without those kits, name the plain step: write the tests beside the change.
 
 ## Procedure
 
@@ -33,7 +33,11 @@ Ground the plan in what was actually built, because a generic plan is worthless.
 
 Write down, for yourself: the feature's intended behavior, its entry points, and its dependencies (services, data, auth, config). Everything downstream hangs off this.
 
-**When the change touches the data layer, find the project's own database client and build one `DB_CMD`.** Read `package.json`, `Gemfile`, the compose file, and `DATABASE_URL` to learn what this project actually runs, because a plan that says `psql` on a Prisma project hands the tester a command they do not have. Write the real invocation, so `psql "$DATABASE_URL"`, `pnpm prisma db execute --stdin`, or `bin/rails runner`. Where the database answers only inside a container, fold the prefix into the same variable (`docker compose exec -T db psql -U app appdb`), and read the service name from the compose file. One variable absorbs the whole difference, so every query block in the plan reads `$DB_CMD` and stays identical across projects.
+Record the revision under test, too: `git rev-parse HEAD` and whether `git status --porcelain` is empty. The plan's header stamp and every reused check result bind to this pair.
+
+Diff touches the data layer (a migration, a schema file, a model, or a query) → read [db.md](db.md), then follow it in every step it names.
+
+This step is done when intended behavior, every entry point, every dependency, and the revision pair are written down, and you know whether db.md applies.
 
 ### 2. Derive the test dimensions
 Walk every dimension below and generate candidate cases for each one that applies to the feature. Skip a dimension only when it's genuinely irrelevant, and say so under *Not covered* in the plan so the tester knows it was considered, not forgotten:
@@ -43,7 +47,7 @@ Walk every dimension below and generate candidate cases for each one that applie
 - **Negative / error handling.** Bad input, missing/expired auth, unavailable dependencies, network failures; assert it fails *gracefully* with a clear message and no corruption.
 - **Regression.** Nearby behavior the change could have broken (shared components, the prior flow, adjacent features).
 - **Security & permissions.** Role/ownership checks, access to another user's data, injection-style input, secrets not leaked in logs or responses.
-- **Data & state.** Persistence after reload/restart, idempotency, correct create/update/delete, no orphaned or stale state. **Go down to the database whenever the diff touches the data layer**, meaning a migration, a schema file, a model, or a query: the new table and columns exist after the migration runs, a create writes the row the change promises *and* its join or child rows, an update changes the columns it claims and no others, a delete cascades as designed and leaves no orphan, and a unique or foreign-key constraint rejects a duplicate. This is the failure class the screen hides, because a create that saves the parent row and silently skips the join row looks identical in the UI. When the diff touches no data layer, skip the database half and say so under *Not covered*, exactly like any other dimension.
+- **Data & state.** Persistence after reload/restart, idempotency, correct create/update/delete, no orphaned or stale state. When the diff touches the data layer, db.md adds the database assertions. When it touches none, skip the database half and say so under *Not covered*, exactly like any other dimension.
 - **Concurrency & timing.** Simultaneous actions, double-submit, race conditions, retries, slow responses.
 - **Compatibility.** Where there's a UI: target browsers/OS/devices, responsive/mobile layout, dark mode.
 - **Accessibility.** Keyboard navigation, focus order, screen-reader labels, and contrast, where there's a UI.
@@ -56,13 +60,11 @@ Prioritize: tag each case with one of three tiers, each carrying an emoji so the
 - 🟡 **Normal.** Should pass; a failure is a real bug but not a blocker.
 - 🟢 **Low.** Nice-to-have, polish, or edge cases with minor impact.
 
-**A case that proves data integrity takes the higher tier.** When a case carries a checkpoint on a row, a relation, or a constraint, promote the whole case rather than tagging the checkpoint: a silent orphan row is often the worst outcome in a case whose visible behavior is minor. One tier per case keeps the glance table true.
-
 Don't pad, because one clear check per behavior beats ten redundant ones. Scale the count to the feature's surface area and risk. What you have at the end of this step is a flat pile of candidate cases; the next step decides which of them are actually separate cases.
 
 **Split human-only from agent-verifiable.** As you generate cases, sort each one: does confirming it *require a human* (visual judgment, real interaction, UX feel), or can an agent/script confirm it by running a command and reading output? Only the human-only cases reach the plan's test cases. Run the agent-verifiable checks yourself and record their outcomes in the **Automated verification** section, and never list a command-and-check-output step as a manual case for the human to run by hand.
 
-**A database check sorts on the same seam, by what produces the fact.** A **static** fact holds before anyone touches the app, so the agent confirms it: the table and its columns exist, the index and the constraint are present, the migration applied. A **mutation** fact only exists after the tester acts, so it belongs in that tester's case as a checkpoint under the step that caused it. A query inside a step is not a manual case; it is the same shape as the `curl` rule in [Write the plan file](#4-write-the-plan-file), which puts a command under the step it verifies.
+This step is done when every dimension has candidate cases or a *Not covered* line, and every candidate carries a tier and a human-only or agent-verifiable tag.
 
 ### 3. Group the cases into scenarios
 A **scenario** is one setup, every case that can run on top of it, and one reset at the end. Sort the candidate cases by the starting state each one needs, then:
@@ -77,17 +79,19 @@ Name a scenario for the state it starts from ("Fresh tenant, no data", "Existing
 
 Number cases within their scenario: `TC-<scenario>.<case>`, so `TC-2.3` is the third case of Scenario 2.
 
+This step is done when every human-only candidate sits in exactly one scenario, and every scenario has a distinct starting state.
+
 **Everything true for the whole plan is not scenario setup.** Branch, build, base URL, credentials, auth token, feature flags, and launch command go once in **Environment** at the top. Each scenario's **Setup** carries only what's specific to that scenario. This is the split that keeps setup connected to the cases that need it.
 
 ### 4. Write the plan file
-Write to `docs/qa/qa-<feature-slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case feature slug and the plan's ISO creation date (for example, `qa-login-throttle-2026-07-23.md`). Keep that date stable on later edits; record an updated date inside the document when useful. Create `docs/qa/` if it doesn't exist. Update an existing QA plan for the same artifact in place. For a genuine same-day collision between distinct plans, make the slug more specific; only as a last resort insert a sequence immediately before the date (`qa-login-throttle-02-2026-07-23.md`).
+Write to `docs/qa/NNNN-qa-<feature-slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case feature slug, and the plan's ISO creation date (for example, `0012-qa-login-throttle-2026-07-23.md`). To get the serial `NNNN`, list `docs/qa/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Keep the whole name stable on later edits; record an updated date inside the document when useful. Create `docs/qa/` if it doesn't exist. Update an existing QA plan for the same artifact in place, and keep its name even when it has no serial.
 
 Structure the file like this (the outer fence below is shown with four backticks only so the inner ```sh blocks display; the real file uses normal triple-backtick fences):
 
 ````markdown
 # QA Plan: <Feature name>
 
-_Generated <date> · against `<commit sha>` · covers <brief scope>_
+_Generated <date> · against `<commit sha>` (<clean or uncommitted changes>) · covers <brief scope>_
 
 ## Summary
 - What the feature does, in one short sentence.
@@ -99,12 +103,6 @@ True for the whole plan. Do this once, before Scenario 1.
 - Branch / build under test
 - Base URL, credentials, and how to obtain any auth token the calls need
 - Feature flags / config
-
-Set the database client once. Every query below runs through it.
-
-```sh
-export DB_CMD='docker compose exec -T db psql -U app appdb'
-```
 
 Launch with:
 
@@ -172,10 +170,6 @@ Priority legend: 🔴 Critical · 🟡 Normal · 🟢 Low
 <reset command>
 ```
 
-```sh
-<database cleanup: truncate the tables the cases wrote, or re-run the seed>
-```
-
 ## Scenario 2: <starting state>
 ...
 
@@ -236,7 +230,6 @@ Rules for good cases:
      - [ ] Nothing is pure-black-on-dark where a muted token was intended
   ```
 - **Every checkbox owns its own line.** A `- [ ]` renders as a *clickable* checkbox only when it starts a line: write `[ ] Pass  [ ] Fail` inline and every previewer shows dead literal text the tester has to edit by hand. This applies to Result's three outcomes, each step checkpoint, and the Environment and Setup boxes alike: one per line, no exceptions, never side by side to save vertical space.
-- **A scenario whose cases write rows carries the cleanup in its Reset.** Put the truncate or the seed re-run in the **Reset** block, in its own ```sh block, so the tester restores the starting state once at the end of the scenario. Keep the cleanup out of the case bodies, because a destructive statement inside a case runs on every pass and the case order already puts destructive work last. The agent writes this block and never runs it.
 - **Observable, not internal.** Write what the tester sees or measures, not state they have no way to inspect.
 - **Concrete and reproducible.** Real values and exact steps, so not "test the login" but "enter `bad@example.com` / blank password, click Sign in".
 - **Skipped is a first-class outcome.** **Result** offers Pass, Fail *and* Skipped, one per line, and **Notes** carries the reason. A case the tester couldn't run, because the environment was missing, a dependency was down, or they ran out of time, has to be distinguishable from one nobody reached; a plan that comes back with silent blanks tells the next reader nothing.
@@ -244,38 +237,36 @@ Rules for good cases:
 - **Honest about gaps.** List what the plan can't verify under *Not covered*, including any dimension you deliberately skipped, rather than pretending coverage.
 - **Every command gets its own ```sh code block.** Never inline a terminal command in prose or a table cell, and never stack multiple commands in one block, so the tester can copy each one with a single click of the previewer's copy button. When commands must run together, chain them with `&&` on one line inside a single block so one copy-paste runs the whole sequence.
 - **Every API endpoint gets a runnable `curl`.** Whenever a case or check exercises an HTTP endpoint, include the exact `curl` invocation in its own ```sh block rather than describing the request in prose. Spell out the method, full URL (with the local base URL or a `$BASE_URL` that **Environment** defines), every required header, and a concrete JSON body with real sample values, copy-paste-ready, with no `<placeholders>` the tester has to guess at. Use `-i` (or `-s -w '\n%{http_code}\n'`) when a checkpoint covers a status code. This is the single biggest speedup in a QA pass: the tester runs the request instead of reconstructing it.
-- **Every database assertion gets a runnable query, in its own ```sh block, through `$DB_CMD`.** Never describe it in prose ("check the orders table"), and never hard-code a client the plan's **Environment** didn't define:
 
-  ```sh
-  $DB_CMD -c "select o.id, o.total_cents, o.status, count(i.id) as items from orders o join order_items i on i.order_id = o.id where o.reference = 'QA-1001' group by o.id;"
-  ```
-
-  Three rules make the query worth its line:
-  - **Select the columns the change is supposed to have written**, plus the join or child rows beside them. A bare `count(*)` passes a write that saved the wrong email, so it proves less than it looks like it proves.
-  - **Query by the identifier the case itself created** (`reference = 'QA-1001'`), rather than by a global count. A row left behind by an earlier pass then cannot fail the check, and the case survives a re-run.
-  - **Put the expected values in the checkpoint text, not in the query.** The tester reads one result and makes one judgment: `- [ ] One order row exists, total 4500, status "paid", with 2 item rows`.
+This step is done when the file exists at its serial path, every case has all four body parts, and every command and `curl` sits in its own block.
 
 ### 5. Run the automated checks yourself
 Before handing off, actually run the agent-verifiable checks you split out in [Derive the test dimensions](#2-derive-the-test-dimensions), meaning terminal commands, endpoint hits, and return-value assertions, and record each outcome in the plan's **Automated verification** section (✅ passed with what the output confirmed, ❌ failed with the actual output). For anything you hit over HTTP, paste the **exact `curl` you ran** in its own ```sh block so the human can re-run or adapt it without rebuilding the request. This is the one part of the plan the agent completes, not the human. If there's no shell/filesystem, say so and leave the section for the human to fill.
 
-**The database's static facts belong here, and you confirm them by reading only.** Run four introspection checks when the diff touches the data layer: the new tables and columns exist with the declared types, the indexes are present, the constraints (unique, foreign key, not-null) are present, and the migration list shows the change applied. Run `SELECT` and catalog queries, and write nothing: no insert, no update, no delete, no migration, no seed. Paste each query you ran in its own ```sh block, the same way the `curl` rule requires, so the human can re-run it.
+**What you run, and why.** You run the project's own test, lint, and build commands as they already exist, plus the read-only checks db.md defines when it applies. These are the checks a machine can confirm, so running them keeps them off the human's list. You write no new test and edit no test file.
 
-**Name the database you are about to open, before you open it.** `DATABASE_URL` in a shell holds whatever the last person exported, and read-only is not a sufficient guard: a `SELECT` against production is still an unauthorized read of customer data. So resolve the host first, state it to the user, and connect when it is `localhost`, a loopback address, or a container service the compose file defines. For any other host, ask the user before the first connection. When they decline, write the queries into the plan for the human and leave that part of **Automated verification** unrun.
+**One command class you never run, and one you reuse instead of re-running:**
 
-**Two commands you do not run, ever:**
-
-- **Anything that destroys or rebuilds state**, such as `*:destroy`, `*:reset`, a teardown-and-rescaffold, a database drop, or a `clean` that wipes a build. This includes every scenario's own **Setup** and **Reset** block: those are written *for the human to run*, and the agent never executes them. Describe them; don't perform them. You are writing a plan *about* an environment, not administering one, and a QA agent that resets state can wipe the very build the human was about to test.
-- **A gate that a prior step in this session already ran green**, meaning the test, build, lint, or verify chain that just passed. Record what it was and that it passed; re-running it produces the same answer at full price, and it is the most common way this step becomes the most expensive one in a pipeline. Re-run only if the change under test **is** that gate, or if something has modified the tree since.
+- **Never: anything that destroys or rebuilds state**, such as `*:destroy`, `*:reset`, a teardown-and-rescaffold, a database write or drop, or a `clean` that wipes a build. This includes every scenario's own **Setup** and **Reset** block: those are written *for the human to run*, and the agent never executes them. Describe them; don't perform them. You are writing a plan *about* an environment, not administering one, and a QA agent that resets state can wipe the very build the human was about to test.
+- **Reuse: a gate already recorded green on this exact revision**, meaning a test, build, lint, or verify result that names the same HEAD sha and the same dirty state you recorded in [Scope the feature](#1-scope-the-feature). Record what it was, the revision it ran on, and that it passed; re-running it produces the same answer at full price, and it is the most common way this step becomes the most expensive one in a pipeline. A result that names no revision, or a different sha or dirty state, is not reusable: run the gate. Run it also when the change under test **is** that gate.
 
 Both rules have the same shape: **inspect what exists, don't reproduce it.** If you need built artifacts to write good cases, read the ones that are already there.
+
+This step is done when every agent-verifiable check from [Derive the test dimensions](#2-derive-the-test-dimensions) has a ✅ or ❌ line, or a line that names the revision of the reused result.
 
 ### 6. Hand off
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-Tell the user the file path and give a one-line summary: how many scenarios and manual cases (and how many 🔴 critical), plus the automated-verification result (e.g. "2 scenarios, 6 manual cases, 2 critical · 6 automated checks ran, all green"). Suggest they run the manual plan in a fresh checkout/build, scenario by scenario, resetting only between scenarios. Don't mark any *manual* case as passed yourself, because those are the human's to execute; the agent only fills the Automated verification section.
+Close with three short beats:
+
+- **What changed.** Give a one-line summary: how many scenarios and manual cases (and how many 🔴 critical), plus the automated-verification result (e.g. "2 scenarios, 6 manual cases, 2 critical · 6 automated checks ran, all green"). Say that no manual case is marked; the human runs them in a fresh checkout, scenario by scenario, and resets only between scenarios.
+- **Where it landed.** Give the plan path, `docs/qa/<file>`, and the revision it was written against.
+- **Next.** Open the PR with **prkit** and hand it `docs/qa/<file>`, so the PR's test plan links the QA plan. Without prkit, run `gh pr create` and put the plan path in the body.
+
+Don't mark any *manual* case as passed yourself, because those are the human's to execute; the agent only fills the Automated verification section. Route to prkit; do not invoke it.
 
 ## Notes
-- **Scope of shell use.** qakit runs the shell only to read the change and to run the project's own verification checks: `git diff`/`git log` to ground the plan, and the automated checks from [Run the automated checks yourself](#5-run-the-automated-checks-yourself) (the project's test, lint, and build commands, plus read-only database introspection on a local or confirmed host). Every command it runs is echoed in the plan's **Automated verification** section, so the user sees exactly what ran. It does not fetch remote code, touch credentials, run anything destructive, or re-run a gate that already passed this session; see the two hard exclusions in [Run the automated checks yourself](#5-run-the-automated-checks-yourself). If a verification step would modify state or need elevated access, describe it for the human instead of running it.
-- **Manual only.** qakit's sole output is a manual QA plan for a human to execute, and it never writes or runs unit/integration/E2E tests. Automated testing belongs to a test-suite skill (**testkit** when it's installed); if that's what the user wants, name that plain next step rather than assuming a particular skill is installed.
-- **No filesystem or shell?** You can't write the file or read a diff. Instead ask the user to paste the change or describe the feature, then print the finished plan as a codeblock with the canonical `docs/qa/qa-<feature-slug>-YYYY-MM-DD.md` path for them to save themselves.
+- **Scope of shell use.** qakit runs the shell only to read the change and to run the project's own verification checks: `git diff`/`git log` to ground the plan, and the automated checks from [Run the automated checks yourself](#5-run-the-automated-checks-yourself) (the project's test, lint, and build commands, plus read-only database introspection on a local or confirmed host). Every command it runs is echoed in the plan's **Automated verification** section, so the user sees exactly what ran. It does not fetch remote code, touch credentials, or run anything destructive, and it reuses a gate result only when it names the same revision; see the two command rules in [Run the automated checks yourself](#5-run-the-automated-checks-yourself). If a verification step would modify state or need elevated access, describe it for the human instead of running it.
+- **Manual only.** qakit's sole output is a manual QA plan for a human to execute. It writes no unit, integration, or E2E tests; it only runs the suite the project already has. New automated tests belong to **implementkit** (TDD mode) for new work, or **testkit** for a codebase with no tests; when neither is installed, name the plain step rather than assuming a particular skill.
+- **No filesystem or shell?** You can't write the file or read a diff. Instead ask the user to paste the change or describe the feature, then print the finished plan as a codeblock with the canonical `docs/qa/NNNN-qa-<feature-slug>-YYYY-MM-DD.md` path, with `0001` when you can't list their QA plans, for them to save themselves.

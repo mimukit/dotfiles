@@ -12,7 +12,7 @@ metadata:
 
 Rewrite text so it stops sounding like a language model produced it. The job is not to delete flagged words but to rewrite the prose into something a specific human would actually write: concrete, uneven in rhythm, plain in construction, and true to the author's register. Keep every claim the original makes, but not its shape: compress the dull stretches, dwell where a person would, merge or split paragraphs freely. Uniform structure is itself a tell, so mirroring the original's paragraph count preserves the thing you came to remove. When coverage and structure pull against each other, coverage wins. A five-paragraph source may land in four, but it never becomes a summary.
 
-**Never invent facts.** The rewrite carries no fact, name, number, date, quote, or citation that isn't in the source or supplied by the user. This is the failure mode the rest of the skill invites: told to replace *nestled in the heart of a vibrant region* with something concrete, the tempting move is to supply the concrete detail yourself. Concreteness comes from the source or it doesn't come at all. Where the source offers nothing specific, cut to the plain version and leave it plain. Opinions, reactions, and mixed feelings are voice rather than fact; add those where the register allows, but never a factual claim to make the prose feel human. Fiction is the exception, where inventing detail is the job. This governs everything else.
+**Never invent facts.** The rewrite carries no fact, name, number, date, quote, or citation that isn't in the source or supplied by the user. This is the failure mode the rest of the skill invites: told to replace *nestled in the heart of a vibrant region* with something concrete, the tempting move is to supply the concrete detail yourself. Concreteness comes from the source or it doesn't come at all. Where the source offers nothing specific, cut to the plain version and leave it plain. Opinions, reactions, and mixed feelings are voice rather than fact; add those where the register allows and the author's position stays the same (see [Removing tells is half the job](#removing-tells-is-half-the-job)), but never a factual claim to make the prose feel human. Fiction is the exception, where inventing detail is the job. This governs everything else.
 
 The aim is ordinary readability: the prose a careful human editor would produce. This is copy-editing to make writing read well, not a way to disguise machine-written work as human where honesty is required, as in academic submissions, disclosure-bound, or attributed writing. Edit for the reader, not to game any automated check.
 
@@ -76,11 +76,13 @@ Scan for these. They matter in **clusters**, not in isolation. One em dash or on
 
 ## Two cut tests
 
-The catalog above names patterns. These two judge a sentence that trips none of them and still reads as machine-written. Both are falsifiable, and both end in a deletion.
+The catalog above names patterns. These two judge a sentence that trips none of them and still reads as machine-written. Both are falsifiable, and both end in a deletion or a plain restatement.
 
 **Does it name a mechanism, or a feeling?** *The database stays close at hand,* *SQL you can read,* *types that follow your schema* all describe a sensation the reader is supposed to have. The fix names what actually happens: *`.toSQL()` returns the exact string sent to the database,* *a column rename fails the build.* Ask what the sentence tells the reader to do or know, then write that. If it can't be restated as a concrete instruction, fact, or number, cut it. Where the source supplies no mechanism, cutting is the only move available: never invent one to pass this test.
 
 **Could it appear unchanged in another project's documentation?** Then it says nothing about this project, and it goes.
+
+**Cut only a sentence that carries no claim.** A claim is something the reader could check or act on: a fact, an instruction, a number, a stated position. A sentence that fails a test but carries a claim from the source stays, rewritten as that claim in plain words. This is how the cut tests and "keep every claim the original makes" agree: the tests remove the generic wrapper, and the claim inside it survives.
 
 ## The em-dash rule
 
@@ -108,14 +110,16 @@ Prose with every tell stripped out and nothing put back reads as sterile, and st
 - **Say the specific thing.** Not *this is concerning* but the concrete version the source already supports.
 - **Allow mixed feelings.** *Impressive, and a little unsettling* beats *impressive.*
 
-None of this loosens the never-invent-facts rule at the top. Opinion, reaction, and unresolved feeling are voice, and you may add them. A name, number, date, or claim is fact, and you may not. In encyclopedic, technical, legal, or reference text, plain and neutral *is* the human voice, and this section barely applies.
+None of this loosens the never-invent-facts rule at the top. Opinion, reaction, and unresolved feeling are voice, and you may add them. A name, number, date, or claim is fact, and you may not.
+
+**An added reaction keeps the author's position where it was.** It does not strengthen, soften, or reverse what the source concludes, and it does not imply an experience the source never reports (*when I tried it*, *in my years running this*). Where the voice you want would move the position, keep the plain version and flag the spot in the hand-off instead. In encyclopedic, technical, legal, or reference text, plain and neutral *is* the human voice, and this section barely applies.
 
 ## Process
 
-1. Read the input and mark every instance of the tells above, then run [the two cut tests](#two-cut-tests) over what survives.
-2. Write a **draft rewrite**: read it aloud in your head, vary sentence length, prefer concrete detail and plain constructions (*is/are/has*), hold the original's register and coverage, and give it the voice described in [Removing tells is half the job](#removing-tells-is-half-the-job).
-3. Ask three questions: *what still makes this read as AI-generated?*, *does the draft state any fact, name, number, date, quote, or citation that isn't in the source?*, and *has the de-slopping left it sterile?* Answer all three in a few blunt bullets. A fabrication is a defect even when it reads more human than the vague original it replaced.
-4. Revise into a **final rewrite** that fixes all three, carrying no em or en dashes.
+1. Read the input and mark every instance of the tells above, then run [the two cut tests](#two-cut-tests) over what survives. Done when every sentence has been checked against the catalog and both tests.
+2. Write a **draft rewrite**: read it aloud in your head, vary sentence length, prefer concrete detail and plain constructions (*is/are/has*), hold the original's register and coverage, and give it the voice described in [Removing tells is half the job](#removing-tells-is-half-the-job). Done when every claim in the source appears in the draft.
+3. Ask four questions: *what still makes this read as AI-generated?*, *does the draft state any fact, name, number, date, quote, or citation that isn't in the source?*, *does any added reaction move the author's position or imply an experience the source never reports?*, and *has the de-slopping left it sterile?* Answer all four in a few blunt bullets. A fabrication is a defect even when it reads more human than the vague original it replaced.
+4. Revise into a **final rewrite** that fixes all four. Done when every audit bullet is fixed and a search for `—` and `–` finds only legitimate ranges.
 
 ## Hand off
 
@@ -123,7 +127,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 This is the hand-off for text pasted into the conversation. Called by another skill or agent, none of it applies: deliver the final text alone and stop. Working from a file, deliver the summary and the path, not the rewrite itself.
 
-**What changed.** Deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught when you asked *what still reads as AI-generated*, and a one-line **summary of changes**. Say so plainly if the audit turned up a fabrication you had to pull back out. If the user asked only for a review, skip the rewrite and report the located tells with line references instead.
+**What changed.** Deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught when you asked *what still reads as AI-generated*, and a one-line **summary of changes**. Say so plainly if the audit turned up a fabrication you had to pull back out. List each spot where you kept the plain version because a reaction would have moved the author's position. If the user asked only for a review, skip the rewrite and report the located tells with line references instead.
 
 **Where it landed.** When a writable filesystem is available and the source came from a file, write the rewrite back (or beside it), leaving code blocks, frontmatter, tables, data, and link targets untouched, and report the path; otherwise print the rewrite in a fenced code block so it copies cleanly.
 

@@ -31,7 +31,7 @@ Three boundaries matter:
 
 ### 1. Preflight
 
-Every check runs before anything mutates, and each failure names itself rather than falling through to a later one.
+Every check runs before anything mutates, and each failure names itself rather than falling through to a later one. Preflight is done when every check below has passed or has stopped the run with its named refusal.
 
 **Environment.** Confirm git, a remote, and a usable `gh`. Without `gh`, releasekit still writes the changelog and cuts the tag, so say once that the GitHub release and the CI check are both skipped, and why. Do not fail wholesale for a missing enrichment.
 
@@ -61,20 +61,37 @@ gh api "repos/{owner}/{repo}/branches/$BASE/protection"
 
 A 404 means unprotected and selects [the direct path](#the-direct-path). Any other answer means protected and selects [the release-PR path](#the-release-pr-path). Getting this wrong is not cosmetic: the direct path pushes a commit straight to the base, and a protected repo rejects it after the changelog has already been written.
 
-**Phase.** On the release-PR path only, work out which half of the release this is **from the repo, never from state you keep**. A merged `chore(release): vX.Y.Z` commit on the base with no tag pointing at it means *finish*. Anything else means *prepare*.
+**Phase.** Work out which phase this run is **from the repo, never from state you keep**. Check in this order, and take the first that matches:
+
+1. *Resume.* An earlier run stopped part way. The evidence is the newest `chore(release): vX.Y.Z` commit on HEAD's line, plus one of these: tag `vX.Y.Z` exists only locally (`git ls-remote --tags origin vX.Y.Z` is empty), the tag is on the remote but `gh release view vX.Y.Z` finds no release, or, on the direct path, the commit is not on the upstream and has no tag. **Resume that version and never derive a new one**, because a second derivation spends a second number on the same code. Pick up at the first step that did not land, and take the release body from that version's section in `CHANGELOG.md`.
+2. *Finish*, release-PR path only. A merged `chore(release): vX.Y.Z` commit on the base with no tag pointing at it.
+3. *Prepare* on the release-PR path, or a fresh release on the direct path. Anything else.
+
+Resume and finish both read the version from the commit subject and skip [Derive the version](#2-derive-the-version) and [Render the changelog](#3-render-the-changelog). The check is done when the preview can name one phase and, for resume, the first step still to run.
 
 ### 2. Derive the version
 
-**Resolve the last release.** Take the **nearest semver ancestor of HEAD**, not the highest version in the repo:
+**Resolve the last release.** Take the **highest stable semver tag merged into HEAD**, not the highest version in the repo:
 
 ```sh
-git describe --tags --abbrev=0 \
-  --match 'v[0-9]*.[0-9]*.[0-9]*' --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*-*'
+tags=$(git tag --merged HEAD \
+  | grep -E '^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' \
+  | awk -F. '{ m = $1; sub(/^v/, "", m); if (m + 0 < 1000) print }')
+nv=$(printf '%s\n' "$tags" | grep -c '^v')
+nb=$(printf '%s\n' "$tags" | grep -c '^[0-9]')
+if [ "$nb" -gt "$nv" ]; then style='^[0-9]'; else style='^v'; fi
+last=$(printf '%s\n' "$tags" | grep "$style" | sort -V | tail -n 1)
 ```
 
-**Both `--match` patterns are load-bearing**, because the tag prefix is inherited rather than chosen, and a repo tagging `1.2.3` without the `v` is as valid as one tagging `v1.2.3`. Matching only the prefixed shape makes releasekit report no previous release on a bare-tagged repo, then rebuild the whole history into one changelog. Filtering to the semver shape at all is what stops a `nightly-2026-08-01` tag being read as a release, and taking an ancestor rather than a maximum is what lets a repo running `v1.x` alongside `v2.x` read its own lineage.
+An empty `$last` means no previous release. Each filter has one job:
 
-**`--exclude '*-*'` is what skips prereleases**, so a `v1.3.0-rc.1` tag is passed over and the commits it shipped still appear in the `v1.3.0` changelog. The exclusion has to be its own flag: a `--match` glob ending in `*` accepts `-rc.1` as part of the final number, so the shape filter alone lets every prerelease through. Cut them here at the resolver, so nothing downstream has to know prereleases exist. A stable tag carries no hyphen, so the pattern reaches nothing else the `--match` pair selected.
+- **`--merged HEAD`** keeps the lineage. A repo running `v1.x` alongside `v2.x` reads its own line, because a `v2` tag is not merged into the `v1` maintenance branch.
+- **The anchored regex** accepts exactly `MAJOR.MINOR.PATCH` with an optional `v` and no leading zeros. It rejects a prerelease (`v1.3.0-rc.1`), a build or backup suffix (`v1.4.0.bak`), a zero-padded calver date (`2026.08.01`), and a name such as `nightly-2026-08-01`. A `git describe --match` glob cannot do this, because a trailing `*` accepts any suffix.
+- **The `awk` filter** drops a tag whose major is 1000 or more. That shape is a calver date such as `2026.8.1`, which the regex alone accepts. List every dropped tag in the preview so a real semver major that high is visible.
+- **The prefix style** follows the majority of the surviving tags, and a tie goes to `v`. A repo that tags `v1.2.3` ignores a stray bare `2.0.0`, and a bare-tagged repo ignores a stray `v` tag. List the tags of the other style in the preview as skipped.
+- **`sort -V`** orders by version, so `v1.10.0` sorts after `v1.9.0`. On a host whose `sort` lacks `-V`, sort on the three numeric fields instead.
+
+Prereleases are skipped here, so the commits a `v1.3.0-rc.1` shipped still appear in the `v1.3.0` changelog. Cut them at the resolver, so nothing downstream has to know prereleases exist.
 
 **Read the range** `<lasttag>..HEAD`, or the whole history when no tag exists. Parse each commit's **subject and body**, because a `BREAKING CHANGE:` footer lives in the body, so bodies cannot be skipped.
 
@@ -84,7 +101,7 @@ git describe --tags --abbrev=0 \
 |---|---|---|
 | a `!` marker or a `BREAKING CHANGE:` footer | major | **minor** |
 | any `feat` | minor | **patch** |
-| any `fix` or `perf` | patch | patch |
+| any `fix`, `hotfix`, `perf`, or `revert` | patch | patch |
 | only `docs`, `chore`, `style`, `test`, `build`, `ci`, `refactor` | none | none |
 
 **The `0.x` column is not a typo, and it is the rule most likely to surprise someone.** Bumping major on a pre-1.0 repo takes `0.3.0` to `1.0.0`, which declares the API stable off the back of a single commit footer. This follows the release-please and Cargo convention instead. State the rule and its arithmetic in words in the preview, not just the resulting number.
@@ -100,13 +117,27 @@ git describe --tags --abbrev=0 \
 
 **Commits that do not parse otherwise proceed.** Collect them for an **Other** section and count them in the preview. Squash-merge repos build subjects from PR titles, and any repo predating the convention has a mixed log, so refusing until every commit parses would make releasekit unusable on both. Nothing is silently dropped; the floor above is what stops the bump becoming fiction.
 
+This step is done when the preview can state the last release (or none), every tag the resolver skipped, the next version, and the rule that produced it.
+
 ### 3. Render the changelog
 
-Group the parsed commits into Keep a Changelog sections: **Added**, **Changed**, **Fixed**, **Removed**, plus **Other** for the unparsed.
+Group the parsed commits into Keep a Changelog sections by type:
+
+| commit type | section |
+|---|---|
+| any type with `!` or a `BREAKING CHANGE:` footer | **Breaking changes** |
+| `feat` | **Added** |
+| `fix`, `hotfix` | **Fixed** |
+| `perf`, `revert` | **Changed** |
+| `docs`, `refactor`, `style`, `test`, `build`, `ci`, `chore` | none; count them by type in the preview |
+| unparsed | **Other** |
+
+A `hotfix` commit is a fix that shipped on an urgent path, so it reads as a fix to the user. The omitted types change nothing a user of the release can see, and the preview count shows they were read, not lost. On an `--allow-empty` release, list the omitted commits under **Other**, so the section is never empty. Render a section only when it has an entry.
 
 - **Breaking changes come first, always in their own section**, carrying the migration note from the footer. A reader scanning a release wants the thing that will break them above the thing that delights them.
 - **Keep the scope, drop the type.** Under an **Added** heading, `auth: add token refresh retry` reads better than `feat(auth): add token refresh retry`, because the heading already said `feat`.
 - **Link each entry to its commit**, and to its PR when the merge commit names one.
+- **Account for every commit.** The step is done when each commit in the range sits in exactly one section or in the omitted count.
 - **Render exactly once.** The `CHANGELOG.md` section and the GitHub release body are the same string. Two renders are two texts that can disagree, and the disagreement always surfaces after the release is public.
 
 ### 4. Preview and confirm
@@ -115,18 +146,27 @@ The preview is mandatory and always renders. `releasekit preview` ends here havi
 
 Lead with the path, then the facts:
 
-- **first line.** The path (direct or release-PR) and, on the release-PR path, the phase. A misdetected phase is the one failure that costs a duplicate release, so it has to be visible before it is actionable.
+- **first line.** The path (direct or release-PR) and the phase (resume, finish, prepare, or fresh). A misdetected phase is the one failure that costs a duplicate release, so it has to be visible before it is actionable.
 - the computed version, and the rule that produced it stated in words;
 - the rendered changelog in full;
 - the manifest file and its old → new version, or that no manifest was found;
 - the tag name;
-- the CI check rollup result on the base's head;
+- the CI check rollup result, and the SHA it belongs to;
 - the count of unparsed commits;
 - every command about to run.
 
 ### 5. Cut the release
 
-**Verify CI first, on either path.** Read the check rollup for the base's head commit and **refuse to tag a failing one**, because a tag on red code spends a version number on something nobody can use. `--allow-red` overrides it for a known-flaky required check. When `gh` is unusable there is no rollup, so **say the check was skipped**; never let a missing signal read as green.
+**Verify CI first, on either path, and bind it to a SHA.** Read the check rollup for the exact commit the CI result has to cover, and **refuse to tag a failing one**, because a tag on red code spends a version number on something nobody can use. `--allow-red` overrides it for a known-flaky required check. When `gh` is unusable there is no rollup, so **say the check was skipped**; never let a missing signal read as green. A pending rollup is not green either, so stop and report it.
+
+```sh
+gh api "repos/{owner}/{repo}/commits/$SHA/check-runs" \
+  --jq '.check_runs[] | [.name, .status, .conclusion] | @tsv'
+gh api "repos/{owner}/{repo}/commits/$SHA/status" --jq .state
+```
+
+- **Finish, and a resume whose release commit is on the upstream.** `$SHA` is the release commit that gets the tag.
+- **Direct path, and a resume whose release commit is not on the upstream.** CI cannot have run on the release commit, so `$SHA` is its parent: HEAD before the release commit. The release commit only adds the changelog and the manifest bump to it. Re-check that `origin/<base>` still equals `$SHA` just before the push, and stop if it moved.
 
 #### The direct path
 
@@ -143,11 +183,11 @@ Unprotected base. In this order, because each step depends on the last landing:
 
 Protected base. Two invocations, and the phase resolved in [Preflight](#1-preflight) decides which one runs.
 
-**Prepare.** Do the manifest bump, the changelog, and the commit on a `release-v<version>` branch. Push it and open a PR whose body is the rendered changelog. **Stop there.** The user reviews and merges it.
+**Prepare.** Do the manifest bump, the changelog, and the commit on a `release-v<version>` branch. Push it and open a PR titled `chore(release): v<version>`, whose body is the rendered changelog. The title is load-bearing: a squash merge turns the PR title into the commit subject, and the finish phase finds the release by that subject. **Stop there.** The user reviews and merges it.
 
-**Finish.** The merged, untagged `chore(release):` commit is the trigger. Verify the rollup, tag that commit, push the tag, and create the GitHub release. The changelog is already in the repo from the merge, so nothing is rewritten and nothing is committed.
+**Finish.** The merged, untagged `chore(release):` commit is the trigger. Verify the rollup on that commit's SHA, tag that commit, push the tag, and create the GitHub release. The changelog is already in the repo from the merge, so nothing is rewritten and nothing is committed.
 
-**If any step on either path fails, stop at that step** and report exactly what landed and what did not. Never roll back a pushed tag; see the refusals in [Notes](#notes).
+This step is done when every command the preview listed has run, or when the run has stopped at a failed step. **If any step on either path fails, stop at that step** and report exactly what landed and what did not. The next run detects the gap as *resume* and continues from there. Never roll back a pushed tag; see the refusals in [Notes](#notes).
 
 ### 6. Hand off
 
@@ -155,7 +195,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 The hand-off differs by path, so report the one that ran.
 
-**Direct path, and release-PR finish.** This is terminal.
+**Direct path, release-PR finish, and resume.** This is terminal.
 
 - *What changed.* The version, the files bumped, and the commit created.
 - *Where it landed.* The tag name, the release URL, and the branch pushed.

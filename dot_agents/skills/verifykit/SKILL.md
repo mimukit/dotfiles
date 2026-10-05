@@ -16,7 +16,7 @@ It is a **driver and recorder, nothing more**. It does not write tests (that's a
 
 ## When this fires
 
-After a frontend feature is built and you want to look at it or prove it works. It captures a running feature with a visual surface. If the change is backend/CLI-only with nothing to drive, say so and stop rather than inventing a flow.
+After a frontend feature is built and you want to look at it or prove it works. It captures a running feature with a visual surface. If the change is backend/CLI-only with nothing to drive, say so without inventing a flow, and route to **qakit** for a manual test plan (`/qakit`); without qakit, name the commands and endpoints a person should exercise by hand.
 
 - **`show`.** "Show me what it looks like", "screenshot this", "what does the page look like now", "did the button move". Screenshots to a local path, nothing published.
 - **`proof`.** "Verify this feature", "record the flow working", "prove the UI change", "capture proof for the PR", or a PR step that needs proof artifacts. Screenshots plus a GIF, bundled and published for the PR body.
@@ -32,9 +32,13 @@ Every capture mode (`show` and `proof`) runs these steps first. `setup` skips th
 
 ### 1. Scope the feature and find the entry point
 
-Ground the run in what actually changed. Read `git diff` (and the linked issue/plan when there is one) to learn which screens, routes, components, or flows the change touches. Determine how to launch the app and reach the feature: the dev-server command and URL. If the project already documents how it runs, follow that; otherwise infer it and confirm the entry URL before driving.
+Ground the run in what actually changed. Plain `git diff` shows only unstaged edits, so resolve the **full change target**: staged and unstaged edits (`git diff HEAD`), untracked files (`git ls-files --others --exclude-standard`, read each one), and the branch's committed changes against its base (`git diff <base>...HEAD`). Take the base from **gitkit** when it is installed; otherwise use `git symbolic-ref --short refs/remotes/origin/HEAD` with the `origin/` prefix removed, else the first of `main` or `master` that resolves. Read the linked issue or plan when there is one. From these, learn which screens, routes, components, or flows the change touches.
+
+Record the **tested revision** before you drive: the application commit (`git rev-parse HEAD`) and the dirty state (`yes` when `git status --porcelain` prints anything, else `no`). `proof` writes both into the bundle, so a later reader can tell whether the captures match the branch. Determine how to launch the app and reach the feature: the dev-server command and URL. If the project already documents how it runs, follow that; otherwise infer it and confirm the entry URL before driving.
 
 Pick a **slug** for this run: the linked **issue number** when there is one, else a short lowercase kebab-case **feature slug** from the branch/diff (e.g. `login-throttle`). Each mode forms its run directory from the slug and the run's ISO creation date.
+
+This step is done when every changed, staged, untracked, and committed path is classified as visual or not, the entry URL is confirmed, and the commit and dirty state are recorded.
 
 ### 2. Choose the flows to drive
 
@@ -43,6 +47,8 @@ Derive candidate flows from the diff as distinct **user entry points**: a change
 - **Explicit instruction wins.** If the invocation names a flow ("verify the checkout flow", "show me the settings page"), drive that.
 - **One flow** touched → drive it, no question.
 - **Multiple flows** touched → list the candidates with short labels and **ask the user which to capture** (allow selecting several). Drive each chosen flow and label its captures as a separate section. Never silently guess a "primary" flow.
+
+This step is done when every flow to drive is named, by the invocation, by the single candidate, or by the user's choice.
 
 ### 3. Pick the capture backend (by precedence)
 
@@ -53,11 +59,20 @@ Detect what's available and use the best, in order:
 3. **computer use** / desktop screen capture;
 4. **none of them** → degrade: don't fake it. Print a short manual capture recipe (what to click, what to screenshot), name verifykit `setup` as the next move to install the driver, and stop. Never run `setup` from inside a capture.
 
-Record which backend was used in the hand-off.
+Record which backend was used in the hand-off. This step is done when one backend is chosen, or the manual recipe is printed and the run has stopped.
 
 ### 4. Handle auth and required state
 
 verifykit reuses state; it never manufactures it. In order: **reuse** an already-authenticated session, a stored browser state file, or test credentials the project already exposes. If the flow is gated and none is available, **ask once** for the entry URL and credentials (or a seed command to run). If the user can't or won't provide them, **degrade gracefully**: capture up to the auth boundary and note where it stopped. Run a seed command you're *handed*, but never invent one, seed a database, or run migrations yourself.
+
+**Bound state-changing flows before you drive them.** Driving the UI can write data: a create, delete, submit, payment, invite, or email-sending action writes through the app as a user would. When any selected flow takes such an action:
+
+- Name the environment from the entry URL and the app's config: local, a dev or preview deploy, or a shared or production host.
+- List each state-changing action the flows will take, and the record or account it touches.
+- Drive those actions without a question only on a local or throwaway environment with test data. For any other host, ask once with the list; drive only the actions the user permits.
+- When the user declines, capture up to the action, not through it, and note the boundary.
+
+This step is done when the auth state is reused, given, or recorded as a boundary, and every state-changing action is permitted or recorded as a boundary.
 
 ## Modes
 
@@ -70,7 +85,7 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 ## Notes
 
 - **`allowed-tools` covers the primary path.** `Bash` runs the CLI browser driver, git, `gh`, `ffmpeg`, `npm`, and the bundled `verify-assets.sh`; `Read` reads the diff and the linked issue; `Write` writes the `proof` bundle; `AskUserQuestion` asks the flow choice, the one auth ask, and `setup`'s install confirm. The **browser MCP fallback is not in that list and cannot be**, because it arrives as MCP tools whose names the server chooses (commonly `mcp__<server>__*`). On a host that enforces `allowed-tools` strictly with no CLI driver installed, grant the browser MCP alongside these four, or verifykit takes its documented degradation: print the manual capture recipe and stop. That degradation is the honest failure, and it never fakes proof.
-- **Driver + recorder, not a provisioner.** It reuses or asks for auth and runs a seed command it's handed; it never creates fixtures, seeds databases, or runs migrations. `setup` installs the driver and nothing about the project. This keeps it safe (it can't mutate real data) and portable across projects.
+- **Driver + recorder, not a provisioner.** It reuses or asks for auth and runs a seed command it's handed; it never creates fixtures, seeds databases, or runs migrations. `setup` installs the driver and nothing about the project. This keeps it portable across projects. It does not make it read-only: a driven create, delete, or submit writes data through the app, which is why [Handle auth and required state](#4-handle-auth-and-required-state) bounds those actions before the drive.
 - **`show` is never published.** No GIF, no bundle, no `.gitignore` edit, no hidden ref. The image goes to the operator and nowhere else.
 - **No mp4.** A hosted mp4 does not embed inline in a PR body, because GitHub only renders video uploaded through its web composer, so the proof format is screenshots + GIF. Video is a deliberate later add.
 - **Private repos.** Inline rendering needs a public repo. On a private one, `verify-assets.sh check` fails, so `proof` skips publishing and hands off the local bundle path for manual attachment rather than embedding dead links.

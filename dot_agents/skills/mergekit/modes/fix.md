@@ -12,7 +12,7 @@ Assemble the punch list before touching code:
 - **Failing checks** from `gh pr checks <n>`, with each failing job's name and, where reachable, its log tail. Red CI is feedback too.
 - **The review decision** from `gh pr view <n> --json reviewDecision`, so you know whether a re-request of review is warranted at the end.
 
-If there is nothing to service, meaning no unresolved threads and green CI, say so and stop. There is nothing to fix.
+If there is nothing to service, meaning no unresolved threads and green CI, say so and stop. There is nothing to fix. Ends when every unresolved thread and every failing check is on the punch list.
 
 ### 2. Triage the punch list, and decide what is actually worth fixing
 
@@ -30,13 +30,13 @@ Rules that keep this honest:
 - **When in doubt, ask rather than decline.** Declining silently is the failure mode that costs the most: the reviewer believes it was considered, and nobody finds out otherwise.
 - **A declined item is still answered.** It stays on the punch list through [Answer the feedback](#5-answer-the-feedback), where it gets a reply stating the reason and stays unresolved. Declining is a position you state, not a thread you drop.
 - **Red CI is not triaged away.** A failing check is a fact about the branch, not an opinion about the code. If a job fails for a reason you consider illegitimate, surface it; don't file it under "declined" and push.
-- **Print the triage before you start.** One line per item with its verdict, so the user sees the whole shape and can overrule any of it. If most of the list came back declined, say so plainly, because a PR whose feedback is mostly wrong usually means the reviewer and the PR disagree about the change itself, and that is worth a conversation, not a fix round.
+- **Print the triage before you start.** Triage ends when every punch-list item carries a verdict and every `ask` item has the user's ruling. One line per item with its verdict, so the user sees the whole shape and can overrule any of it. If most of the list came back declined, say so plainly, because a PR whose feedback is mostly wrong usually means the reviewer and the PR disagree about the change itself, and that is worth a conversation, not a fix round.
 
 ### 3. Get the worktree and sync
 
 Adopt the branch's existing worktree exactly as [`start` does](./start.md#2-get-a-worktree-adopting-first-and-creating-only-if-needed), because your own PR almost always still has the worktree it was built in. Then, unlike `start`, **sync it**: you are about to push to this branch anyway, so it lands on the base it will merge into. Hand the sync to gitkit, which owns the rebase-versus-merge rule; without gitkit, rebase onto the base and push with `--force-with-lease`.
 
-It is your branch, but it is *published*, so the sync previews and waits for an OK before anything is pushed. The thread count matters more here than anywhere else: you are about to *answer* those threads, and a rebase outdates the ones you have not replied to yet, so gather and triage the punch list first, and put the number in the preview. On conflict, stop: list the conflicted files (`git diff --name-only --diff-filter=U`), propose a resolution for each, confirm before writing, then run the repo's test and build gate before you push. A PR you opened from a fork you don't control is the read-only case, where you cannot push; say so and stop.
+It is your branch, but it is *published*, so the sync previews and waits for an OK before anything is pushed. The thread count matters more here than anywhere else: you are about to *answer* those threads, and a rebase outdates the ones you have not replied to yet, so gather and triage the punch list first, and put the number in the preview. On conflict, stop: list the conflicted files (`git diff --name-only --diff-filter=U`), propose a resolution for each, confirm before writing, then run the repo's test and build gate before you push. A PR you opened from a fork you don't control is the read-only case, where you cannot push; say so and stop. Ends when the worktree is on the latest base and `origin` matches it, or on a declined or stopped sync.
 
 ### 4. Fix, gate, commit, push
 
@@ -46,16 +46,18 @@ For each item you decided to **fix**, in the live worktree:
 2. Run the repo's test and build gate.
 3. Commit in the repo's own style, preferring an installed commit skill.
 
-Then push with a plain `git push`, and the PR updates in place. This is **bounded**, like any fix round: if an item turns out to be ambiguous once you are inside the code, or you can't get the gate green, stop and surface it rather than guessing at what the reviewer meant. An item can still flip to **ask** here, because triage judged it from the outside, and the code sometimes disagrees.
+Then push with a plain `git push`, and the PR updates in place. This is **bounded**, like any fix round: if an item turns out to be ambiguous once you are inside the code, or you can't get the gate green, stop and surface it rather than guessing at what the reviewer meant. An item can still flip to **ask** here, because triage judged it from the outside, and the code sometimes disagrees. Ends when every **fix** item is in a pushed commit or flipped to **ask**, and the gate passed on the pushed head.
 
 ### 5. Answer the feedback
 
 Close the loop so the reviewer sees every item handled, fixed *and* declined, each mutation previewed and confirmed like any other:
 
-- **Reply and resolve** each thread you actually fixed, pointing at the commit that did it. **Never resolve a thread you didn't fix.**
+- **Reply and resolve** each thread you actually fixed, pointing at the commit that did it. **Resolve exactly the threads a pushed commit fixed.**
 - **Reply to each declined thread with the reason, and leave it open.** A declined item is a position, not a silence: name what it conflicts with, whether the convention, the decision, or the PR's scope, and let the reviewer overrule you. Out-of-scope items are the exception worth going further on: offer to file the follow-up issue rather than leaving the point to evaporate.
 - **Re-request review** when the decision was `CHANGES_REQUESTED` (`gh pr edit <n> --add-reviewer <login>`, or the `requested_reviewers` REST endpoint).
 - **Do not merge.** Servicing feedback earns a fresh review, not a landing, because merging is `close`'s job, behind its human gate.
+
+Ends when every punch-list thread has a reply, and only the fixed threads are resolved.
 
 ### 6. Hand off
 

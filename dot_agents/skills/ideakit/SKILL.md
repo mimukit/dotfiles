@@ -1,7 +1,7 @@
 ---
 name: ideakit
 description: >-
-  Think an idea through across many sessions, with one ideas repo holding a folder per idea, a jotpad for the thoughts that have none, one idea open at a time, and nothing written to disk until you ask for it. Use when the user says "capture this idea", "I just had an idea", "jot this down", "random thought", "promote that jot", "let's think about the <X> idea", "brainstorm <X> with me", "what was I thinking about <X>", "where do my ideas stand", "what should I think about next", or names their ideas repo or runs "/ideakit".
+  Think an idea through across many sessions, with one ideas repo holding a folder per idea, a jotpad for the thoughts that have none, and one idea open at a time. Use when the user says "jot this down", "promote that jot", "capture this idea", "let's think about the <X> idea", "where do my ideas stand", "research <X> for this idea", "is the <X> idea worth building", "I'm dropping the <X> idea", or runs "/ideakit".
 license: MIT
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Bash, AskUserQuestion, WebSearch, WebFetch
@@ -17,7 +17,7 @@ An idea is a subject someone wants to think about, not a project they have commi
 
 A jot is smaller again: a thought with no folder, no slug, and no commitment. The jotpad takes any subject at any time, and a jot earns a folder by coming back.
 
-Eight modes. [`jot`](modes/jot.md) drops a loose thought into the pad. [`promote`](modes/promote.md) turns a jot that keeps returning into its own idea. [`capture`](modes/capture.md) writes an idea down and stops. [`session`](modes/session.md) is the mode that thinks. [`status`](modes/status.md) reports and writes nothing. [`research`](modes/research.md) and [`validate`](modes/validate.md) send a question out and bring the answer back. [`close`](modes/close.md) records a verdict.
+Eight modes. [`jot`](modes/jot.md) drops a loose thought into the pad. [`promote`](modes/promote.md) turns a jot that keeps returning into its own idea. [`capture`](modes/capture.md) writes an idea down and stops. [`session`](modes/session.md) is the mode that thinks. [`status`](modes/status.md) reports and writes nothing. [`research`](modes/research.md) and [`validate`](modes/validate.md) send a question out (`validate` through the user, who starts validatekit) and bring the answer back. [`close`](modes/close.md) records a verdict.
 
 **`jot`, `promote`, `capture`, and `close` write on their own. Every other mode offers its writes and takes no for an answer.** See [Saving is a demand, not a default](#saving-is-a-demand-not-a-default).
 
@@ -49,7 +49,7 @@ All state lives in one repo outside the user's work repos, at `~/ideas` unless `
   INDEX.md                          ← the router
   jotpad/
     INDEX.md                        ← the jot router
-    YYYY-MM-DD.md                   ← that day's jots, written once
+    YYYY-MM-DD.md                   ← that day's jots, append-only
   topics/<slug>/
     IDEA.md                         ← a stable head plus an ## Open block
     NOTES.md                        ← the dated log, append-only
@@ -122,13 +122,13 @@ State is `live`, `promoted`, or `dropped`. A `promoted` cell carries the slug it
 Two to six lines in the user's own words: what the thought is, and what set it off.
 ```
 
-**A dated file is written once and never edited again.** Every state change lands in `jotpad/INDEX.md` instead. The pad then has one place to look and one place to repair, and the date a thought arrived survives everything that happens to it afterwards.
+**A dated file is append-only, like `NOTES.md`.** A block, once written, is never edited, and new blocks go only into today's file. Every state change lands in `jotpad/INDEX.md` instead. The pad then has one place to look and one place to repair, and the date a thought arrived survives everything that happens to it afterwards.
 
-**An id is permanent and never reused.** Allocate it by reading `jotpad/INDEX.md`, taking the highest id, and adding one. A jot the user returns to gets a second block under the same id in the new day's file, and its row gains that date. **Three entries is the promotion signal**, because the user has now come back twice and that is what a folder is for.
+**An id is permanent and never reused.** Allocate it by taking the highest id in `jotpad/INDEX.md` or in today's file, whichever is higher, and adding one. Reading today's file too keeps a block whose row never got written from losing its id to the next jot. A jot the user returns to on a later day gets a new block under the same id in that day's file, and its row gains that date. A return on the same day appends a second block under the same id in today's file and leaves the `Entries` cell alone, because the cell counts days. **Three entries is the promotion signal**, because the user has now come back on three separate days and that is what a folder is for.
 
 **Dropping a jot is a one-cell edit.** When the user says a jot is nothing, set its state to `dropped` and write nothing else. It needs no mode and no verdict entry: a jot never claimed enough to need one.
 
-**The isolation guard covers the pad.** A `jot` run reads `jotpad/INDEX.md` and `INDEX.md`, both bounded routers. A jot discussion reads those plus only the dated files that one jot's row names. Neither opens a folder under `topics/`, and no topic mode opens a file under `jotpad/`. [`promote`](modes/promote.md) is the single crossing, and it reads one jot and writes one topic folder.
+**The isolation guard covers the pad.** A `jot` run reads `jotpad/INDEX.md` and `INDEX.md`, both bounded routers, plus today's dated file, which it appends to. A jot discussion reads those plus only the dated files that one jot's row names. Neither opens a folder under `topics/`, and no topic mode opens a file under `jotpad/`. [`promote`](modes/promote.md) is the single crossing, and it reads one jot and writes one topic folder.
 
 A dated file does hold unrelated jots side by side, so reading one thread carries its neighbours into the window. That cost is accepted and it is bounded. The pad holds loose thoughts by definition, and a thread heavy enough to be worth protecting from them is a thread that has earned `promote`.
 
@@ -140,17 +140,25 @@ Repair runs at two levels, and each mode repairs only what it can see.
 - **Report an unregistered folder rather than opening it.** A folder missing from the router needs five fields that live inside it, and reading it would break the guard for a bookkeeping errand. So `status` names the folder and says to run `session` on it to register it.
 - **Repair the jot router without asking.** Its cells hold an id, entry dates, and a state, which is bookkeeping rather than thinking. A jot's row is the only record of that jot's state, so it is written whenever a mode changes one.
 
+### Recover a partial write
+
+Every multi-file write runs in a fixed order: the record first, then the caches. In a topic folder that is `NOTES.md`, then `IDEA.md`, then the router row. In the pad it is the dated block, then the jot router row. A run that stops midway therefore leaves the record ahead of its caches and never behind, and each case has one repair:
+
+- **`IDEA.md` disagrees with the last `NOTES.md` entry.** The next mode that opens the folder offers the rewrite from the log, in its own save offer.
+- **A topic folder has no router row**, the trace of a `capture` or `promote` that stopped early. `status` reports it as unregistered, and `session` on it writes the row.
+- **A block in today's file has no jot router row.** The next `jot` run sees the id in today's file and writes the missing row without asking, as for any jot router repair.
+
 ### The slug is permanent
 
 A slug is short, lowercase, kebab-case, and taken from the idea's core noun. **`capture` proposes it and confirms it with the user before creating anything**, because no mode renames a folder afterwards. The cost lands once at creation instead of in rename machinery for a rare event. The router's `Idea` column carries the current human name and stays free to change.
 
 ### Artifacts land inside the topic folder
 
-**The artifact root is the topic folder, not the repo root.** A skill that documents a path under `docs/` writes it under `topics/<slug>/docs/` instead, keeping its own subpath and filename convention intact. `docs/plans/plan-sso-2026-07-23.md` becomes `topics/<slug>/docs/plans/plan-sso-2026-07-23.md`.
+**The artifact root is the topic folder, not the repo root.** A skill that documents a path under `docs/` writes it under `topics/<slug>/docs/` instead, keeping its own subpath and filename convention intact. `docs/plans/0001-plan-sso-2026-07-23.md` becomes `topics/<slug>/docs/plans/0001-plan-sso-2026-07-23.md`.
 
 This is a root swap, so it holds for every skill, including one added after this file was written. The repo root has no `docs/` directory and does not gain one.
 
-Filenames follow `<type>-<slug>-YYYY-MM-DD.md`, with the artifact's creation date at the end. Keep that date stable when the file is edited later.
+Filenames follow `NNNN-<type>-<slug>-YYYY-MM-DD.md`, with a four-digit serial in front and the artifact's creation date at the end. The serial counts per directory inside the topic folder: list that directory, take the highest leading serial, and add one, starting at `0001`. Keep the whole name stable when the file is edited later.
 
 ## Saving is a demand, not a default
 
@@ -187,7 +195,7 @@ The mode bodies live in one file each under `modes/`. Route with [Mode selection
 
 ## The dispatch contract
 
-`research` and `validate` both send a question to a sibling skill. Four rules govern every dispatch:
+`research` sends its question to a sibling skill. `validate` cannot, because validatekit is invocation-only, so the user runs it and brings the answer back; the rules below govern that answer the same way. Four rules govern every dispatch:
 
 - **Let the sibling answer inline.** researchkit and validatekit both default to answering in the conversation and saving nothing, and that default is ideakit's too. Do not answer their save prompt on the user's behalf.
 - **Suppress the sibling's hand-off and print ideakit's own.** The dispatch is a sub-step, and two competing next-step lines help nobody.
@@ -208,8 +216,10 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 **Next.** Crown one move, chosen by state:
 
-- The run wrote a jot → say there is no next step. Do not offer a session on it.
-- A `live` jot carries three or more entries → run `promote` on that jot.
+Take the first rule that matches, top to bottom.
+
+- The run gave a `live` jot its third entry or a later one → run `promote` on that jot.
+- The run wrote any other jot → say there is no next step. Do not offer a session on it.
 - The jot just became an idea → run `session` on the new slug.
 - The session stopped on an open question → run `session` again on that question.
 - The open question needs an external fact → run `research`.
@@ -217,6 +227,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 - The idea is settled enough to shape work → plan it in the project repo, with a plan skill (**plankit** when installed).
 - Nothing is open → run `close`, and name which verdict fits.
 - The idea just closed → say there is no next step. Do not invent a follow-up.
+- The run was `validate` and the user chose to run validatekit → run `/validatekit` with the idea path, then ask ideakit to keep the verdict.
 
 Then offer a commit of the ideas repo. Never run it without a yes. **Skip the commit offer on a run that wrote nothing.**
 

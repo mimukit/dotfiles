@@ -51,6 +51,8 @@ docs/wiki/runbooks/rollback.md        → runbooks-rollback
 
 Flattening makes a collision nearly impossible, since the source paths are already unique, but it isn't a proof (`how-to/deploy.md` and `how/to-deploy.md` both flatten to `how-to-deploy`). **Report any collision and stop.** Renaming a source page is the fix, and that's the user's call, not a silent tiebreak.
 
+In the same pass, resolve every relative link in the doc set against its page's directory and list each one that points at no file in the repo. A dead link is a warning, not a stop. The scan is done when every page has a flattened name and every relative link is either resolved or listed.
+
 ### 3. Write the workflow, on consent
 
 Show the file, name its path, and write it only on a yes. Default target `.github/workflows/publish-wiki.yml`; adapt `docs/wiki` to the doc home the ladder actually resolved, and the branch to the repo's real default.
@@ -81,7 +83,7 @@ jobs:
 
       # The wiki page namespace is flat: docs/wiki/how-to/deploy.md and
       # docs/wiki/runbooks/deploy.md would both land on /wiki/deploy. Flatten
-      # each path into a unique page name and rewrite in-repo links to match.
+      # each path into a unique page name and rewrite relative links to match.
       - name: Flatten the doc set into wiki page names
         run: |
           set -euo pipefail
@@ -98,18 +100,32 @@ jobs:
             dir="$(dirname "$rel")"
             if [ "$dir" = "." ]; then dir=""; fi
 
-            # [Deploy](how-to/deploy.md) -> [Deploy](how-to-deploy), resolving
-            # ../ against the page's own directory first. Anchors are kept;
-            # absolute URLs and links to non-page files are left alone.
-            WIKI_DIR="$dir" perl -pe '
-              s{\]\(([^):#]+?)\.md(#[^)]*)?\)}{
-                my ($p, $anchor) = ($1, $2 // "");
-                $p = "$ENV{WIKI_DIR}/$p" if $ENV{WIKI_DIR} ne "";
-                $p =~ s{^\./}{};
-                $p =~ s{/\./}{/}g;
-                1 while $p =~ s{[^/]+/\.\./}{};
-                $p = ($p eq "index") ? "Home" : do { $p =~ s{/}{-}g; $p };
-                "]($p$anchor)"
+            # Resolve each relative link against the page's own directory.
+            # A page inside the doc set becomes its wiki page name:
+            #   [Deploy](how-to/deploy.md) -> [Deploy](how-to-deploy)
+            # Anything else (source files, non-Markdown assets) becomes a
+            # GitHub URL pinned to this commit: blob/ for links, raw/ for
+            # images. Absolute URLs, root paths, and bare anchors stay as-is.
+            WIKI_SRC="$src" WIKI_DIR="$dir" perl -pe '
+              s{(!?\[[^\]]*\])\(([^)\s]+)\)}{
+                my ($label, $target) = ($1, $2);
+                if ($target =~ m{^(?:[A-Za-z][A-Za-z0-9+.-]*:|\#|/)}) {
+                  "$label($target)";
+                } else {
+                  my ($p, $anchor) = $target =~ m{^([^\#]*)(\#.*)?$};
+                  $anchor //= "";
+                  $p = join "/", grep { length } $ENV{WIKI_SRC}, $ENV{WIKI_DIR}, $p;
+                  $p =~ s{(^|/)\./}{$1}g;
+                  1 while $p =~ s{(^|/)(?!\.\.?/)[^/]+/\.\./}{$1};
+                  if ($p =~ m{^\Q$ENV{WIKI_SRC}\E/(.+)\.md$}) {
+                    my $page = $1;
+                    $page = ($page eq "index") ? "Home" : do { $page =~ s{/}{-}g; $page };
+                    "$label($page$anchor)";
+                  } else {
+                    my $kind = ($label =~ /^!/) ? "raw" : "blob";
+                    "$label($ENV{GITHUB_SERVER_URL}/$ENV{GITHUB_REPOSITORY}/$kind/$ENV{GITHUB_SHA}/$p$anchor)";
+                  }
+                }
               }ge
             ' "$f" > "$out/$flat.md"
           done
@@ -132,6 +148,8 @@ Four choices in there are load-bearing, so don't quietly drop them:
 - **`preprocess: false`.** The action's own link rewriting assumes wiki paths mirror source paths, which is exactly what the flatten step breaks. One owner for the transformation.
 - **`concurrency`** without `cancel-in-progress`, because two force-pushes racing on one wiki repo is how a sync lands half-applied.
 - **`permissions: contents: write`**, and nothing else. The built-in `GITHUB_TOKEN` is enough; a wiki sync never needs a PAT, and being asked for one is a signal something is wrong.
+
+**Links that leave the doc set point back at the repo.** Only Markdown pages are copied into the wiki, so a relative link to a source file outside the doc home, or to an image or other asset, would break there. The flatten step rewrites each one to a GitHub URL pinned to the commit being published (`blob/` for a link, `raw/` for an image), so the wiki never shows a dead link and never carries a copy of an asset that can drift. A link whose target is missing in the repo stays broken in the wiki too, so the collision scan reports any relative link that resolves to no file before you install.
 
 Pinning `@v5` follows the action's documented usage. For a repo that pins actions to commit SHAs, match that convention instead and say you did.
 

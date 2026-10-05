@@ -4,19 +4,19 @@ For a repo with no doc set, or a partial one.
 
 ### 1. Ground it
 
-The research pass, and the bulk of the work. Read the manifests and their declared commands, entry points, CLI surface, routes, env vars, config, `Dockerfile`/compose, CI workflows, deploy config, the existing README, and `CONTEXT.md`/`docs/adr/` when they exist. Ask once for probe consent and use it to confirm the commands that will end up in `getting-started.md`, because a getting-started whose first command doesn't exist is worse than no getting-started.
+The research pass, and the bulk of the work. Read the manifests and their declared commands, entry points, CLI surface, routes, env vars, config, `Dockerfile`/compose, CI workflows, deploy config, the existing README, and `CONTEXT.md`/`docs/adr/` when they exist. Ask once for probe consent and use it to confirm the commands that will end up in `getting-started.md`, because a getting-started whose first command doesn't exist is worse than no getting-started. The step is done when every source on that list has been read or named as absent.
 
 ### 2. Adopt what's already there
 
-Pages found under rung 2 get manifest entries with `documents:` globs, `adopted: true`, and no stamp. wikikit does not rewrite them and does not claim them.
+Pages found under rung 2 get manifest entries with `documents:` globs, `adopted: true`, and no stamp. wikikit does not rewrite them and does not claim them. The step is done when every rung-2 page has a manifest entry.
 
 ### 3. Propose the map
 
-Consent-gated, and this is the gate that matters. Show the page list with a one-line scope each, which entries are newly authored versus adopted, and **what wikikit could not determine from code**. The user accepts, trims, or redirects before a single file is written.
+Consent-gated, and this is the gate that matters. Show the page list with a one-line scope each, which entries are newly authored versus adopted, and **what wikikit could not determine from code**. The user accepts, trims, or redirects before a single file is written. The step is done when the user has answered for every proposed page.
 
 ### 4. Write the accepted pages
 
-Each grounded per [Grounding: verify before you write](../SKILL.md#grounding-verify-before-you-write), each held to the [Writing standards](../SKILL.md#writing-standards), each stamped with `<ref>@<sha>` and the date.
+Each grounded per [Grounding: verify before you write](../SKILL.md#grounding-verify-before-you-write), each held to the [Writing standards](../SKILL.md#writing-standards), each stamped with `<ref>@<sha>` and the date per [The provenance stamp](../SKILL.md#the-provenance-stamp), which leaves a page written on a feature branch unstamped until merge.
 
 ### 5. Rewrite the README front door
 
@@ -34,13 +34,13 @@ Every later run is exact rather than positional. Refuse the markers and wikikit 
 
 ### 6. Write the manifest and update the nav
 
-Write `<doc home>/.wikimap.yaml`, then update the docs engine's nav or sidebar config when one was detected. A page an engine can't reach is a page nobody reads.
+Write `<doc home>/.wikimap.yaml`, then update the docs engine's nav or sidebar config when one was detected. A page an engine can't reach is a page nobody reads. The step is done when every written page has a manifest entry and, with an engine, a nav entry.
 
 ### 7. Hand off
 
 _Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Report pages authored, pages adopted (mapped, not stamped), the README zone written or declined, and what could not be determined from code.
+**What changed.** Report pages authored, pages adopted (mapped, not stamped), pages due a stamp after merge, the README zone written or declined, and what could not be determined from code.
 
 **Where it landed.** Give the doc home, which ladder rung chose it, the manifest path, and the engine config touched.
 

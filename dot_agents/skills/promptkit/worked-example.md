@@ -11,19 +11,22 @@ One example, because the five parts are faster to recognize than to describe. Th
 **Out.** The prompt, ready to paste:
 
 ```
-Fix the session expiry bug in `src/lib/session.ts`: `refreshSession()` returns the stale
-token when the refresh call fails, so an expired session reads as valid downstream.
+`refreshSession()` in `src/lib/session.ts` returns the stale token when the
+refresh call fails, so an expired session reads as valid downstream.
 
-Scope: `src/lib/session.ts` and its test file. Do not touch `src/middleware/auth.ts`,
-because the routing there is correct and deliberately out of scope for this fix.
+Scope: `src/lib/session.ts` and its test file. Leave `src/middleware/auth.ts`
+as it is, because the routing there is correct and out of scope for this fix.
 
 Constraints: follow the conventions in the repo's agent instruction file. Keep
 `refreshSession()`'s signature, since three call sites depend on it.
 
+Task: make a failed refresh in `refreshSession()` end the session instead of
+returning the stale token.
+
 Done when `pnpm test src/lib/session.test.ts` passes with a new case covering the
 failed-refresh path, and `pnpm typecheck` is clean.
 
-Stop there. Do not refactor the surrounding token helpers, and do not commit.
+Stop there. Leave the surrounding token helpers as they are, and do not commit.
 ```
 
 **What changed.** The ledger:
@@ -35,4 +38,4 @@ resolved "don't break anything else" → named auth.ts as explicitly out of scop
 assumed the bug is the stale-token return path; stated in the prompt, correct it if wrong
 ```
 
-Read the two together and the mechanism is visible. Every vague phrase in the input has a row; the one thing the tree couldn't settle is a row too, and it names the assumption rather than hiding it, so a wrong guess costs one correction instead of a wasted run. Note also what the prompt *doesn't* say: nothing about error handling, because the instruction file covers it, and one pointer line is cheaper than a restatement that can contradict it.
+The order follows the contract's layout rule: the context the receiver needs (the bug, the scope, the constraints) comes first, and the ask, its done signal, and its stop condition come last, where the receiver reads them just before it acts. Read the prompt and the ledger together and the mechanism is visible. Every vague phrase in the input has a row; the one thing the tree couldn't settle is a row too, and it names the assumption rather than hiding it, so a wrong guess costs one correction instead of a wasted run. Note also what the prompt *doesn't* say: nothing about error handling, because the instruction file covers it, and one pointer line is cheaper than a restatement that can contradict it.

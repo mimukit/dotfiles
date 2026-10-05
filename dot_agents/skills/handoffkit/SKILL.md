@@ -1,10 +1,10 @@
 ---
 name: handoffkit
 description: >-
-  Compact the current conversation into a handoff document another agent or session can pick up cold: goal, state, next steps, key artifacts by reference, and constraints. Explicit invocation only, because auto-triggering is disabled so a session compaction never fires mid-work. Use when you deliberately run "/handoffkit" (optionally with a focus argument) to hand off work, write a handoff doc, or summarize the session for the next agent.
+  Compact the current conversation into a handoff document another agent or session can pick up cold: goal, state, next steps, key artifacts by reference, and constraints. Use when you deliberately run "/handoffkit" (optionally with a focus argument) to hand off work, write a handoff doc, or summarize the session for the next agent.
 license: MIT
 disable-model-invocation: true
-allowed-tools: Read, Write
+allowed-tools: Read, Write, Glob, Bash
 metadata:
   internal: false
 ---
@@ -37,8 +37,11 @@ Write these sections; drop any that are genuinely empty rather than padding them
 ## Goal
 What we're trying to achieve and why. If the user gave a focus argument, frame this around it.
 
+## Workspace
+Required when the task involves code. The repository root and the worktree path, the branch, the HEAD SHA, the upstream and the count of unpushed commits, the dirty state (each modified, staged, or untracked path, or "clean"), and any stash the session made.
+
 ## Current state
-What's done and working, what's half-done, what's untouched. Be concrete.
+What's done and working, what's half-done, what's untouched. Be concrete. Name each check that has not run or is failing, with the command that shows it.
 
 ## Next steps
 The ordered actions the next agent should take. Start with the very first one.
@@ -61,15 +64,25 @@ Capabilities the next session should reach for, e.g. a commit skill to land the 
 
 ## Procedure
 
-1. **Reread the session.** Scan the conversation for the goal, the current state, decisions, and loose ends. That is the raw material.
-2. **Separate carry-over from reference.** For each thing worth mentioning, decide: does it live only in this chat (carry it) or is it already an artifact (link it)?
-3. **Draft the document** in the shape above, slanted toward the focus argument if one was given. Keep it tight; a new agent should be able to read it in a minute and act.
-4. **Redact** any secrets or PII before output.
-5. **Save or print it** according to the output rules below, then close per [Hand off](#hand-off).
+1. **Reread the session.** Scan the conversation for the goal, the current state, decisions, and loose ends. That is the raw material. The step is done when each section of the shape has its material, or is known to be empty.
+2. **Read the workspace** when the task involves code. Read it from git, never from memory of the session, because the session may predate the last commit:
+
+   ```sh
+   git rev-parse --show-toplevel; git worktree list
+   git branch --show-current; git rev-parse HEAD
+   git rev-parse --abbrev-ref @{upstream}; git rev-list --count @{upstream}..HEAD
+   git status --short; git stash list
+   ```
+
+   `Bash` is declared for these read-only queries only. A failed upstream query means "no upstream", and the document says so. The step is done when every **Workspace** field has a value read in this run.
+3. **Separate carry-over from reference.** For each thing worth mentioning, decide: does it live only in this chat (carry it) or is it already an artifact (link it)? The step is done when every item has one of the two labels.
+4. **Draft the document** in the shape above, slanted toward the focus argument if one was given. The draft is done when every sentence carries something no linked artifact holds, every empty section is dropped, and **Next steps** opens with one action the next agent can run without reading further.
+5. **Redact** any secrets or PII before output. The step is done when no key, token, password, or personal datum appears by value.
+6. **Save or print it** according to the output rules below, then close per [Hand off](#hand-off).
 
 ## Output
 
-**Default: save a Markdown file.** Write the finished handoff into `docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `handoff-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case subject slug and the handoff's ISO creation date at the end (for example, `handoff-auth-migration-2026-07-13.md`). Keep that date stable if the same handoff is edited, and update the existing file in place. If a genuinely distinct handoff would collide on the same day, make the slug more specific; only as a last resort insert the next available sequence immediately before the date (`handoff-auth-migration-02-2026-07-13.md`). Tell the user the exact path.
+**Default: save a Markdown file.** Write the finished handoff into `docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `NNNN-handoff-<slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case subject slug, and the handoff's ISO creation date at the end (for example, `0005-handoff-auth-migration-2026-07-13.md`). To get the serial `NNNN`, list `docs/handoffs/` with `Glob` (`docs/handoffs/*.md`), take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Keep the whole name stable if the same handoff is edited, and update the existing file in place. Tell the user the exact path.
 
 **On explicit request: print inline.** When the user explicitly asks for terminal, inline, chat-only, or copy-pastable output, emit the finished handoff as a single Markdown codeblock and do not write a file.
 
@@ -81,6 +94,6 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 **What changed.** Nothing in the project itself; the handoff is a new (or updated) document, and say which.
 
-**Where it landed.** Give the exact path (`docs/handoffs/handoff-<slug>-YYYY-MM-DD.md`), or "printed inline, no file written" when that's what happened.
+**Where it landed.** Give the exact path (`docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md`), or "printed inline, no file written" when that's what happened.
 
 **Next.** One move. Start a fresh session pointed at this document, beginning with the handoff's own first next-step. Name that step here so the user doesn't have to open the file to learn it. Nothing else follows in *this* session; the whole point of the handoff is that this context can now end.

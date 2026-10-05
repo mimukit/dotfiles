@@ -24,7 +24,7 @@ gh api repos/{owner}/{repo} --jq '{allow_update_branch, security_and_analysis}'
 | `--enable-wiki` | false | Proposed off; wikikit `publish` is opt-in and enabling later is one click. Flippable in this preview. |
 | `--enable-projects` | false | Nothing in this collection reads a project board. |
 | `--enable-issues` | true | The issue tracker is the workflow's substrate. |
-| `--allow-update-branch` | true | Puts the "Update branch" button on a PR behind its base, the sync mergekit runs. |
+| `--allow-update-branch` | false | The button merges the base into the PR branch by default, and gitkit syncs a branch by rebase. No skill here uses it. |
 | `--enable-auto-merge` | true | Lets `gh pr merge --auto` land an approved PR once checks pass, so a merge waits on CI instead of on you. No skill here uses it: mergekit merges on your word and afkkit stops at an open PR. |
 | `--enable-secret-scanning` | true | GitHub reports a credential committed to the repo. |
 | `--enable-secret-scanning-push-protection` | true | GitHub blocks the push that carries a credential, so nothing to revoke. |
@@ -40,7 +40,7 @@ The default branch is report-only: state it when it isn't `main` and change noth
 Apply only the selected rows, in one echoed command built from those flags:
 
 ```sh
-gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --delete-branch-on-merge --enable-issues --enable-wiki=false --enable-projects=false --allow-update-branch --enable-auto-merge --enable-secret-scanning --enable-secret-scanning-push-protection
+gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --delete-branch-on-merge --enable-issues --enable-wiki=false --enable-projects=false --allow-update-branch=false --enable-auto-merge --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
 
 When the command fails, re-run it without the rejected flag rather than dropping the whole batch, and report which row GitHub refused. This step is done when every row in the map is either applied, deliberately left unselected by the user, refused by GitHub with that refusal reported, or already matching.
@@ -53,7 +53,7 @@ List which baseline files exist and which are missing. Propose only the missing 
 | `LICENSE` | The license the user picks in the license question below. | Present, or the user declines a license. |
 | `README.md` | Title, the one-line About text, an install or run section matched to the stack. | Present. |
 | `.gitignore` | Matched to the detected stack; no file when the stack is unknown. | Present, or stack undetected. |
-| `AGENTS.md` | A repo-conventions skeleton: what the project is, how to build and test it, what an agent must not do. | Present. |
+| `AGENTS.md` | A repo-conventions skeleton: what the project is, how to build and test it, what an agent must not do, and the [docs artifact naming](#docs-artifact-naming) section. | Present; then propose only the naming section, when it is missing. |
 | `.claude/CLAUDE.md` | One line pointing at `AGENTS.md` (`@../AGENTS.md` under a header), so both agent families read one source. | Present. |
 
 **The license is a question, never an assumption, and a private repo gets the question too.** Ask which license the project takes before writing `LICENSE`. The recommendation follows the repo's visibility (fetched in the settings diff), and the option list changes with it:
@@ -73,6 +73,20 @@ List which baseline files exist and which are missing. Propose only the missing 
 - **Offer an open license to a private repo as the runner-up**, because a private repo often goes public later and picking the license now is cheaper than relicensing after contributors arrive.
 - **"No license" stays available in both.** Say what it means when picked: default copyright already reserves all rights, so the code is not open, but nobody reading the repo can tell that from the repo.
 - Recommend, and let the user decide; say in one line that this is not legal advice.
+
+### Docs artifact naming
+
+Every `AGENTS.md` this mode writes carries the section below. When `AGENTS.md` is already present, check it for an artifact-naming rule. When none exists, propose appending the section, and accept a no. A repo scaffolded by another tool, such as a project generator, arrives with an `AGENTS.md` but no naming rule, and that is the case this row exists for.
+
+```markdown
+## Docs artifact naming
+
+- An artifact under `docs/<type>/` (a plan, a QA plan, a review, research) is named `NNNN-<type>-<slug>-YYYY-MM-DD.md`.
+- `NNNN` is a four-digit serial, per directory, assigned in creation order and never reused. To get it, list the directory, take the highest serial, and add one. An empty directory starts at `0001`.
+- `YYYY-MM-DD` is the creation date. The whole name stays fixed after edits.
+- An ADR uses its decision number as the serial: `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`.
+- Reader-facing pages (`docs/wiki/`, how-to guides, runbooks) stay unnumbered.
+```
 
 The holder name comes from `gh api user --jq .name`, falling back to `git config user.name` when that is empty, and it is always visible in the file preview before the write. This step is done when every row is written, skipped for its stated reason, or declined by the user.
 

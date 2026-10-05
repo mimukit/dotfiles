@@ -87,7 +87,7 @@ Rewrite each hit to the new name. Check three places a plain grep for the basena
 
 Look for a documented artifact-naming convention in the repo — `AGENTS.md`, `CONTRIBUTING.md`, or a docs README. When one exists and still describes the old unnumbered shape, propose the updated wording and apply it on an OK. When the repo documents no convention at all, offer to add [The rule](#the-rule) as a short section, and accept a no.
 
-Without this, the next artifact the repo writes has no serial and the tree drifts back within a week. Say that in one line when the user declines.
+The kits that write artifacts add the serial on their own, but an agent without them reads only the repo. Without the recorded rule, that agent writes the next artifact with no serial. Say that in one line when the user declines.
 
 ## 7. Hand off
 

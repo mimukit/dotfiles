@@ -1,7 +1,7 @@
 ---
 name: skillkit
 description: >-
-  Create a new AI agent skill from scratch, with kit-convention naming, drafting, live testing, and publishing included. Use when the user wants to author, scaffold, or draft a new skill, runs "/skillkit", or says something like "help me make a skill for X". Interviews for intent, proposes on-brand kit names, drafts a conventions-compliant SKILL.md.
+  Create a new AI agent skill from scratch (kit-convention naming, drafting, trigger cases, live testing, publishing), or re-check an existing one after a change. Use when the user says "help me make a skill for X", runs "/skillkit", or says "I changed this skill, check it".
 license: MIT
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Bash, AskUserQuestion, WebSearch, WebFetch
@@ -15,52 +15,75 @@ Authoring skill for a personal skill collection. It turns a rough idea ("I want 
 
 ## Invocation
 
-`/skillkit`, or any natural "create/author/scaffold a skill" request. If the user hasn't said what the skill should *do*, ask before anything else. Drive the procedure below one step at a time; don't jump ahead to drafting before intent, visibility, provenance, and name are settled.
+`/skillkit`, or any natural "create/author/scaffold a skill" request. If the user hasn't said what the skill should *do*, ask before anything else. Drive the procedure below one step at a time, and settle intent, visibility, provenance, and name before drafting.
+
+A request to check or update a skill that already exists skips the creation steps: go to [Maintain an existing skill](#maintain-an-existing-skill).
 
 ## Procedure
 
 ### 1. Gather intent
 Ask what the skill should do and *when it should trigger* (the real user phrasings). Optionally ask for example skill links; if given, skim them for structure ideas, which is non-blocking and only worth doing if fetching is available. Capture the job, the trigger conditions, and any hard constraints (tools it needs, things it must not do).
 
-Then check that a **new skill** is the right shape, because the collection's index is a human's to hold. A skill earns its own directory when a person genuinely wants to choose it: a distinct moment, a distinct decision they'd make deliberately. When the choice is one the agent should make from context instead, it belongs as a **mode inside an existing skill**, since a mode costs one branch in that skill's description where a new skill costs a permanent entry the user has to remember. Name the existing skill and let the user decide; don't refuse the request.
+Then check that a **new skill** is the right shape, because the collection's index is a human's to hold. A skill earns its own directory when a person genuinely wants to choose it: a distinct moment, a distinct decision they'd make deliberately. When the choice is one the agent should make from context instead, it belongs as a **mode inside an existing skill**, since a mode costs one branch in that skill's description where a new skill costs a permanent entry the user has to remember. Name the existing skill and let the user decide; don't refuse the request. Done when you can state the job, every branch it handles with at least one real phrasing each, and the user's choice between a new skill and a mode.
 
 ### 2. Visibility (internal or public?)
 Ask whether this is an **internal** repo-only skill or a **public** publishable one, because it changes the rules for everything downstream.
 - **internal**: a maintenance/meta skill for the host repo. Repo coupling is fine, so it may reference the repo's conventions doc, build tooling, and use repo-relative links. Stamp `metadata.internal: true`. skills.sh hides it from discovery.
 - **public**: a shareable skill. It **must** follow [Portability](#portability-public-skills-only) below and stamp `metadata.internal: false`. It gets discovered and listed on skills.sh automatically once pushed to a public collection repo.
 
+Done when the user has picked one.
+
 ### 3. Provenance (original vs. "my version of")
-Ask: is this **original**, or **your version of an upstream skill**? Either way it's authored from scratch here; the answer just informs how much you lean on the upstream for structure ideas ([Gather intent](#1-gather-intent)).
+Ask: is this **original**, or **your version of an upstream skill**? Either way it's authored from scratch here; the answer just informs how much you lean on the upstream for structure ideas ([Gather intent](#1-gather-intent)). Done when the user has answered, with the upstream link when there is one.
 
 ### 4. Propose names
-Follow the host collection's naming convention when it has one. Otherwise suggest **3–5 `kit` names** and recommend one: one lowercase word, the **functional term leads** so it stays searchable (people search `commit`, not `kit`), `kit` appended, and shorten an awkward root rather than force a clumsy join (`humanize` → `humankit`, not `humanizekit`). Avoid collisions with well-known tools (`speckit`, `shipkit`, anything already popular): when network access exists, search the candidate on the web and in the skills.sh directory; when offline, state that the popularity check was skipped. Let the user pick. The chosen name **must** equal the directory name.
+Follow the host collection's naming convention when it has one. Otherwise suggest **3–5 `kit` names** and recommend one: one lowercase word, the **functional term leads** so it stays searchable (people search `commit`, not `kit`), `kit` appended, and shorten an awkward root rather than force a clumsy join (`humanize` → `humankit`, not `humanizekit`). Avoid collisions with well-known tools (`speckit`, `shipkit`, anything already popular): when network access exists, search the candidate on the web and in the skills.sh directory; when offline, state that the popularity check was skipped. Let the user pick. The chosen name **must** equal the directory name. Done when the user has picked a name and its collision check is run or reported as skipped.
 
 ### 5. Draft
-Create the skill in the host collection's documented layout from the [Frontmatter template](#frontmatter-template) below, applying the **Quality bar**, and stamp `metadata.internal` from [Visibility](#2-visibility-internal-or-public). In a collection repo this is commonly `skills/<name>/SKILL.md`; standalone, use the agent's discovered skills directory such as `.claude/skills/<name>/SKILL.md`. Keep it lean, and prefer one file.
+Create the skill in the host collection's documented layout from the [Frontmatter template](#frontmatter-template) below, applying the **Quality bar**, and stamp `metadata.internal` from [Visibility](#2-visibility-internal-or-public). In a collection repo this is commonly `skills/<name>/SKILL.md`; standalone, use the agent's discovered skills directory such as `.claude/skills/<name>/SKILL.md`. Keep it lean: one file for a straight-through skill, and the mode-satellite shape from [Information hierarchy](#information-hierarchy) when modes are skipped branches.
 - If **public**, apply the **Portability** checklist below as a hard gate: the skill must stand alone once installed.
+- Write the **trigger cases** beside the draft: for each branch, two or three realistic prompts that *should* fire the skill, plus two or three near-misses that should *not* (a prompt that belongs to a neighboring skill, or a request the base model handles alone). Save them where the collection keeps such cases; without one, use `evals/triggers.md` in the skill's own directory, as two lists headed `Should fire` and `Should not fire`. The file makes routing repeatable: every later description edit re-runs the same prompts.
+
+Done when every frontmatter field is filled, every step carries a completion criterion, the skill ends on a hand-off, and every branch has trigger cases.
 
 ### 6. Review loop
-Show the draft. Take edits and iterate until the user explicitly approves. Don't proceed to testing on a draft the user hasn't signed off.
+Show the draft. Take edits and iterate until the user explicitly approves. Done when the user has approved the draft in words; testing starts only then.
 
 ### 7. Live test
 Don't install the skill yourself. Hand the user the commands to drive the live trial. If the collection provides dev-link tooling (check its README or Makefile for a link/unlink target), tell them to inject the skill with that; otherwise have them symlink or copy `skills/<name>` into their agent's skills directory (e.g. `~/.claude/skills/<name>`). Then test in a **fresh session**, because the skill list loads at startup, so a running session won't see the new skill. No scratch test-plan file; testing here is done live and directly. Suggest they exercise it against reality:
-- fire it with a few varied, realistic phrasings that *should* trigger it, plus a near-miss or two that should *not* (guards against overtriggering);
+- run every prompt in the trigger cases file, one fresh session each, and note which ones fired the skill (the near-misses guard against overtriggering);
 - confirm the real run follows the drafted procedure end to end and produces the artifact or outcome the skill promises;
 - settle any line you suspect is a **no-op** by running it, not by arguing. A no-op is an instruction the model already obeys by default, so the test is model-relative: delete the suspect line, run the same phrasing again, and keep the line only when the behavior changes.
 
-When done testing, they remove the dev link the same way it was added (the collection's unlink command, or deleting the symlink/copy).
+When done testing, they remove the dev link the same way it was added (the collection's unlink command, or deleting the symlink/copy). Done when every trigger case has a fired or not-fired result, and any mismatch has led to a description edit or a changed case the user agreed to.
 
 ### 8. Hand off
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-First finish the mechanical tail: run the collection's skill lint if it has one (fix errors and address warnings; without one, self-check against the [Conventions](#conventions), **Quality bar**, and, for public skills, **Portability**), and update whatever the collection uses to list its skills (typically a README skills table, and a `skills.sh.json` directory-grouping file if the repo has one). Then close:
+First finish the mechanical tail. Update every surface the collection uses to list or document its skills, when the repo has it:
 
-**What changed.** Report the skill created (name, visibility, file count), the listing surfaces updated, and the lint or self-check result.
+- the README skills table;
+- a `skills.sh.json` directory-grouping file (public skills only);
+- a per-skill reader page (for example `docs/wiki/skills/<name>.md`), plus its entry in the doc map (`docs/wiki/.wikimap.yaml`) and its link in the docs index (`docs/wiki/index.md`);
+- a generated cheatsheet: run the collection's command for it (for example `make cheatsheet`) after the page exists.
+
+Then run the collection's skill lint if it has one, fix errors, and address warnings. Without one, self-check against the [Conventions](#conventions), **Quality bar**, and, for public skills, **Portability**. Done when every surface the repo has is updated and lint reports no errors. Then close:
+
+**What changed.** Report the skill created (name, visibility, file count), the listing and docs surfaces updated, the trigger-case results, and the lint or self-check result.
 
 **Where it landed.** Give the skill's directory path, and whether a dev link from [Live test](#7-live-test) is still in place (it should be removed by now; say so if it isn't).
 
 **Next.** The work is uncommitted, so the move is to commit it: suggest a conventional message (e.g. `feat(<name>): add <name> skill`) for the user to run. **Never commit automatically**, because committing is the user's call.
+
+## Maintain an existing skill
+
+For a skill that already exists and has just changed. Run each check, then close with the same three-beat hand-off as creation.
+
+1. **Re-run the trigger cases.** Run every case in the skill's trigger cases file in a fresh session; when the skill has none yet, write them first, as in [Draft](#5-draft). Done when every case has a result and every mismatch is fixed or reported.
+2. **Check the description against the branches.** Every mode or branch has one trigger, and no trigger names a branch the skill no longer has. Done when each branch maps to one trigger.
+3. **Update the docs surfaces** from [Hand off](#8-hand-off) that the change touched: the reader page for a new mode, a changed description, tool list, visibility, or hand-off target, then the cheatsheet. Done when a reader of the page alone would not be wrong.
+4. **Run the collection's lint.** Done when it reports no errors.
 
 ## Conventions
 
@@ -83,6 +106,8 @@ A skill is built from **steps** (the ordered actions the agent performs) and **r
 
 **Disclose by branch, not by size.** Inline what every branch needs, and push behind a pointer what only some branches reach, where a mode-filtered catalog that each run reads a third of is the clean case. Push too much down and you hide material the agent needs; push too little and the top bloats. Neither direction is the safe default.
 
+**Mode satellites have a fixed shape.** A skill whose modes are skipped branches (each run takes one mode and never reads the others) splits into a routing root `SKILL.md` plus `modes/<mode>.md`, one file per mode. The root keeps mode selection, guards, and the vocabulary every mode shares, plus one pointer per mode: a list item that names the mode, links its `modes/<mode>.md` file, and says to read it, then follow it. A mode file assumes the root is loaded and never repeats it; each mode's hand-off moves with its mode body. A straight-through skill, whose every run walks the whole body, stays one file whatever it weighs.
+
 **Co-locate a concept**: keep a definition, its rules, and its caveats under one heading rather than scattered through the file. Scattering is not duplication, since duplication repeats one meaning in two places while scattering fragments one meaning across many, and it fails differently, because the agent reads one part and never meets the rest.
 
 **Sprawl** is the failure mode: a skill simply too long, even when every line is live and unique. Attention thins across the excess. The cure is the ladder, not a trim pass.
@@ -99,7 +124,7 @@ A skill is built from **steps** (the ordered actions the agent performs) and **r
 **A skill writes for two different readers, and they need opposite prose.** Text a skill writes back to *its own operator* (QA steps, handoff documents, status snapshots, `Hand off` sections, next-move lines, preview-and-confirm lines) is procedural: write it in ASD-STE100 Simplified Technical English. One instruction per sentence. Procedural sentences 20 words or fewer, descriptive sentences 25 or fewer. Active voice, present tense, name the actor. No metaphor, idiom, or second meaning. Pick one term per concept and keep it *within a single document*; the rule never reaches across documents. Text a person reads *to form an opinion* (plan context, research recommendations, ADR rationale, review verdicts) is explanatory and keeps uneven rhythm and a stated position; do not apply STE to it. Machine-read or format-bound text is exempt: commit subjects, issue titles, prompts, design tokens, code, paths, commands, and quoted source. **Content the skill produces for a third-party audience is out of scope entirely**, including project documentation, published prose, and UI copy, because that is production writing for readers outside the session and needs room to explain a concept. Precedence: an explicit user instruction, then the target repository's documented convention, then the register. Inline this rule in a public skill rather than linking it.
 
 ### Documentation artifact naming
-When a skill creates a durable Markdown artifact under `docs/`, follow the host collection's convention when it has one. Otherwise use `<type>-<slug>-YYYY-MM-DD.md`: a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end (for example, `docs/plans/plan-sso-login-2026-07-23.md`). Keep that creation date stable when the file is edited. Update the same artifact in place; for a genuine same-day collision, make the slug more specific and only then insert a sequence immediately before the date (`research-auth-providers-02-2026-07-23.md`). ADRs retain their sequence as `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`. Multi-file artifacts put the convention on their bundle directory, such as `docs/verify/verify-<slug>-YYYY-MM-DD/`, while structural child names remain fixed. Inline the applicable rule in every public skill that creates such an artifact so the installed skill remains self-contained.
+When a skill creates a durable Markdown artifact under `docs/`, follow the host collection's convention when it has one. Otherwise use `NNNN-<type>-<slug>-YYYY-MM-DD.md`: a four-digit serial, a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end (for example, `docs/plans/0001-plan-sso-login-2026-07-23.md`). The serial is per directory, zero-padded, monotonic, and never reused: list the directory, take the highest leading serial, and add one, starting at `0001`. Keep the whole name stable when the file is edited, and update the same artifact in place. ADRs use their decision number as the serial: `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`. Multi-file artifacts put the convention on their bundle directory, such as `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/`, while structural child names remain fixed. A skill that finds an artifact by name matches an optional leading `NNNN-`, so it still sees files written before the serial. Inline the applicable rule in every public skill that creates such an artifact so the installed skill remains self-contained; a skill that leaves the serial to the target repo's agent guide writes unnumbered files in every fresh repo.
 
 ### Cross-referencing steps
 **Never reference a step by its number** (a bare "see step N" citation). A bare number binds to a step's *position*, so inserting or reordering steps silently makes it point at the wrong one. Reference the step's *identity* instead: for a step with a heading, link to it by name with a GitHub anchor (`[Gather intent](#1-gather-intent)`, since GitHub builds the anchor from the full heading text by lowercasing it, dropping punctuation, and turning spaces into hyphens); for a list item with no heading, name the action in prose rather than citing its ordinal.
@@ -114,7 +139,7 @@ Apply these while drafting; they are the difference between a skill that trigger
 - **Front-load the leading word.** A leading word is the compact term that names what the skill does, and the first words of `name` and `description` do the invocation work, so put it there. It works twice over when it's a word the model already knows (`commit`, `review`, `slop`, `ledger`): a pretrained word anchors a region of behavior for free, where a coined one charges you definition tokens for the same anchor. Repeat it as a *token* through the body; never restate it as a sentence.
 - **"Use when" trigger.** The `description` starts with what it does, then a plain-English "Use when …" clause, phrased slightly pushy to fight undertriggering (name the phrasings/commands that should fire it). A description is a **context pointer**, and it loads on every turn whether or not the skill fires, so spend it on **one trigger per branch, not per synonym**: cover every mode, and collapse the phrasings that rename a single one. Cut identity the body already carries, because a pointer says what the material is and when to reach it, never the skill's rules or scope disclaimers. Prune synonyms, never coverage; a branch with no trigger silently never fires.
 - **Skills are for what the model can't already do.** A skill only fires for tasks the base model can't handle directly. If the guidance is obvious, it won't trigger no matter how you word it.
-- **Stay lean; disclose by branch.** Prefer one `SKILL.md`, and apply [Information hierarchy](#information-hierarchy): inline what every branch needs, push into a satellite file inside the skill's own directory what only some branches reach, and co-locate each concept under one heading. Watch for sprawl, which a trim pass can't fix.
+- **Stay lean; disclose by branch.** Apply [Information hierarchy](#information-hierarchy), including the mode-satellite shape for a skill with skipped-branch modes: inline what every branch needs, push into a satellite file inside the skill's own directory what only some branches reach, and co-locate each concept under one heading. Watch for sprawl, which a trim pass can't fix.
 - **Every step ends on a completion criterion**, per [Completion criteria](#completion-criteria). Write the bound so the agent can tell done from not-done, and prefer the exhaustive form ("every X accounted for") to the productive one ("produce a list of X"). A step that ends on a feeling is where run-to-run variance comes from.
 - **Intent over incantation.** A skill says *what to accomplish and why*, and lets the agent work out the exact invocation. Pin an exact command **only** when it's a stable public contract (`git commit`, `gh pr create`, `grep`, `jq`) where re-deriving it every run just burns tokens and invites variance, and even then, make it self-correcting ("run `gh pr create …`; if a flag is rejected, check `gh pr create --help`"). Never hardcode a volatile or vendor tool's syntax, and never encode a tool's *internal* behavior as if it were contract (output-format parsing, help-text scraping, default-shape assumptions), because that's the brittle stuff that breaks on a tool update; describe the goal and let the agent read the docs. The failure mode to avoid on both ends: pinning brittle syntax that breaks loudly, or over-abstracting a frozen command into "figure it out" that taxes every run quietly.
 - **One meaning, one place.** No duplication. For internal skills, point to the host repo's conventions doc instead of restating it; for public skills, inline what they need (see Portability). The **environment** is a source of truth too (`package.json` scripts, a `Makefile`, a config file, `--help` output), so a skill that restates one is a cache, and a cache earns its load only when the lookup is expensive. Cache the unwritten convention and the reason behind a choice; leave the one-command lookups where they cannot go stale.

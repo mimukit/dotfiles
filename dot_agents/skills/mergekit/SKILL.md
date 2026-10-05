@@ -35,6 +35,7 @@ Every merge requires an explicit, per-PR confirmation from a human who has just 
 
 - **Never a batch.** "Merge them all" is not a confirmation for any individual PR. Ask once per PR, naming the number and title.
 - **A stack cascade is one action, so it takes one confirmation that names every PR in it.** Merging a PR in a stack merges every unmerged PR *below* it, bottom-up, so the reviewer who says yes to the top is saying yes to all of them. That is not an exception to the rule above; it is the rule applied honestly. The prompt lists each PR the cascade will land, in merge order, with number and title, so nothing merges that the human did not see named. A cascade nobody enumerated is exactly the batch this rule bans.
+- **Bound to the reviewed head.** The confirmation names the PR's head SHA and covers that commit only. A push after the confirmation is a new change, so it needs a fresh review and a fresh confirmation, and the merge call carries `--match-head-commit` so GitHub enforces it.
 - **Never inferred.** Green CI, an approving review, zero unresolved threads, and a passing local gate are *inputs to the human's decision*, and none of them is the decision. A perfectly green PR still waits.
 - **Never default-yes.** Don't phrase the prompt so silence merges. No answer means no merge.
 - **Never as a side effect.** `start` never merges. A fix round never merges. Only `close` merges, and only after the confirmation.

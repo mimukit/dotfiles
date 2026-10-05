@@ -3,7 +3,7 @@
 Turn work into issues. Two inputs: a plan file (the main path) or a plain description (start fresh).
 
 ### 1. Find the input
-- **Plan path:** a `plan-<slug>-YYYY-MM-DD.md`. Resolve it by precedence: an explicit path in the prompt → the newest canonical plan under `docs/plans/` (creation date is the filename suffix) → ask which plan.
+- **Plan path:** a `NNNN-plan-<slug>-YYYY-MM-DD.md`, or an older `plan-<slug>-YYYY-MM-DD.md` without the serial. Resolve it by precedence: an explicit path in the prompt → the newest canonical plan under `docs/plans/` (the highest leading serial; for plans without one, the latest creation-date suffix) → ask which plan.
 - **Ad-hoc path:** a plain description with no plan. This is the "start fresh, just file it" case → one well-formed issue.
 
 ### 2. Decompose a plan into a proposed breakdown
@@ -84,7 +84,7 @@ Use a temp file for each body (multi-line markdown through `--body` is flaky) an
 Apply the [lifecycle labels](../SKILL.md#lifecycle-labels-every-mode) so the fresh issues advertise their state. The **grill gate** decides which vocabulary applies, because `ready` is a promise the work can run *unattended*, earned only when the decisions are already settled:
 
 - **Grilled source.** The input plan file carries a `Grilled: YYYY-MM-DD` stamp (grillkit writes it when it hardens a plan), *or* the user explicitly says the work is grilled/ready. The decisions are settled, so the normal pair applies: every independent issue gets `ready`, every dependent one gets `blocked` plus a [recorded dependency](../SKILL.md#recording-a-dependency) naming the prerequisite.
-- **Ungrilled source.** An ad-hoc description, or a plan with no grill stamp. The decisions aren't settled, so **every issue gets `needs-planning`**, because it still needs a human plan/grill session before anything unattended should touch it. Record the dependency anyway; it takes effect once the issue is grilled into `ready`. This is what keeps afkkit (and any unattended worker) from picking up work a human hasn't grilled yet.
+- **Ungrilled source.** An ad-hoc description, or a plan with no grill stamp, including one whose `Grilled:` line a later material edit removed. The decisions aren't settled, so **every issue gets `needs-planning`**, because it still needs a human plan/grill session before anything unattended should touch it. Record the dependency anyway; it takes effect once the issue is grilled into `ready`. This is what keeps afkkit (and any unattended worker) from picking up work a human hasn't grilled yet.
 
 **Nothing is labeled `stacked` at creation time.** A dependent only becomes stackable once its prerequisite has an open PR, and at creation nothing has been built. The Stack column records the *intent*; the label arrives later, from the PR-authoring skill or from [`sync`](./sync.md).
 
@@ -107,7 +107,7 @@ Record the dependency in the same call that labels the issue, so a dependent nev
 Show the label set alongside the issues in the preview. The OK covers filing the issues; the labels themselves ride along without a separate prompt.
 
 ### 5. Write the issue numbers back into the plan
-Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth. Add the ref to each phase heading the issue covers, without changing the file's creation-date suffix:
+Once issues exist, annotate the source `NNNN-plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth. Add the ref to each phase heading the issue covers, without changing the file's name, serial and creation-date suffix included:
 
 ```markdown
 ### Phase 1: oidc provider (#41)
@@ -129,6 +129,6 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 **Next.** Route on which set came back non-empty, naming a sibling kit only when it's installed and otherwise describing the action plainly:
 
 - **`ready` issues exist** → pick one up with `start <n>`, which gets it a worktree and flips it `in-progress`. Crown the **highest-priority** one rather than listing all of them, breaking a tie on whichever frees the most other work.
-- **everything is `needs-planning`** (an ungrilled source) → the next move is a human grill session, meaning **grillkit** on the plan, then re-run `create`, or relabel by hand once the decisions are settled. Nothing here is workable unattended yet, so say that plainly rather than offering `start`.
+- **everything is `needs-planning`** (an ungrilled source) → the next move is a human grill session, meaning **grillkit** on the plan, then the `triage` promotion for each issue (`#45 is grilled, mark it ready`), which moves it to `ready`, `stacked`, or `blocked`. Nothing here is workable unattended yet, so say that plainly rather than offering `start`.
 - **everything is `blocked`** → surface the root prerequisite; that's the only thing anyone can act on. When the breakdown marked dependents as stack candidates, say so here: starting the root frees them as soon as its PR opens, not when it merges.
 
