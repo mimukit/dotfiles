@@ -164,6 +164,10 @@ git push -u origin HEAD && git status -sb && \
 gh pr view --json number,url,state 2>/dev/null || true
 ```
 
+**Write every path literally** in each `git add`, `git diff`, `git restore`, and `printf` call. Never store a path list in a shell variable such as `g2="a b c"`, because zsh, the default macOS shell, does not split an unquoted variable into words: `git add -- $g2` gets one path named `a b c` and fails. Quote a path that holds a space.
+
+**The push joins the chain with `&&` after the last commit**, so a failed add, check, or commit in any group stops it and nothing partial gets published. The `;` in the park pattern below is the only exception, and a parked group never carries the push; push in its own call once every commit has landed.
+
 Leave a partially staged path out of `git add` and keep it in the check list, so the group takes its staged hunks only. List both sides of a rename in its group, because `--no-renames` prints the old path and the new path.
 
 **Park the staged paths that are not this group's.** When the recorded staged set holds paths outside the current group (keep-staged paths, or paths of a later group), the check fails until they leave the index. Move them aside as a patch, commit the group, and put them back:

@@ -6,7 +6,7 @@ What is actually waiting on you, in one table:
 gh pr list --state open --json number,title,headRefName,isDraft,statusCheckRollup,reviewDecision,author,updatedAt
 ```
 
-Three facts that command cannot give you matter more than the ones it can, so gather them per PR:
+Four facts that command cannot give you matter more than the ones it can, so gather them per PR:
 
 - **Unresolved review threads.** REST does not expose thread resolution state at all; only GraphQL does, via a `reviewThreads` connection carrying `isResolved` and `isOutdated`. Query it with `gh api graphql`; if the shape has moved, check the current [GraphQL API docs](https://docs.github.com/en/graphql) rather than guessing. A PR with a bot review sitting unanswered is not ready for your time.
 - **Behind the base branch.** Run `git fetch origin` once, then compare each head against `origin/<base>`, because a PR that is behind is one you would be reviewing in a state that will never exist.
