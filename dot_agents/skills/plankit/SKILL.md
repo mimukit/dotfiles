@@ -47,9 +47,9 @@ The failure mode is options that only *look* plural:
 > **Distinct (aim for):** cache the response (smallest diff, ships this week, goes stale on writes) · denormalize the read path so there's nothing to cache (a migration, but the whole staleness class disappears) · don't fix it here at all, because it's only slow when called in a loop, so batch upstream and the endpoint stops mattering.
 
 ### 4. Converge, settle the structure
-Resolve the structural decisions a coherent draft needs (the architecture, the phases, the scope boundary) one at a time, each with a recommended answer. Then **stop**: deliberately leave the deeper, thin, or still-uncertain spots for grillkit rather than grinding every edge case here. Record those under **Open questions** in the doc so the hardening step has a target.
+Resolve the structural decisions a coherent draft needs (the architecture, the phases, the scope boundary, and the test approach when a phase asks for a new kind of test) one at a time, each with a recommended answer. Then **stop**: deliberately leave the deeper, thin, or still-uncertain spots for grillkit rather than grinding every edge case here. Record those under **Open questions** in the doc so the hardening step has a target.
 
-**Done when** the architecture, the phase list, and the scope boundary each have a settled answer the user accepted or redirected, and every other unsettled point sits in the Open questions list.
+**Done when** the architecture, the phase list, and the scope boundary each have a settled answer the user accepted or redirected, every phase that needs a person is marked [attended](#attended-phases), and every other unsettled point sits in the Open questions list.
 
 ### 5. Write the plan document
 Write `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md`, where `NNNN` is the next four-digit serial in `docs/plans/`, `<slug>` is a short lowercase kebab-case name for the feature, and the suffix is the plan's ISO creation date (`0007-plan-sso-login-2026-07-23.md`). To get the serial, list `docs/plans/`, take the highest leading serial, and add one; start at `0001` when there is none. The serial is per directory and never reused, and it applies in every repo, a fresh one included. Keep the whole name stable on later edits; record an updated date inside the document when useful. Use the [plan-doc format](#plan-doc-format) below, which is the contract grillkit and issuekit both read, so keep the body phase/task-shaped. Create `docs/plans/` if it doesn't exist. If a plan for this work already exists, update it in place rather than writing a second file, and keep its name even when it has no serial. When that plan carries a `Grilled:` line and your update is [material](#when-a-grilled-stamp-goes-stale), delete the line and say so in the hand-off.
@@ -91,6 +91,7 @@ The problem, why it matters now, and the outcome that means success.
 The chosen approach and what it **reuses** from the existing codebase, then the plan body as phases/milestones/tasks, each a concrete, verifiable unit of work. This is the structure issuekit reads to propose an issue breakdown. When the alternatives were close, keep the rejected ones to a line each so the choice stays legible later.
 
 ### Phase 1: <name>
+Attended: <only when the phase needs a person: the pick or approval it waits on>
 <the tasks>
 Done when: <an observable a reviewer can check: a command and its output, a behavior in the running app, a test that passes>
 
@@ -107,6 +108,12 @@ Explicit scope boundaries, meaning what this plan deliberately does not cover.
 A hardened plan additionally carries a **`Grilled: YYYY-MM-DD` line directly under the title**. grillkit writes it when the plan survives a grill session, and issuekit reads it as the gate for filing issues `ready`. plankit never writes the stamp itself; a fresh draft is ungrilled by definition.
 
 **Every phase ends on a `Done when:` line**, the acceptance observable. It names something a person or a test can check after the phase ships, never an intent ("auth works"). It gives the build a finish line to check against, and a phase without one has no finish.
+
+**A phase that asks for a new kind of test names its runner and approach** in Design decisions (for example "component tests with vitest and Testing Library, beside the source"). Without that row, the build stops to ask which runner to use.
+
+### Attended phases
+
+**A phase that needs a person carries an `Attended:` line** naming what it waits on: a design pick, a mockup approval, an outward action such as filing issues or a deploy. Order the attended phases before the phases an unattended run can take, so the human work ends first and the rest can run with nobody at the keyboard. An unattended runner reads the line and stops before the build, not in the middle of it.
 
 ### When a `Grilled:` stamp goes stale
 

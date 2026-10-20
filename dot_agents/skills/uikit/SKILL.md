@@ -3,7 +3,7 @@ name: uikit
 description: >-
   Build production UI that reads as a deliberate choice for this project rather than an LLM default, and audit shipped UI for the tells that give it away. Use when the user says "build this page", "make this UI not look AI-generated", "this looks like slop", "design this screen", "audit our UI", "make the frontend look good", or "/uikit". Reads a project's DESIGN.md when one exists.
 license: MIT
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion, Task, Agent
 metadata:
   internal: false
 ---
@@ -109,6 +109,7 @@ This step is done when the rung, the stack, and every behavior the request speci
 - **Motion is justified in one sentence or it doesn't ship.** Animate `transform` and `opacity` only, never `transition: all`, never animate layout properties. One orchestrated moment beats scattered effects, and extra animation is itself a tell.
 - **Write the strings as design material.** Follow `DESIGN.md`'s voice rules when it has them. Otherwise: active voice, sentence case, name things by what people control rather than how the system is built. A control says what happens ("Save changes", not "Submit") and keeps the same verb through the whole flow, so a button that says "Publish" produces a toast that says "Published." Errors name the fix, not the failure. An empty screen is an invitation to act.
 - **Match complexity to the direction.** Maximalist needs elaborate execution; minimal needs precision in spacing and type. Elegance is executing the chosen direction well, not choosing the smaller one.
+- **A mockup follows [Mockups](#mockups).**
 
 This step is done when every specified behavior renders, and every new component names the existing one it reuses or extends, or the reason it is new.
 
@@ -254,6 +255,19 @@ Not findings, but a floor. Every build clears these without announcing it, and `
 
 The Tailwind v4 and shadcn/ui correctness rules live in [stack.md](stack.md). Read that file when the project uses Tailwind or shadcn/ui, and skip it whole on another stack.
 
+## Mockups
+
+A mockup is an HTML page built for a person to compare or approve before the real build. Every send of the page costs its full length, so send it as few times as the decision allows:
+
+1. Write the page to a file, and edit that file for every change.
+2. Preview it once at most, to catch a broken render.
+3. Collect every fix the preview shows, and apply them in one pass.
+4. Render or show it to the user once, by path when the tool accepts a path.
+
+A resend of the whole page for one small fix is the expensive path. When the mockup is large (several screens, or options side by side), build it in a subagent that returns the file path and a one-line summary, so the page never enters this context.
+
+The mockup is done when the user has seen it once and every fix they asked for is in the file.
+
 ## Self-critique
 
 ### The written pre-flight, which always runs
@@ -272,6 +286,8 @@ Report what you fixed and what you're leaving, with a reason. This is a critique
 Only on an explicit ask ("look at it", "screenshot it and check"). A picture is worth a thousand tokens when a picture is available.
 
 Use what is **already present**, in this order: a browser-automation tool the environment provides · an installed headless browser or an existing test-automation setup already in the project. Point it at whatever renders cheapest: a static file, a component preview route, a running dev server the user started.
+
+Read facts with an evaluate call (text, a computed style, an element count) before anything else. Take a snapshot with no image by default. Use an image only for the visual judgment itself, and save it to a file when the user must see it.
 
 **Never install a browser. Never start a dev server you weren't told to start. Never seed data.** uikit needs strictly less than a full end-to-end tool does: rendered output, not a driven authenticated flow.
 

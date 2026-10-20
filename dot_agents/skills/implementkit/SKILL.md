@@ -3,7 +3,7 @@ name: implementkit
 description: >-
   Implement a plan, spec, or issue into working code in straight-through, tests-after, or TDD mode, then run the repo's test and build gate before declaring done. Use when the user says "implement this plan", "implement #42", "do this TDD", "build it, then add tests", "apply these review findings", or "make this failing test pass". It runs attended; the unattended issue-to-PR span is afkkit's.
 license: MIT
-allowed-tools: Bash, Read, Grep, Glob, Edit, Write, Skill
+allowed-tools: Bash, Read, Grep, Glob, Edit, Write, Task, Agent, Skill
 metadata:
   internal: false
 ---
@@ -53,6 +53,17 @@ Pick **straight-through**, **tests-after**, or **TDD** by this precedence, takin
 
 ### 4. Build in the resolved mode
 
+**A long build runs as a conductor.** When the scope holds more than one heavy phase (one that needs a fresh context of its own), or one mechanical bulk phase such as a vendored port or a large lint sweep, this thread builds none of it. Every tool call re-bills the whole context, so each phase built inline taxes every phase after it. Instead:
+
+- Group the phases: a heavy phase stands alone, and consecutive light phases share a group.
+- Dispatch one subagent per group, in order, with the host's subagent tool (`Task` or `Agent`, or `spawn_agent` on Codex). Its brief carries the paths it touches, the signatures of the shared APIs it calls, the resolved mode, the phase's acceptance items, and the gate commands, so it reads nothing this thread already read.
+- The subagent builds and runs the gate under [Tool rules](#tool-rules), writes its notes and logs to a file, and returns a short result: pass or fail, the files changed, the gate result, and that file's path.
+- The conductor edits no code. It reads each result, dispatches the next group, then runs the [done-gate](#5-run-the-done-gate) once over the whole tree.
+
+When afkkit is installed, its conductor section holds the full dispatch and payload rules. On a host with no subagent tool, build the groups inline in order and say so.
+
+Follow [Tool rules](#tool-rules) for every command and every file write, inline or delegated.
+
 **Straight-through.** Implement the production code to satisfy the input. Write **no new tests**; run the existing suite as part of the gate ([Run the done-gate](#5-run-the-done-gate)). Here the build/typecheck is the real safety net, since new code may be uncovered.
 
 **Tests-after.** Implement the production code first, as in straight-through. Then write one focused test per behavior the input names. **Watch each test fail before you keep it:** make a small semantic break in the code it covers (flip a comparison, change a returned value), run the test, see it go red, and reverse the break. A test that stays green under its break tests nothing, so rewrite or delete it. Reverse each break by undoing your own edit, never by restoring a file that also holds other changes.
@@ -75,6 +86,14 @@ The step is done when every requirement in scope has code, and, in tests-after a
 
 - the **test** command, and
 - the **build / typecheck** command (and **lint**, if the repo runs one).
+
+**Run each gate command once, into a log file**, then print its exit code and a bounded tail or grep of the log:
+
+```sh
+log="${TMPDIR:-/tmp}/gate-lint.log"; pnpm lint >"$log" 2>&1; echo "exit $?"; tail -n 40 "$log"
+```
+
+The one run gives both the pass signal and the messages, so a second run of the same gate buys nothing. Read further into the log when the tail does not name the failure.
 
 All must pass before you declare done. If a command genuinely doesn't exist (no test script, no build step), say so and lean on what does exist; don't fabricate a command.
 
@@ -118,7 +137,9 @@ Leave every change **unstaged**. Do not `git add`, do not commit, do not draft a
 - each **acceptance item** with its evidence, and each item marked `unverified`,
 - for a reproduction-test fix round, the **test path**, seen red before the fix and green after,
 - each **plan warning** (ungrilled, open questions) that the build went ahead with,
-- the **phases stamped**, each `Done when:` result, and which phases of that plan are still unbuilt.
+- the **phases stamped**, each `Done when:` result, and which phases of that plan are still unbuilt,
+- each **phase group** a subagent built, with its result file,
+- each **process** the run started, and that it is stopped.
 
 Then crown one next move: commit the work with commitkit when installed, or say plainly that the next step is to group and commit the changes. Don't run it yourself. Name the runners-up in this order:
 
@@ -126,6 +147,15 @@ Then crown one next move: commit the work with commitkit when installed, or say 
 2. When the build touched a UI surface, look at it with verifykit `show` when installed, otherwise open the app and look.
 
 Name the next phase of the plan when one is left. Say the plan is fully built when none is.
+
+## Tool rules
+
+Each rule removes a retry that a long build otherwise pays for again and again.
+
+- **Edit for exact changes.** Use Edit for a small, exact change. When a script writes files (a codemod, `sed -i`, a heredoc), the same command runs the repo's formatter on those files and prints the changed lines (`git diff --stat`, or `git diff -U0` on the files), so a bad pattern shows at once, not at the gate.
+- **Commands that run in zsh and bash alike.** Quote every glob argument (`--include='*.tsx'`, `'pkg@*'`). Iterate a file list with `printf '%s\n' … | while IFS= read -r f; do …; done` or `xargs`, never `for f in $files`. zsh does not split an unquoted variable, and it stops on a glob that matches nothing.
+- **Long-running processes by PID.** Start a dev server with the repo's own start and stop scripts when it has them. Otherwise start it in the background with its output to a log and its PID in a file. A package-manager wrapper can exit while its child keeps the port, so check the port (`curl -sf`, `lsof -ti :<port>`), not the wrapper's exit, to know whether the server runs. Before the hand-off, stop each process you started by its PID or by the PID on its port, and confirm the port is free.
+- **Browser checks read facts first.** When a browser tool checks UI, read facts with an evaluate call (text, a computed style, an element count) before anything else. Take a snapshot with no image by default. Use an image only for a visual decision, and save it to a file when the user must see it.
 
 ## Notes
 
