@@ -9,8 +9,8 @@
 
 -- INFO: Disable diagnostics for .env files
 vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-  pattern = "*.env*",
-  callback = function()
-    vim.diagnostic.enable(false)
+  pattern = { ".env", ".env.*", "*.env" },
+  callback = function(args)
+    vim.diagnostic.enable(false, { bufnr = args.buf })
   end,
 })
