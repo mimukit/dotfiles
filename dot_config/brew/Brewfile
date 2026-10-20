@@ -12,6 +12,8 @@ brew "ansible"
 brew "atuin"
 # Official Amazon AWS command-line interface
 brew "awscli"
+# Bourne-Again SHell, a UNIX command interpreter
+brew "bash"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
 # Toolchain of the web
@@ -154,6 +156,8 @@ brew "ripgrep"
 brew "ruby"
 # Safe, concurrent, practical language
 brew "rust"
+# Display and control your Android device
+brew "scrcpy"
 # Smart session manager for the terminal
 brew "sesh"
 # 7-Zip is a file archiver with a high compression ratio
@@ -304,6 +308,8 @@ cask "numi"
 cask "obs"
 # Verify system files structure, run miscellaneous maintenance and more
 cask "onyx"
+# Android file transfer
+cask "openmtp"
 # Replacement for Docker Desktop
 cask "orbstack"
 # Self-hosted daemon for AI coding agents
