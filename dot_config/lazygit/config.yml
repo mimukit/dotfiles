@@ -39,7 +39,7 @@ promptToReturnFromSubprocess: true
 
 customCommands:
   # Every entry calls ~/.local/bin/git-commitkit (chezmoi:
-  # private_dot_local/bin/executable_git-commitkit), which runs Claude on Haiku
+  # private_dot_local/bin/executable_git-commitkit), which runs Codex by default
   # with the commitkit skill and writes the message to lazygit's own pending
   # commit file. This replaced a command that piped the diff to pbcopy and opened
   # a Raycast AI command; that left the terminal and ignored the commitkit
@@ -47,6 +47,7 @@ customCommands:
   #
   # The full path is deliberate. lazygit started from a GUI pane does not always
   # inherit the PATH that .zshrc builds.
+  # Set COMMITKIT_PROVIDER=claude before starting lazygit to use Claude instead.
 
   # Shift+G writes the message and stops. `output: none` plus `loadingText` is
   # the only shape lazygit gives a spinner to: handler_creator.go wraps the final

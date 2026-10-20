@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# git-commitkit — write a commit message for the staged diff with Claude, using
+# git-commitkit — write a commit message with Codex or Claude, using
 # the commitkit skill (chezmoi: private_dot_local/bin/executable_git-commitkit).
 #
 # Installed on PATH as git-commitkit, so `git commitkit` works from any shell.
@@ -48,14 +48,18 @@
 # scope is restated there. Without that restatement it dropped the scope in one
 # sample out of three; with it, five out of five carried one.
 #
-# Exit codes: 0 wrote a message, 1 refused (nothing staged, bad output, no
-# claude). Never exits non-zero for a merely unusual diff.
+# Codex runs outside the repository with user configuration, hooks, plugins,
+# command tools and web search disabled. Authentication stays with the CLI.
+# Only its final-message file becomes the generated message.
+#
+# Exit codes: 0 succeeded, 1 refused (nothing staged, bad output, missing CLI).
 
 set -uo pipefail
 
 readonly PENDING_FILE="LAZYGIT_PENDING_COMMIT"
 
-MODEL="${COMMITKIT_MODEL:-haiku}"
+PROVIDER="${COMMITKIT_PROVIDER:-codex}"
+MODEL="${COMMITKIT_MODEL:-}"
 MAX_BYTES="${COMMITKIT_MAX_BYTES:-60000}"
 
 # Generated files. commitkit forbids reading their contents, and their diffs are
@@ -71,7 +75,7 @@ note() { printf 'git-commitkit: %s\n' "$1" >&2; }
 
 usage() {
   cat >&2 <<'EOF'
-usage: git commitkit [mode]
+usage: git commitkit [--provider codex|claude] [--model MODEL] [mode]
 
 generate, then act:
   (no flag)        write the message to the pending-commit file, the clipboard
@@ -85,16 +89,23 @@ act on a message already written:
   --edit-pending   open $EDITOR on the pending message, with the diff below
   --clear          delete the pending-commit file
 
-env: COMMITKIT_MODEL (default haiku), COMMITKIT_MAX_BYTES (default 60000),
+env: COMMITKIT_PROVIDER (default codex),
+     COMMITKIT_MODEL (default Codex CLI model, or haiku for Claude),
+     COMMITKIT_MAX_BYTES (default 60000),
      COMMITKIT_SKILL (path to a commitkit SKILL.md),
-     COMMITKIT_THINKING=1 (re-enable model thinking, slower but more considered)
+     COMMITKIT_THINKING=1 (use medium Codex reasoning or enable Claude thinking)
 EOF
-  exit 1
+  exit 0
 }
 
 mode=print
 while [ $# -gt 0 ]; do
   case "$1" in
+    --provider|--model)
+      [ $# -ge 2 ] && [ -n "$2" ] || die "$1 requires a value"
+      if [ "$1" = --provider ]; then PROVIDER="$2"; else MODEL="$2"; fi
+      shift
+      ;;
     --commit) mode=commit ;;
     --edit) mode=edit ;;
     --amend) mode=amend ;;
@@ -139,7 +150,11 @@ case "$mode" in
     ;;
 esac
 
-command -v claude >/dev/null 2>&1 || die "claude not found on PATH"
+case "$PROVIDER" in
+  codex|claude) ;;
+  *) die "unknown provider: $PROVIDER (use codex or claude)" ;;
+esac
+command -v "$PROVIDER" >/dev/null 2>&1 || die "$PROVIDER not found on PATH"
 
 # --- gather the diff --------------------------------------------------------
 #
@@ -185,9 +200,10 @@ repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
 skill_file=""
 for candidate in \
   "${COMMITKIT_SKILL:-}" \
+  "${repo_root:+$repo_root/.agents/skills/commitkit/SKILL.md}" \
   "${repo_root:+$repo_root/.claude/skills/commitkit/SKILL.md}" \
-  "$HOME/.claude/skills/commitkit/SKILL.md" \
-  "$HOME/.agents/skills/commitkit/SKILL.md"
+  "$HOME/.agents/skills/commitkit/SKILL.md" \
+  "$HOME/.claude/skills/commitkit/SKILL.md"
 do
   [ -n "$candidate" ] && [ -r "$candidate" ] && { skill_file="$candidate"; break; }
 done
@@ -223,8 +239,9 @@ EOF
 
 # --- build the prompt -------------------------------------------------------
 
-prompt_file=$(mktemp -t commitkit) || die "cannot create a temp file"
-trap 'rm -f "$prompt_file"' EXIT
+run_dir=$(mktemp -d -t commitkit) || die "cannot create a temp directory"
+trap 'rm -rf "$run_dir"' EXIT
+prompt_file="$run_dir/prompt"
 
 if [ -n "$skill_file" ]; then
   cat "$skill_file" > "$prompt_file"
@@ -259,13 +276,34 @@ thinking_budget=0
 [ "${COMMITKIT_THINKING:-0}" = "1" ] && thinking_budget=""
 
 generate() {
-  MAX_THINKING_TOKENS="$thinking_budget" claude -p \
-    --model "$MODEL" \
-    --tools "" \
-    --setting-sources "" \
-    --no-session-persistence \
-    --system-prompt "$SYSTEM_PROMPT" \
-    < "$prompt_file" 2>&1
+  if [ "$PROVIDER" = claude ]; then
+    MAX_THINKING_TOKENS="$thinking_budget" claude -p \
+      --model "${MODEL:-haiku}" \
+      --tools "" \
+      --disallowedTools 'mcp__*' \
+      --setting-sources "" \
+      --no-session-persistence \
+      --system-prompt "$SYSTEM_PROMPT" \
+      < "$prompt_file" > "$run_dir/message" 2> "$run_dir/error"
+  else
+    local reasoning=low
+    local codex_args=(codex -a never exec)
+    [ "${COMMITKIT_THINKING:-0}" = 1 ] && reasoning=medium
+    [ -n "$MODEL" ] && codex_args+=(--model "$MODEL")
+    printf '%s\n' "$SYSTEM_PROMPT" > "$run_dir/instructions"
+    # Codex progress uses stdout/stderr; consume only the final-message file.
+    "${codex_args[@]}" \
+      --ignore-user-config --ignore-rules --ephemeral \
+      --skip-git-repo-check --cd "$run_dir" --sandbox read-only \
+      --disable shell_tool --disable hooks --disable plugins \
+      --disable apps --disable multi_agent \
+      -c project_doc_max_bytes=0 -c 'web_search="disabled"' \
+      -c "model_instructions_file=\"$run_dir/instructions\"" \
+      -c "model_reasoning_effort=\"$reasoning\"" \
+      --color never \
+      --output-last-message "$run_dir/message" - \
+      < "$prompt_file" > "$run_dir/progress" 2> "$run_dir/error"
+  fi
 }
 
 # Draft mode already forbids a fence, a preamble and a footer. The stripping is
@@ -295,15 +333,19 @@ valid_subject() {
   [[ $1 =~ $SUBJECT_RE ]]
 }
 
-# One retry. Thinking is off, so a run costs under two seconds and the occasional
-# dropped scope is cheaper to re-roll than to hand back as an error.
+# Retry once when the model returns an invalid subject.
 msg=""
 raw=""
 for attempt in 1 2; do
-  raw=$(generate)
+  rm -f "$run_dir/message"
+  generate
   status=$?
-  [ $status -eq 0 ] || die "claude failed (exit $status): ${raw:-no output}"
-  [ -n "$raw" ] || die "claude returned nothing"
+  if [ "$status" -ne 0 ]; then
+    cat "$run_dir/error" >&2
+    die "$PROVIDER failed (exit $status)"
+  fi
+  raw=$(cat "$run_dir/message" 2>/dev/null)
+  [ -n "$raw" ] || die "$PROVIDER returned nothing"
 
   msg=$(printf '%s\n' "$raw" | sanitise)
   if [ -n "$msg" ] && valid_subject "$(printf '%s\n' "$msg" | head -1)"; then
@@ -333,16 +375,14 @@ case "$mode" in
     printf '%s\n' "$msg"
     ;;
   edit)
-    msg_file=$(mktemp -t commitkit-msg) || die "cannot create a temp file"
-    trap 'rm -f "$prompt_file" "$msg_file"' EXIT
+    msg_file="$run_dir/commit-message"
     printf '%s\n' "$msg" > "$msg_file"
     # -v puts the diff in the editor buffer for review; an empty buffer aborts.
     git commit -v -e -F "$msg_file" || die "commit aborted"
     rm -f "$(pending_path)"
     ;;
   amend)
-    msg_file=$(mktemp -t commitkit-msg) || die "cannot create a temp file"
-    trap 'rm -f "$prompt_file" "$msg_file"' EXIT
+    msg_file="$run_dir/commit-message"
     printf '%s\n' "$msg" > "$msg_file"
     # --only rewords without absorbing whatever happens to be staged.
     git commit --amend --only -v -e -F "$msg_file" || die "amend aborted"

@@ -45,6 +45,23 @@ chezmoi add $FILE
 
 Two files are deliberately missing from that script's re-add list, and both would look covered while doing nothing. `~/.claude/settings.json` and `~/.codex/config.toml` are managed by `modify_` scripts, which `chezmoi re-add` skips; the extract steps in the same script handle them. `~/.gitconfig` is a template now, and `re-add` skips a template just as silently. Edit `private_dot_gitconfig.tmpl` and apply.
 
+## Commit messages in lazygit
+
+`git commitkit` uses the Codex CLI by default. Sign in with `codex login` before the first request. To use Claude Code, sign in with `claude` and select it explicitly.
+
+```sh
+git commitkit                         # generate with Codex
+git commitkit --provider claude       # generate with Claude and Haiku
+git commitkit --model YOUR_MODEL      # override the Codex model
+COMMITKIT_PROVIDER=claude lazygit      # use Claude for this lazygit session
+```
+
+In lazygit, press `G` to generate a message, then `c` to review it. `Ctrl+G` generates and commits immediately. `E` generates and opens the editor. `M` rewords the last commit from the commits panel.
+
+`COMMITKIT_PROVIDER` selects `codex` or `claude`. `--provider` overrides it. `COMMITKIT_MODEL` sets the model for the selected provider, and `--model` overrides it. Without a model override, Codex uses its built-in default and Claude uses `haiku`. Codex skips the user configuration for this request. `COMMITKIT_THINKING=1` selects medium Codex reasoning or enables Claude thinking.
+
+Both providers use the same commitkit skill and CLI authentication. The script makes no direct API requests and never switches providers automatically. A failed request preserves the pending message. Codex reads the supplied diff from a temporary directory with command tools, hooks, plugins, and web search disabled.
+
 ## On a new machine
 
 `chezmoi apply` installs the Brewfile itself. `.chezmoiscripts/run_onchange_after_install-packages.sh.tmpl` carries the Brewfile's hash, so it runs on a fresh machine and again whenever a package is added or removed, and stays quiet on a routine apply. It skips without failing when Homebrew is absent, which is what keeps it out of the way in CI.
