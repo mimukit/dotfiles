@@ -7,11 +7,12 @@
 # Steps another tool already owns:
 #   brew_formula, brew_cask -> brewupx (dot_zshrc)
 #   chezmoi                 -> czs, which also refreshes the Brewfile
+#   github_cli_skills       -> skills CLI, which owns the installed skill metadata
 # Steps turned off on purpose: containers, vim, system (macOS software update),
 # microsoft_office
 #   mise                    -> the [commands] entry below. The built-in step runs
 #                              `mise self-update`, which fails on a brew install.
-disable = ["brew_cask", "brew_formula", "chezmoi", "containers", "microsoft_office", "mise", "system", "vim"]
+disable = ["brew_cask", "brew_formula", "chezmoi", "containers", "github_cli_skills", "microsoft_office", "mise", "system", "vim"]
 
 # Cache the sudo credential at the start of the run. Without this a cask or a
 # softwareupdate step opens a password prompt in a pane nobody is watching, and
