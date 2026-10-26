@@ -58,6 +58,11 @@ config.window_frame = {
 	border_bottom_color = "#dc8a78",
 }
 
+config.colors = {
+	selection_bg = config.window_frame.border_top_color,
+	selection_fg = "#1e1e2e",
+}
+
 -- Dim inactive panes
 config.inactive_pane_hsb = {
 	saturation = 0.24,
