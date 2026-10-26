@@ -7,7 +7,6 @@
 ---
 --- My Wezterm config file
 local wezterm = require("wezterm")
-local mux = wezterm.mux
 
 local config = {}
 -- Use config builder object if possible
@@ -158,10 +157,13 @@ config.window_padding = {
 	bottom = "0cell",
 }
 
--- Maximize at startup
-wezterm.on("gui-startup", function(cmd)
-	local tab, pane, window = mux.spawn_window(cmd or {})
-	window:gui_window():maximize()
+-- Maximize each window once, and preserve manual sizes on config reload.
+wezterm.on("window-config-reloaded", function(window)
+	local key = "maximized_window_" .. window:window_id()
+	if not wezterm.GLOBAL[key] then
+		wezterm.GLOBAL[key] = true
+		window:maximize()
+	end
 end)
 
 return config
