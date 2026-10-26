@@ -103,6 +103,13 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 # Shell integrations
 eval "$(starship init zsh)"
 
+# Load the bundled WezTerm integration once in WezTerm shells.
+if [[ "$TERM_PROGRAM" == "WezTerm" ]] && (( ! ${+functions[__wezterm_osc7]} )); then
+  if [[ -r "/Applications/WezTerm.app/Contents/Resources/wezterm.sh" ]]; then
+    source "/Applications/WezTerm.app/Contents/Resources/wezterm.sh"
+  fi
+fi
+
 # Shell integrations for macos only
 if [[ "$OSTYPE" == "darwin"* ]]; then
    eval "$(fzf --zsh)"
