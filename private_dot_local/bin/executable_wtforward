@@ -1,0 +1,227 @@
+#!/bin/sh
+# Runs on the LAPTOP, not on the box. Keeps one SSH ControlMaster connection
+# to the box and mirrors its dev-server ports to the laptop, with the same port
+# number on both sides, so http://localhost:<port> opens the box's server.
+#
+#   every WTFORWARD_INTERVAL seconds   read the box's TCP listeners (ss -ltnH)
+#   a new listener in 10000-19999      ssh -O forward -L <lo>:p:127.0.0.1:p
+#   or in WTFORWARD_EXTRA
+#   a listener that went away          ssh -O cancel
+#
+# POSIX sh and ssh only, for macOS and Linux. Install it with
+#   scp devaloy-ovh:projects/devaloy/scripts/wtforward ~/.local/bin/
+# See docs/wiki/run-worktrees-in-parallel.md.
+set -u
+
+usage() {
+  echo "usage: wtforward [host]   (select a host with fzf when omitted; Ctrl+C stops)"
+}
+
+case "${1:-}" in
+  -h | --help) usage; exit 0 ;;
+  -*) usage >&2; exit 2 ;;
+esac
+if [ "$#" -gt 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+# Read concrete aliases, including aliases from SSH Include files.
+# Limit recursion because Include files can refer back to each other.
+ssh_hosts() (
+  file=$1
+  depth=$2
+  [ "$depth" -lt 16 ] && [ -r "$file" ] || exit 0
+  awk '
+    { sub(/#.*/, ""); gsub(/=/, " "); gsub(/"/, "") }
+    tolower($1) == "host" || tolower($1) == "include" {
+      for (i = 2; i <= NF; i++) print tolower($1), $i
+    }
+  ' "$file" | while IFS=' ' read -r kind value; do
+    if [ "$kind" = host ]; then
+      case "$value" in *[\*\?\!\[]*) continue ;; esac
+      printf '%s\n' "$value"
+    else
+      case "$value" in
+        \~/*) value="$HOME/${value#\~/}" ;;
+        /*) ;;
+        *) value="$HOME/.ssh/$value" ;;
+      esac
+      # SSH Include accepts glob patterns. Expand them without word splitting.
+      old_ifs=$IFS
+      IFS=
+      for included in $value; do
+        ssh_hosts "$included" "$((depth + 1))"
+      done
+      IFS=$old_ifs
+    fi
+  done
+)
+
+host="${1:-}"
+if [ -z "$host" ]; then
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "wtforward: install fzf or pass an SSH host argument" >&2
+    exit 2
+  fi
+  if [ ! -t 0 ] || [ ! -t 1 ]; then
+    echo "wtforward: host selection needs a terminal; pass an SSH host argument" >&2
+    exit 2
+  fi
+  hosts=$({ ssh_hosts "$HOME/.ssh/config" 0; ssh_hosts /etc/ssh/ssh_config 0; } | sort -u)
+  if [ -z "$hosts" ]; then
+    echo "wtforward: no SSH host aliases found; pass an SSH host argument" >&2
+    exit 2
+  fi
+  host=$(printf '%s\n' "$hosts" | fzf --prompt='SSH host> ' --height=40% --reverse) || exit 130
+  [ -n "$host" ] || exit 130
+fi
+interval="${WTFORWARD_INTERVAL:-2}"
+# The main checkouts keep the projects' default ports, so those are not hashed.
+extra="${WTFORWARD_EXTRA:-3000 3001 3002 4000}"
+
+case "$interval" in
+  '' | . | *[!0-9.]* | *.*.*)
+    echo "wtforward: WTFORWARD_INTERVAL must be a number of seconds" >&2
+    exit 2
+    ;;
+esac
+for p in $extra; do
+  case "$p" in
+    *[!0-9]*)
+      echo "wtforward: WTFORWARD_EXTRA holds '$p', which is not a port number" >&2
+      exit 2
+      ;;
+  esac
+done
+
+# A private directory, so two runs never share a socket and nobody else can
+# open it. The socket path stays short enough for the 104-byte macOS limit.
+dir=$(mktemp -d "${TMPDIR:-/tmp}/wtforward.XXXXXX") || exit 1
+sock="$dir/master"
+
+# Every client call goes through the master, never a new connection. When
+# the master is gone, ssh would open a direct connection instead; the
+# ProxyCommand makes that fallback fail, so a dead master reads as closed.
+mux() {
+  ssh -S "$sock" -o ControlMaster=no -o ProxyCommand=false "$@"
+}
+
+cleanup() {
+  trap - EXIT INT TERM HUP
+  mux -O exit "$host" >/dev/null 2>&1
+  rm -rf "$dir"
+}
+trap cleanup EXIT
+trap 'cleanup; echo "closed the connection to $host"; exit 130' INT
+trap 'cleanup; exit 143' TERM HUP
+
+if ! ssh -M -S "$sock" -fN -o ControlPersist=no "$host"; then
+  echo "wtforward: cannot connect to $host" >&2
+  exit 1
+fi
+echo "connected to $host; checking its listeners every ${interval}s"
+
+# OpenSSH binds a plain -L forward on 127.0.0.1 and on ::1, and reports
+# success when one of the two binds works. A laptop process that holds the
+# port on one family would then get no warning, so each family gets its own
+# forward, and a failure on either one means the port is taken. A machine
+# with no IPv6 loopback forwards IPv4 only: three probes on random free ports
+# tell that case apart from a taken port.
+families="127.0.0.1"
+probes=$(awk 'BEGIN { srand(); for (i = 0; i < 3; i++) print int(20000 + rand() * 40000) }')
+for probe in $probes; do
+  if mux -O forward -L "[::1]:$probe:127.0.0.1:$probe" "$host" >/dev/null 2>&1; then
+    mux -O cancel -L "[::1]:$probe:127.0.0.1:$probe" "$host" >/dev/null 2>&1
+    families="127.0.0.1 [::1]"
+    break
+  fi
+done
+if [ "$families" = "127.0.0.1" ]; then
+  echo "wtforward: this machine has no IPv6 loopback; forwarding on 127.0.0.1 only" >&2
+fi
+
+cancel_port() {
+  for a in $families; do
+    mux -O cancel -L "$a:$1:127.0.0.1:$1" "$host" >/dev/null 2>&1
+  done
+}
+
+# Sets err to the ssh message when a bind fails, and leaves no half forward.
+forward_port() {
+  for a in $families; do
+    if ! err=$(mux -O forward -L "$a:$1:127.0.0.1:$1" "$host" 2>&1); then
+      cancel_port "$1"
+      return 1
+    fi
+  done
+}
+
+# Reads ss -ltnH output and prints each wanted port once, space-separated
+# like the other port lists, so has() can match it. ss lists a port
+# once per address family, and the port is the last colon-separated field of
+# the local address in column 4 (127.0.0.1:p, [::]:p, *:p).
+wanted_ports() {
+  awk -v extra="$extra" '
+    BEGIN { n = split(extra, e, " "); for (i = 1; i <= n; i++) want[e[i] + 0] = 1 }
+    {
+      p = $4; sub(/.*:/, "", p)
+      if (p !~ /^[0-9]+$/) next
+      p += 0
+      if (((p >= 10000 && p <= 19999) || (p in want)) && !(p in seen)) { seen[p] = 1; print p }
+    }' | sort -n | tr '\n' ' '
+}
+
+has() {
+  case " $1 " in *" $2 "*) return 0 ;; esac
+  return 1
+}
+
+active=""   # ports forwarded now
+skipped=""  # ports that failed to forward; warned once, kept until they go away
+
+while :; do
+  if ! listeners=$(mux "$host" ss -ltnH 2>&1); then
+    if mux -O check "$host" >/dev/null 2>&1; then
+      echo "wtforward: cannot read the listeners on $host: $listeners" >&2
+    else
+      echo "wtforward: the connection to $host closed" >&2
+    fi
+    exit 1
+  fi
+  wanted=$(printf '%s\n' "$listeners" | wanted_ports)
+
+  for p in $wanted; do
+    if has "$active $skipped" "$p"; then
+      continue
+    fi
+    if forward_port "$p"; then
+      active="$active $p"
+      echo "forward localhost:$p -> $host:$p"
+    else
+      skipped="$skipped $p"
+      echo "wtforward: port $p is in use on this machine, skipped ($(printf '%s\n' "$err" | head -n 1))" >&2
+    fi
+  done
+
+  keep=""
+  for p in $active; do
+    if has "$wanted" "$p"; then
+      keep="$keep $p"
+    else
+      cancel_port "$p"
+      echo "cancel localhost:$p ($host:$p stopped)"
+    fi
+  done
+  active="$keep"
+
+  keep=""
+  for p in $skipped; do
+    if has "$wanted" "$p"; then
+      keep="$keep $p"
+    fi
+  done
+  skipped="$keep"
+
+  sleep "$interval"
+done
