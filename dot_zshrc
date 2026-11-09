@@ -307,3 +307,4 @@ path_prepend "/usr/local/opt/postgresql@18/bin"
 if [[ "$OSTYPE" == "darwin"* ]]; then
   eval "$(zoxide init zsh)"
 fi
+export PATH="$HOME/.local/bin:$PATH"
