@@ -1,4 +1,5 @@
 tap "abue-ammar/tinycast", trusted: true
+tap "anomalyco/tap", trusted: true
 tap "infisical/get-cli", trusted: true
 tap "peterldowns/tap", trusted: true
 tap "pulumi/tap"
@@ -270,6 +271,8 @@ cask "google-chrome"
 cask "google-chrome@beta"
 # Chromium-based web browser
 cask "helium-browser"
+# Local voice dictation
+cask "anomalyco/tap/hex", trusted: true
 # Utility to hide menu bar items
 cask "hiddenbar"
 # Homebrew's official GUI
@@ -340,8 +343,8 @@ cask "tailscale-app"
 cask "telegram-desktop"
 # To-do & task list manager
 cask "ticktick"
-# Tiny, fully native launcher, hotkeys, and clipboard history
-cask "abue-ammar/tinycast/tinycast", trusted: true
+# Application launcher and productivity tool
+cask "tinycast"
 # Speech-to-text and AI text processing
 cask "typewhisper"
 # Open-source code editor
@@ -354,6 +357,8 @@ cask "vorssaint"
 cask "wezterm"
 # Native desktop client for WhatsApp
 cask "whatsapp"
+# Local-first Markdown editor
+cask "writer"
 # REST, GraphQL and gRPC client
 cask "yaak"
 # Mesh VPN client
@@ -363,5 +368,5 @@ mas "Hidden Bar 2", id: 1452453066
 mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
 mas "Pastel", id: 413897608
+mas "Session", id: 1521432881
 mas "TeraCopy", id: 1378806557
-npm "corepack"
