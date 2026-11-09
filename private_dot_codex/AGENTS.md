@@ -57,9 +57,11 @@ skill, which carries the complete pattern catalog.
 
 Never hard-wrap Markdown. Write each paragraph and each list item as one continuous line, and let the editor soft-wrap it. Keep the line structure only where it carries meaning: code fences, tables, and YAML frontmatter. No setting on this machine wraps Markdown for you, so a wrapped file is your own doing. This rule covers every Markdown file you write or edit for me, including this one. If a repository states its own line rule, follow the repository instead.
 
-## Mockups
+## Mockups and images
 
-When I ask for a mockup, make an image mockup. Never write HTML for it, unless I ask for code in the same request.
+When I ask for a mockup, make an image mockup. Never write HTML for it, unless I ask for code in the same request. Do not render an HTML page and screenshot it to make or iterate on a mockup.
+
+Use your built-in image generation for every image task. When you give an image task to a sub-agent, run that sub-agent on the newest Sol model. Today that is `gpt-6.1-sol`; to confirm the newest, read the `*-sol` slugs in `~/.codex/models_cache.json`. Claude Code agents on this machine cannot generate images, so they send their image tasks to a Codex sub-agent.
 
 ## Hard rules to follow
 

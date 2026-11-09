@@ -49,9 +49,16 @@ detail, and uneven sentence length. For a full rewrite or a review pass, use the
 
 Never hard-wrap Markdown. Write each paragraph and each list item as one continuous line, and let the editor soft-wrap it. Keep the line structure only where it carries meaning: code fences, tables, and YAML frontmatter. No setting on this machine wraps Markdown for you, so a wrapped file is your own doing. This rule covers every Markdown file you write or edit for me, including this one. If a repository states its own line rule, follow the repository instead.
 
-## Mockups
+## Images and mockups
 
-When I ask for a mockup, make an image mockup. Never write HTML for it, unless I ask for code in the same request.
+Claude Code cannot generate images. Codex can, so send every image task to Codex: a UI mockup, a screen variant, an icon, an illustration, or any other generated picture.
+
+- Do not write an HTML mockup page and screenshot it to make or iterate on a design. Write HTML only when the request asks for code.
+- Start a Codex sub-agent for each image task, on the newest Sol model. Today that is `gpt-6.1-sol`. To confirm the newest, read the `*-sol` slugs in `~/.codex/models_cache.json`.
+- In T3 Code, use `delegate_task` with the Codex provider and the Sol model. Elsewhere, run `codex exec -m gpt-6.1-sol "<prompt>"` in the project directory.
+- Give the sub-agent the screen, the content, the size, and the path for the PNG. Codex also keeps a copy under `~/.codex/generated_images/`.
+- Show me the image, take my feedback, and send the next round to Codex. Repeat until I approve the mockup.
+- If `command -v codex` prints nothing, or Codex is not signed in, say so. Do not fall back to an HTML screenshot.
 
 ## Committing
 
