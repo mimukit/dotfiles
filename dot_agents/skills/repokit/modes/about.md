@@ -31,6 +31,8 @@ Present a side-by-side so nothing is a surprise, and let the user accept, edit, 
 
 Don't apply anything until the user signs off on the final values. This step is done when each of the three fields is accepted, edited, or kept current.
 
+**Under `setup`, skip this question and apply the defaults.** Write the description and the homepage only when the current field is empty; a curated value stays. Add the proposed topics and remove none. Under `setup`, this step is done when each field has its default outcome recorded for the hand-off.
+
 ## 5. Apply, echoing the commands
 On approval, write the approved values and print each command you run:
 

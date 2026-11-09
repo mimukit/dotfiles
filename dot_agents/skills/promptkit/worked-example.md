@@ -23,8 +23,9 @@ Constraints: follow the conventions in the repo's agent instruction file. Keep
 Task: make a failed refresh in `refreshSession()` end the session instead of
 returning the stale token.
 
-Done when `pnpm test src/lib/session.test.ts` passes with a new case covering the
-failed-refresh path, and `pnpm typecheck` is clean.
+Done when a new failed-refresh case in `src/lib/session.test.ts` fails before the
+fix, on the stale token coming back, and passes after it; the rest of
+`pnpm test src/lib/session.test.ts` stays green, and `pnpm typecheck` is clean.
 
 Stop there. Leave the surrounding token helpers as they are, and do not commit.
 ```

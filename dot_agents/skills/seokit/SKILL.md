@@ -174,7 +174,7 @@ Write the report for the site owner: short sentences, one fix per line, every fi
 
 **Location.** When the working directory is inside a git repository, write `docs/seo/NNNN-seo-<slug>-YYYY-MM-DD.md` under the repository root. Otherwise ask once: save in the working directory, or print only. With no filesystem, print the report as one code block with its filename.
 
-**Name.** `NNNN` is a four-digit serial: list `docs/seo/`, take the highest leading serial, add one, and start at `0001` in an empty or missing directory. The slug is the **production** host without `www.`, dots turned to hyphens, plus the path segments (`example-com-pricing`); `crawl` uses the host alone. A `local` run uses the production origin, so local and production reports of one page share a slug. The date is today's. Every run writes a new file; never overwrite an earlier report.
+**Name.** `NNNN` is a four-digit serial: take the highest leading serial in `docs/seo/` across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD docs/seo/` after `git fetch origin`), and add one, and start at `0001` when there is none. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. The slug is the **production** host without `www.`, dots turned to hyphens, plus the path segments (`example-com-pricing`); `crawl` uses the host alone. A `local` run uses the production origin, so local and production reports of one page share a slug. The date is today's. Every run writes a new file; never overwrite an earlier report.
 
 **Skeleton**, in order:
 

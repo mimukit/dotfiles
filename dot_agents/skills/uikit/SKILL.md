@@ -1,7 +1,7 @@
 ---
 name: uikit
 description: >-
-  Build production UI that reads as a deliberate choice for this project rather than an LLM default, and audit shipped UI for the tells that give it away. Use when the user says "build this page", "make this UI not look AI-generated", "this looks like slop", "design this screen", "audit our UI", "make the frontend look good", or "/uikit". Reads a project's DESIGN.md when one exists.
+  Build production UI that reads as a deliberate choice for this project rather than an LLM default, audit shipped UI for the tells that give it away, or mock up a screen as an image before the build. Use when the user says "build this page", "make this UI not look AI-generated", "audit our UI", "make the frontend look good", "mock up this screen", "show me a few options for this screen", or "/uikit". Reads a project's DESIGN.md when one exists.
 license: MIT
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion, Task, Agent
 metadata:
@@ -25,10 +25,15 @@ The whole skill hangs off one idea: **taste is spent only where nothing else con
 
 ## When this fires
 
-- **`build`.** "Build this page", "add a settings screen", "make this look good", "design the onboarding flow", or any UI work handed over by an implementation step. Generates the UI.
-- **`audit`.** "Does this look AI-generated", "audit our UI", "why does this feel like a template", "check the frontend for slop". Read-only sweep. **Writes nothing, ever.**
+Route by the request, read that mode's file, then follow it. Everything in this root applies to every mode, and the mode files do not repeat it.
 
-If a request is plainly one or the other, just run it. Ask only when a request could genuinely go either way ("look at the dashboard"), since `audit` is free and `build` edits source.
+- **`build`.** "Build this page", "add a settings screen", "make this look good", "design the onboarding flow", or any UI work handed over by an implementation step. Generates the UI. Mode `build` → read [modes/build.md](modes/build.md), then follow it.
+- **`audit`.** "Does this look AI-generated", "audit our UI", "why does this feel like a template", "check the frontend for slop". Read-only sweep. **Writes nothing, ever.** Mode `audit` → read [modes/audit.md](modes/audit.md), then follow it.
+- **`mockup`.** "Mock up this screen", "show me what this would look like", "show me a few options for this screen", "mock up three versions". Produces an image, and code only when the user asks for code. Writes no source. Mode `mockup` → read [modes/mockup.md](modes/mockup.md), then follow it.
+
+If a request is plainly one of them, just run it. Ask only when a request could genuinely go either way ("look at the dashboard"), since `audit` is free and `build` edits source. A mockup request that also says "as code", "the HTML", or "the component" is a `build`.
+
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
 ## The precedence ladder
 
@@ -88,87 +93,6 @@ Worked examples:
 ### Never block on the design read
 
 **It is a declaration, not an interview.** When the subject is unclear at rung 3 or 4, infer it from whatever the repo shows and *state the inference*, and never stop to ask. Wrong-but-stated beats correct-but-hung: uikit runs inside unattended pipelines where nothing is there to answer, and a stated read is the thing a reviewer corrects. Ask only when the user is plainly present and the request itself is ambiguous.
-
-## Mode: `build`
-
-### 1. Ground it
-
-Walk [the ladder](#the-precedence-ladder) and name the rung that matched. Detect the stack from the project's manifest and config rather than assuming, naming the framework, styling system, component library, and whether it's Tailwind v3 or v4, because [that distinction changes what renders](stack.md). Greenfield or undeclared, default to **Tailwind v4 + shadcn/ui** and say out loud that it's a default.
-
-This step is done when the rung, the stack, and every behavior the request specifies are named.
-
-### 2. State the design read
-
-[Five words](#the-design-read), one line, before any code exists. This step is done when all five words have a value and the signature changes no specified behavior.
-
-### 3. Build
-
-**Compose before you invent.** Use the existing component before writing a styled `div`; extend it before forking it; fork it only when the difference is real and say why. An agent's instinct is to write fresh markup because it's faster than reading what's there, and that instinct is what produces a codebase with four Buttons.
-
-- **Clear [the accessibility floor](#the-accessibility-floor)** without announcing it. It is a floor, not a feature.
-- **Motion is justified in one sentence or it doesn't ship.** Animate `transform` and `opacity` only, never `transition: all`, never animate layout properties. One orchestrated moment beats scattered effects, and extra animation is itself a tell.
-- **Write the strings as design material.** Follow `DESIGN.md`'s voice rules when it has them. Otherwise: active voice, sentence case, name things by what people control rather than how the system is built. A control says what happens ("Save changes", not "Submit") and keeps the same verb through the whole flow, so a button that says "Publish" produces a toast that says "Published." Errors name the fix, not the failure. An empty screen is an invitation to act.
-- **Match complexity to the direction.** Maximalist needs elaborate execution; minimal needs precision in spacing and type. Elegance is executing the chosen direction well, not choosing the smaller one.
-- **A mockup follows [Mockups](#mockups).**
-
-This step is done when every specified behavior renders, and every new component names the existing one it reuses or extends, or the reason it is new.
-
-### 4. Pre-flight
-
-Run [self-critique](#self-critique). It is a critique, not a gate: findings get fixed or get named, and the build is not blocked either way. This step is done when each of the four written checks has a result.
-
-### 5. Hand off
-
-_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
-
-**Called by a build skill** (implementkit, afkkit, or another kit that runs uikit as a step)? Return three items to the caller and stop: the design read verbatim, the changed file paths, and the pre-flight result with anything left unfixed. Skip the three beats below, because the caller owns the next move.
-
-**What changed.** Report the components and pages written or edited, one line each, and the composition decisions (what was reused, what was extended, what was newly written and why).
-
-**Where it landed.** Give the file paths, and the pre-flight result including anything left unfixed.
-
-**Next.** **Repeat the design read verbatim in this hand-off.** It is the only durable record of why the UI looks the way it does, and repeating it here is what carries it into a PR body when this runs inside a pipeline. Then, if the project has no `DESIGN.md`, the crowned next move is **designkit** `init` when installed (otherwise write one by hand), because it derives the system from shipped UI, and there is now shipped UI to derive from. If a `DESIGN.md` already exists, the next move is committing the work with **commitkit** when installed, otherwise `git add` and commit. Changes are left unstaged either way; uikit does not commit. As a runner-up, look at the shipped screen with verifykit `show` when installed, otherwise open the app and look.
-
-## Mode: `audit`
-
-**Read-only. Writes nothing, ever.** It reports and routes; fixing is a separate `build` invocation, deliberately.
-
-### 1. Resolve the target
-
-In order, taking the first that applies:
-
-1. **Explicitly named paths**, meaning a directory, a component, or a route. This leads because the UI most worth auditing predates the skill and appears in no diff at all; "audit our UI" is the actual ask, and a diff cannot answer it.
-2. **The UI files in the working tree or the branch diff**, when uncommitted or branch changes exist and no path was named. Note that a plain diff never shows untracked files, so list those separately and read them too.
-3. **Ask**, when neither resolves. Don't sweep a whole repository by reflex; that's unbounded on any real application.
-
-State the target in one line before reading anything. This step is done when the target line names every path in scope.
-
-### 2. Sweep
-
-Run [the catalog](#the-anti-slop-catalog), filtered to the surface, so `product` entries don't fire on a marketing page and `marketing` entries don't fire on a settings screen. Then run [the accessibility floor](#the-accessibility-floor), which fires on both. This step is done when every file in the target has been checked against every filtered catalog entry and every floor rule, or is counted as skipped.
-
-### 3. Report
-
-Terse, clickable, no preamble. One finding per line:
-
-```
-src/components/Features.tsx:34   🔴  three equal feature cards for four features → show the real count, grouped by weight
-src/components/Hero.tsx:12       🔴  fake dashboard built from divs → use a real screenshot or an embedded live component
-src/app/settings/page.tsx:88     🟡  icon-only button with no accessible name → add aria-label
-src/components/Card.tsx:7        🟢  rounded-3xl here, rounded-lg everywhere else → pick one corner language
-```
-
-🔴 Blocker · 🟡 Should-fix · 🟢 Nit. Then a mechanical verdict, and a **mandatory** coverage line: how many files were read and how many were skipped. An audit that reached three files reads exactly like a clean bill of health unless it says otherwise.
-
-**On the seam with a general code review:** a code-review pass hunts *code* signatures, meaning dead abstractions, over-commenting, and defensive noise. uikit hunts *visual* ones. Running both against the same diff produces complementary findings, not duplicates. Neither defers to the other.
-
-### 4. Hand off
-
-**What changed.** Nothing. Say it outright; a reader should never have to wonder whether a read-only mode wrote something.
-
-**Where it landed.** Inline in this reply. No artifact by default; offer to save one only if asked.
-
-**Next.** Crown the single worst finding and route it to [`build`](#mode-build). **"Nothing here reads as generated" is a valid, stated result**, so say the UI is clean and stop rather than inventing a finding to justify the run.
 
 ## The anti-slop catalog
 
@@ -244,7 +168,7 @@ Silence in these is the product-side equivalent of a purple gradient, because no
 Not findings, but a floor. Every build clears these without announcing it, and `audit` reports any that a shipped surface doesn't:
 
 - Visible `:focus-visible` on every interactive element. Never remove a focus ring without replacing it.
-- `prefers-reduced-motion` honored wherever anything moves.
+- `prefers-reduced-motion` honored wherever anything moves. **motionkit**, when installed, says what the reduced version keeps.
 - WCAG AA contrast on text and on meaningful non-text.
 - Semantic elements before ARIA: a `button` beats a `div` with `role="button"` and a click handler, always.
 - Every control labeled, every image with `alt` (empty `alt=""` when decorative, deliberately).
@@ -255,18 +179,9 @@ Not findings, but a floor. Every build clears these without announcing it, and `
 
 The Tailwind v4 and shadcn/ui correctness rules live in [stack.md](stack.md). Read that file when the project uses Tailwind or shadcn/ui, and skip it whole on another stack.
 
-## Mockups
+## The mobile layer
 
-A mockup is an HTML page built for a person to compare or approve before the real build. Every send of the page costs its full length, so send it as few times as the decision allows:
-
-1. Write the page to a file, and edit that file for every change.
-2. Preview it once at most, to catch a broken render.
-3. Collect every fix the preview shows, and apply them in one pass.
-4. Render or show it to the user once, by path when the tool accepts a path.
-
-A resend of the whole page for one small fix is the expensive path. When the mockup is large (several screens, or options side by side), build it in a subagent that returns the file path and a one-line summary, so the page never enters this context.
-
-The mockup is done when the user has seen it once and every fix they asked for is in the file.
+The fixes that make a web app on a phone behave like an installed one (sticky hover, the tap flash, `100vh`, input zoom, safe areas, overscroll, touch axes) live in [mobile.md](mobile.md). Surface ships to phones → read [mobile.md](mobile.md), then apply it; skip it whole on a desktop-only surface.
 
 ## Self-critique
 

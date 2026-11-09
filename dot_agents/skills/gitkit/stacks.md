@@ -46,7 +46,7 @@ Then hand the new branch to gitkit's [create-or-adopt](./SKILL.md#create-or-adop
 gh stack rebase --upstack              # replay every layer above the current one
 ```
 
-Surface a conflict the way gitkit surfaces any other: list the conflicted files with `git diff --name-only --diff-filter=U`, propose a resolution per file, confirm before writing, and run the repo's test gate afterward, because a conflict resolution is a code change.
+Resolve a restack conflict by [Conflicts](./SKILL.md#conflicts), the same rule as any other sync.
 
 **Inspect:**
 

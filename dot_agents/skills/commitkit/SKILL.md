@@ -1,9 +1,9 @@
 ---
 name: commitkit
 description: >-
-  Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin. Use when the user asks to commit changes, says "commit this", runs "/commitkit", runs "/commitkit all" to commit every change in the tree, or wants a well-formed commit message written for staged work, even if they don't spell out the format.
+  Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin. Use when the user asks to commit changes, says "commit this", runs "/commitkit", runs "/commitkit all" to commit every change in the tree, or wants a well-formed commit message written for staged work, even if they don't spell out the format. Also use when the user says "commit these, we'll review later" or "I reviewed the X plan", to stamp a doc for review or mark it reviewed.
 license: MIT
-allowed-tools: Bash, Read
+allowed-tools: Bash, Read, Edit
 metadata:
   internal: false
 ---
@@ -14,9 +14,9 @@ Turn the current changes into one or more clean commits with [Conventional Commi
 
 ## When this fires
 
-The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). A request for the *message only* ("draft a commit message", "what should the message say") takes the [Message-only route](#message-only-route), which never stages, commits, or pushes. A caller that wants the commits without the push says `no-push` ("commit only, do not push"); see [Commit each group](#5-commit-each-group).
+The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). A request for the *message only* ("draft a commit message", "what should the message say") takes the [Message-only route](#message-only-route), which never stages, commits, or pushes. A caller that wants the commits without the push says `no-push` ("commit only, do not push"); see [Commit each group](#5-commit-each-group). A commit request that defers the review of a doc ("we'll review later"), or a report that a doc is reviewed, takes the [Review stamp](#review-stamp) before the procedure.
 
-This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage this session's files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step.
+This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage this session's files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step. The one planned question is the branch, when a branch-workflow repo has you [on the base branch](#on-the-base-branch).
 
 ## Scope
 
@@ -31,6 +31,32 @@ A run commits **this session's changes**, not every change in the tree. One bran
 
 **A session path can hold hunks you did not write**, when another session edited the same file. When its stat shows more change than you made, or you know another session works in that file, read its diff. Commit only your own hunks, staged as a patch the way a mixed file is in [Commit each group](#5-commit-each-group). When the hunks overlap and cannot be split, stop and ask.
 
+## On the base branch
+
+A repo that works through issue branches and pull requests does not expect a commit straight on its base branch, so a run there asks first. A solo repo that commits to the base branch every day gets no question. Run this check before the commit chain in [Commit each group](#5-commit-each-group), and only when `HEAD` is the base branch. **gitkit** owns the base branch; without gitkit, take the branch `git symbolic-ref --short refs/remotes/origin/HEAD` names, minus `origin/`.
+
+Skip the check when the user already named the branch for this run ("commit on main", "put it on a hotfix branch"), or when a calling skill passed `no-push`. A caller owns its own branch.
+
+**Read the workflow signals in one call:**
+
+```sh
+git worktree list --porcelain | grep -E '^branch refs/heads/(issue|hotfix)-'; \
+gh pr list --state merged --limit 1 --json number -q '.[].number' 2>/dev/null; \
+gh api "repos/{owner}/{repo}/branches/<base>/protection" >/dev/null 2>&1 && echo protected
+```
+
+Any output is a signal: an `issue-*` or `hotfix-*` worktree, a merged pull request, or a protected base branch. A `gh` failure counts as no signal. With no signal, commit on the base branch and push as usual.
+
+**With a signal, ask once for the whole run and stop until the user answers.** Offer three choices, and recommend `hotfix-*` for a fix or a quick change and `issue-*` for anything else:
+
+- **Commit on the base branch.** Run the chain as it stands.
+- **A `hotfix-<slug>` branch.** Take the slug from the symptom, or from the change when it is not a fix, kebab-cased, at most about 40 characters, with a hyphen and never a slash. Put `git switch -c hotfix-<slug> && \` at the head of the chain.
+- **An `issue-<n>-<slug>` branch.** File the issue first: `gh issue create --title "<type(scope): summary of the main group>" --body "<one-line why>"`, and read `<n>` from the URL it prints. Add no `ready` label, because the work has already begun. Take the slug from the title without its `type(scope):` prefix, kebab-cased, at most about 50 characters. Put `git switch -c issue-<n>-<slug> && \` at the head of the chain, and add a `Refs #<n>` footer to each message. Without `gh`, drop this choice.
+
+The new branch carries the working tree with it, out-of-scope changes included, and they stay uncommitted. The run stays on the new branch after the push. Never invent a branch name with another prefix.
+
+**Done when** the run is on the branch the user chose, or the signal call printed nothing and the run stays on the base branch.
+
 ## Message-only route
 
 A user in a live session wants the message, not the commit. This route reads and prints. The index, the refs, and the remote stay exactly as they were.
@@ -43,6 +69,16 @@ A user in a live session wants the message, not the commit. This route reads and
 The only git commands on this route are reads: `status`, `diff`, `log`, `rev-parse`, `for-each-ref`, and `hash-object` without `-w`.
 
 **Done when** every message is printed and a closing run of the record commands prints the same commit and the same two hashes as the opening run. Hand off in one line: say nothing changed, and name the next move, which is to say "commit" to commit with these messages.
+
+## Review stamp
+
+A doc committed for later review carries a stamp line, so a later session finds it with one `grep`. **statuskit** lists the pending docs; without statuskit, `grep -rl '^Review: pending' docs/` lists them. The stamp is `Review: pending`, and `Review: done YYYY-MM-DD` replaces it once the user has reviewed the doc. Neither the Message-only route nor Draft mode edits a file, so no stamp runs there.
+
+**Stamp.** The user asks to commit and defers the review ("commit the plan and research files, we'll review later"). Before [Read the state](#1-read-the-state), stamp each in-scope Markdown file under `docs/` that the request names, or each one under `docs/plans/` and `docs/research/` when it names the kinds. Write the line as its own paragraph after the title block and before the first `##` heading. After YAML frontmatter, use the position after the title. A file that already has a `Review:` line gets that line replaced, not a second one. A file the request does not cover stays unstamped. The stamp lands in the same commit as the file, and the message does not mention it.
+
+**Mark reviewed.** The user says a doc is reviewed ("I reviewed the verifykit plan", "mark all reviewed"). Find the named docs, or every doc with `Review: pending` for "all", in `docs/`. Replace the line with `Review: done` and today's date. Treat only those files as the scope, and commit them through the normal procedure, usually as one `docs` commit. A named doc with no pending stamp gets a one-line note and no edit.
+
+**Done when** every covered file holds exactly one `Review:` line in the new state, before the commit chain starts.
 
 ## Draft mode
 
@@ -94,7 +130,7 @@ Pick the `type` from what the diff *does*, not what files it touches:
 |------|------|
 | `feat` | a new capability the user can see |
 | `fix` | a bug fix |
-| `hotfix` | an urgent fix patched straight onto the base branch |
+| `hotfix` | a fix on a `hotfix-<slug>` branch |
 | `docs` | documentation only |
 | `refactor` | behavior-preserving code change |
 | `perf` | a performance improvement |
@@ -103,7 +139,7 @@ Pick the `type` from what the diff *does*, not what files it touches:
 | `style` | formatting/whitespace, no logic |
 | `chore` | routine maintenance that fits nothing above |
 
-**`hotfix` is `fix` in a hurry, and the branch decides it, not the severity.** Use `hotfix` when the commit sits on a branch named `hotfix-<slug>`, cut from the base branch to patch it directly. Everything else stays `fix`, however urgent it felt. This keeps the type checkable from the branch name rather than from a judgement about how bad the bug was. `hotfix` is an addition to the [Conventional Commits](https://www.conventionalcommits.org) set, so drop back to `fix` in a repo whose tooling validates types against the standard list; say once that you did.
+**`hotfix` is `fix` in a hurry, and the branch decides it, not the severity.** A fix on a branch named `hotfix-<slug>` takes `hotfix`. A fix anywhere else stays `fix`, however urgent it felt. A hotfix branch also carries quick changes that are not fixes, and those keep the type their diff earns (`docs`, `chore`, `feat`), because the changelog files a `hotfix` under **Fixed**. This keeps the type checkable from the branch name rather than from a judgement about how bad the bug was. `hotfix` is an addition to the [Conventional Commits](https://www.conventionalcommits.org) set, so drop back to `fix` in a repo whose tooling validates types against the standard list; say once that you did.
 
 **Scope** is **mandatory** here. Unlike vanilla Conventional Commits, never omit it. Work out the module or feature group the diff belongs to (a package, module, directory, or feature area) and use that as the scope: `feat(auth): …`. When a change is genuinely global or fits no single area (repo-wide config, tooling, cross-cutting cleanup), use `repo` as the scope: `chore(repo): …`. Add a `!` (or a `BREAKING CHANGE:` footer) when the change breaks existing behavior.
 
@@ -146,7 +182,7 @@ Order the groups so dependencies land first (e.g. a shared helper before the fea
 **Done when** every in-scope changed path sits in exactly one group or on a stated skip list, every out-of-scope path sits on the out-of-scope list, and every recorded staged path sits in a group or in the keep-staged set.
 
 ### 5. Commit each group
-With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs. **Before each commit, check that the staged set equals exactly that group's paths**, so the commit cannot take a path that belongs elsewhere:
+When `HEAD` is the base branch, settle the branch first with [On the base branch](#on-the-base-branch). With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs. **Before each commit, check that the staged set equals exactly that group's paths**, so the commit cannot take a path that belongs elsewhere:
 
 ```sh
 git add -- <group 1 paths> && \
@@ -186,7 +222,7 @@ The patch holds the exact staged hunks, so a partially staged file comes back pa
 
 The `gh pr view` tail tells the hand-off whether this branch already has a pull request. It costs nothing extra, because it rides the same call. An empty result or a `gh` failure means no pull request, and that is a normal outcome rather than an error.
 
-**Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way.
+**Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way, because many solo repos commit straight to the base branch and a prompt there would fire on every run. A branch-workflow repo asks which branch before the commit, in [On the base branch](#on-the-base-branch), never before the push.
 
 Hold the push and ask in these cases:
 
@@ -222,10 +258,11 @@ List each commit's changed/created files in the last column. You already know th
 
 1. **A calling skill passed `no-push`.** Report the commits and return to the caller. The caller owns the next move, so crown nothing.
 2. **The push did not happen.** Crown the push and give the command.
-3. **The branch already has an open pull request** (the `gh pr view` tail printed one). The commits are on it now, so crown the review move, not a new pull request. Say the pull request updated, give its number and URL, and name the move that fits the reason you committed. After review fixes, that is to reply to the reviewer and re-request review with **mergekit**, otherwise `gh pr comment <number>`. Never crown opening a pull request for a branch that has one.
-4. **The pull request is merged or closed.** Say so and crown a new branch for this work with **gitkit**, otherwise `git switch -c <name> <base>`.
-5. **The branch has no pull request.** Crown opening one from exactly these commits: **prkit** when it is installed, otherwise `gh pr create`.
-6. **The feature clearly is not finished.** Say that and crown the plain action, which is to keep building, then re-run commitkit for the next group.
+3. **The run stamped docs `Review: pending`.** Crown the review: name each stamped file, and say "read it, then tell commitkit you reviewed it". Crown no pull request for a docs-only run.
+4. **The branch already has an open pull request** (the `gh pr view` tail printed one). The commits are on it now, so crown the review move, not a new pull request. Say the pull request updated, give its number and URL, and name the move that fits the reason you committed. After review fixes, that is to reply to the reviewer and re-request review with **mergekit**, otherwise `gh pr comment <number>`. Never crown opening a pull request for a branch that has one.
+5. **The pull request is merged or closed.** Say so and crown a new branch for this work with **gitkit**, otherwise `git switch -c <name> <base>`.
+6. **The branch has no pull request.** Crown opening one from exactly these commits: **prkit** when it is installed, otherwise `gh pr create`.
+7. **The feature clearly is not finished.** Say that and crown the plain action, which is to keep building, then re-run commitkit for the next group.
 
 Don't open a pull request yourself; commitkit's job ends at the push.
 

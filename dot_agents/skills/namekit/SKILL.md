@@ -58,7 +58,7 @@ Check `.com` plus whichever second TLD the project's surface implies (`.dev` for
 
 Reflect the project description back in one sentence before asking anything. A misread costs one correcting line here and a whole shortlist later.
 
-Then interview. Six items make the pool; ask only the ones the description leaves open, cap the round at five questions, and ask them in a single batch:
+Then interview. Six items make the pool; ask only the ones the description leaves open, and check each item against the description rather than skipping the round because it reads complete ("AI growth platform for SMBs" still names no audience, tone, or surface), cap the round at five questions, and ask them in a single batch:
 
 1. **What it does.** The domain and the outcome.
 2. **Who it is for, and what language they read.** A Bangla-reading audience opens roots an English-only audience closes.
@@ -77,6 +77,8 @@ Work down this ladder and stop at the first rung that answers:
 2. **Derived from examples.** The user cites their own names ("like `codealoy`, `growaloy`, `saasaloy`"), and the shared tail is the convention.
 3. **Read from their repos, on request.** Only when the user points at them: `gh repo list <owner> --limit 100 --json name`. Sample the projects, not the forks, because a fork's name is somebody else's convention.
 4. **Ask.** Offer suffix, prefix, portmanteau, or none.
+
+**Read the convention fresh every run.** Never store it or fall back to a house default such as `kit`; a stored convention goes stale when the user changes their mind, while names already shipped stay current.
 
 **State the resolved convention in the output**, so a wrong read costs one correcting line rather than a discarded shortlist.
 
@@ -133,7 +135,7 @@ Print the probed names as a ranked table before the three beats:
 
 **What changed.** Report the resolved convention, the crowned name and the one-sentence reason, how many batches the user probed, and whether a second generation pass ran. Name each probed name the registries took, with the probe that killed it. List the candidates that stayed unprobed, so the user can come back to them.
 
-**Where it landed.** namekit writes no file by default. Write `docs/names/NNNN-names-<slug>-YYYY-MM-DD.md` only when the user asks, where `<slug>` is the project's short kebab-case name and the date is the file's creation date. To get the serial `NNNN`, list `docs/names/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Keep the whole name stable on a later edit. Follow the host repository's own artifact convention when it documents one. With no filesystem, print the document as a codeblock and give the filename.
+**Where it landed.** namekit writes no file by default. Write `docs/names/NNNN-names-<slug>-YYYY-MM-DD.md` only when the user asks, where `<slug>` is the project's short kebab-case name and the date is the file's creation date. To get the serial `NNNN`, take the highest leading four-digit serial in `docs/names/` across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD docs/names/` after `git fetch origin`), and add one; start at `0001` when there is none. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. The serial is per directory and never reused. Keep the whole name stable on a later edit. Follow the host repository's own artifact convention when it documents one. With no filesystem, print the document as a codeblock and give the filename.
 
 **Next.** Crown one move. The name is chosen and nothing owns it yet, so the move is to claim the namespaces the project actually needs, in the order the interview's typed-surface answer implies. Name **repokit** to set a new repo's About panel and topics when it is installed, otherwise `gh repo create`. When the name came out of an idea session, name **ideakit** as the runner-up so the decision lands back in that idea's log. namekit never registers a domain, publishes a package, or creates an org.
 

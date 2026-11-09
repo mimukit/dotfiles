@@ -61,7 +61,7 @@ An optional scope argument narrows what gets ranked in either mode. It never cha
 
 ## The ledger
 
-One file per repository: `docs/tests/NNNN-testplan-<repo>-YYYY-MM-DD.md`, where the date is its **creation** date and the whole name stays fixed forever. To get the serial `NNNN`, list `docs/tests/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. `audit` creates it. Every run after that finds it by `testplan-<repo>-`, with or without a leading serial, and updates it in place. A scoped run appends under a scoped heading in the same file, and it never spawns a second one.
+One file per repository: `docs/tests/NNNN-testplan-<repo>-YYYY-MM-DD.md`, where the date is its **creation** date and the whole name stays fixed forever. To get the serial `NNNN`, take the highest leading four-digit serial in `docs/tests/` across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD docs/tests/` after `git fetch origin`), and add one; start at `0001` when there is none. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. The serial is per directory and never reused. `audit` creates it. Every run after that finds it by `testplan-<repo>-`, with or without a leading serial, and updates it in place. A scoped run appends under a scoped heading in the same file, and it never spawns a second one.
 
 One file is what makes run N+1 cheap. A brownfield retrofit does not finish in one session, and a skill that writes a fresh dated survey per slice leaves a pile of surveys and no resumable state at all.
 

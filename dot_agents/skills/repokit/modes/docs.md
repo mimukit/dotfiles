@@ -9,7 +9,7 @@ This mode touches the filesystem, not GitHub, so the root's `gh` preflight is ad
 `NNNN-<type>-<slug>-YYYY-MM-DD.md`
 
 - **`NNNN`** — a four-digit zero-padded serial, monotonic and never reused. It records creation order.
-- **The counter is per directory.** `docs/plans/` and `docs/qa/` each start at `0001`. Numbering a new artifact means scanning its own directory for the highest serial and incrementing, which is one cheap listing.
+- **The counter is per directory.** `docs/plans/` and `docs/qa/` each start at `0001`. Numbering a new artifact means taking the highest serial in its directory across this worktree, every other local worktree, and `origin/HEAD`, then adding one. One worktree alone is not enough: parallel worktrees then take the same serial and need a renumber commit later.
 - **`<type>`** — the artifact type, matching its directory: `plan`, `qa`, `review`, `research`, `adr`, `handoff`, and so on.
 - **`<slug>`** — a short lowercase kebab-case subject.
 - **`YYYY-MM-DD`** — the ISO **creation** date, kept. The serial gives the order; the date stays readable without opening the file. Both stay fixed when the file is later edited.

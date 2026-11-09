@@ -15,7 +15,7 @@ Configure a GitHub repository through the [`gh` CLI](https://cli.github.com), in
 
 - **`about`.** Infer a one-line *About* description and a focused set of topics from the repo's own contents (README, manifest, code), show them against whatever is already set, and apply what you approve.
 - **`labels`.** Provision the workflow labels: the **lifecycle and priority** sets issuekit uses to track work and rank it, and the **automation** label that asks a repo's AI review tooling to look at a PR. Create what's missing, reconcile what drifted.
-- **`setup`.** Bring an already-created repo up to convention in one span: apply the house repo settings (merge-commit-only, delete-branch-on-merge), scaffold the baseline files (LICENSE by an asked question, README, `.gitignore`, `AGENTS.md`), then run `about` and `labels` on top. It configures; `gh repo create` stays with the user.
+- **`setup`.** Bring an already-created repo up to convention in one span: apply the house repo settings (merge-commit-only, delete-branch-on-merge), scaffold the baseline files (LICENSE by visibility, README, `.gitignore`, `AGENTS.md`), then run `about` and `labels` on top, all on defaults with no questions. It configures; `gh repo create` stays with the user.
 - **`docs`.** Renumber the repo's `docs/` artifacts so a directory listing reads in creation order: a zero-padded serial in front of every artifact filename, assigned from when the artifact was created. A one-time migration per repo, idempotent on a re-run.
 
 Four jobs, one skill, because all four answer "make this repo match convention": the outward-facing blurb people read, the label vocabulary the issue workflow runs on, the settings-and-files baseline a new repo starts from, and the naming of the artifacts the other kits write into it.
@@ -54,7 +54,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # which repo? (the current
 - If there's no GitHub remote (the `repo view` call fails), stop and say so, because repokit acts on a repo that exists on GitHub. That covers `setup` too: creating the repo is the user's move (`gh repo create`), and repokit begins after it exists.
 - **No shell or `gh` at all** (e.g. a browser-based agent)? You can't call `gh`. Do the reasoning from what the user provides and **print the exact `gh` commands** for them to run, whether the description/topics lines, the `gh label create` block, or the `gh repo edit` settings line, as a codeblock to paste. `setup`'s scaffold files degrade the same way: print each file as a fenced block with its path.
 
-**Safety stance, for the whole skill.** A repo's description, topics, labels, and settings are outward-facing state. **Preview every mutation and get an OK before it runs, so nothing changes on GitHub unprompted.** Always echo the exact command(s) you run, so the change is auditable and replayable.
+**Safety stance, for the whole skill.** A repo's description, topics, labels, and settings are outward-facing state. **Preview every mutation and get an OK before it runs, so nothing changes on GitHub unprompted.** `setup` is the one exception: the user asked for it to run on defaults, so it applies them and reports every change in its hand-off. `about` and `labels` run on their own keep their approval questions. Always echo the exact command(s) you run, so the change is auditable and replayable.
 
 **Re-run safe.** Every mode reconciles against what's already there, so running repokit a second time on an unchanged repo proposes nothing and mutates nothing. It's always safe to re-run.
 

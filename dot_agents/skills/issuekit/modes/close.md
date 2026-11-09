@@ -19,11 +19,13 @@ This precondition is the whole reason `close` is safe to run on a name you half-
 
 Show the full consequence in one line and wait:
 
-> PR #10 (`feat(auth): add sso login`) merged → close #42 and strip its `in-review`, unblock #44 (`blocked → ready`), move #46 (`stacked → ready`), keep #45 `blocked` (still waits on #43), remove the worktree for `issue-42-add-sso-login`.
+> PR #10 (`feat(auth): add sso login`) merged → close #42 and strip its `in-review`, unblock #44 (`blocked → ready`), move #46 (`stacked → ready`), keep #45 `blocked` (still waits on #43), remove the worktree for `issue-42-add-sso-login`, delete `~/qakit/0012-qa-sso-login-2026-07-23/` (14 files).
 
-Compute the dependent moves for the preview with [the transition rule](../SKILL.md#promoting-a-dependent), so each one shows its real result. Name every effect, including the ones that feel routine. Name the label moves here too, because this is the only place the user sees them before they run. Unblocking a dependent changes what someone else picks up next; removing a worktree deletes a directory they may have a terminal sitting in.
+Compute the dependent moves for the preview with [the transition rule](../SKILL.md#promoting-a-dependent), so each one shows its real result. Name every effect, including the ones that feel routine. Name the label moves here too, because this is the only place the user sees them before they run. Unblocking a dependent changes what someone else picks up next; removing a worktree deletes a directory they may have a terminal sitting in. Find the screenshot folders for the preview as [Remove the QA screenshots](#5-remove-the-qa-screenshots) describes.
 
 This step is done when the user approves the previewed line or declines it. A decline stops the run before the close.
+
+**A merge instruction is the approval when mergekit calls `close`.** mergekit calls `close` after it merges a PR on a direct human ask. That ask already covers the issue close and the teardown, so print the preview line and run it without a wait. A "keep the worktree" or "keep the branch" in the ask still applies.
 
 ### 3. Reconcile the tracker
 
@@ -53,16 +55,41 @@ gitkit's own teardown rules apply and issuekit does not override them:
 - **A dirty worktree stops the removal** and shows what would be lost. A merged PR does not guarantee an empty worktree: scratch files, a stashed experiment, or an un-pushed follow-up commit all live there, and none of them are in the PR.
 - **Already gone → "already gone"**, not an error. `close` is idempotent in the same spirit as `start`'s adopt-and-stop; re-running it after a partial run is normal.
 - **gitkit owns the removal rule, and it resolves to `-d`**, with `-D` only for a squash merge whose merged PR `headRefOid` equals the branch tip. Without gitkit, delete with `-d` and keep the branch when it refuses.
-- **gitkit removes only what it created.** It marks the worktrees and branches it creates, and it reports an unmarked one as adopted and keeps it.
+- **A prepared worktree runs its declared teardown first**, such as a drop of the worktree's database, and a failed teardown keeps the worktree. Without gitkit, run the `teardown:` block of the repo's `## Worktree setup` section from inside the worktree before the removal.
+- **gitkit removes only what it created.** It marks the worktrees and branches it creates, and it reports an unmarked one as adopted and keeps it. The one exception is a call from mergekit after a direct merge ask: gitkit's merged-PR exception then removes the PR's worktree and local branch, marker or not.
 - **A branch another layer is stacked on stays.** When this issue's branch is the base of a layer above it, removing the branch strips that layer of its base and its open PR of its target. Before the teardown, check for open PRs that target this branch (`gh pr list --state open --base issue-<n>-<slug>`), and when there are any, remove the worktree but keep the branch, naming the layers that still need it. Read the PRs, not the labels: a layer already in work is `in-progress` or `in-review`, not `stacked`. GitHub re-targets a layer automatically once the branch below it *merges*; it cannot recover one that was deleted underneath it.
 
 If no worktree matches the branch, say so and carry on, because the tracker half of `close` still succeeded. This step is done when the worktree is removed, kept dirty with what would be lost, kept as adopted, or reported as already gone, and the branch is deleted or kept with its reason.
 
-### 5. Hand off
+### 5. Remove the QA screenshots
+
+qakit keeps each run's screenshots and gallery in `~/qakit/<plan file name without .md>/`, outside every repo, and commits none of them. Once the PR merges, the folders for the QA plans that PR added have no further use. List those plans from the merged PR:
+
+```sh
+gh api --paginate "repos/{owner}/{repo}/pulls/<pr>/files" --jq '.[] | select(.status == "added") | .filename | select(test("^docs/qa/.*[.]md$"))'
+```
+
+For each plan, the folder is `~/qakit/` plus the file name without `.md`. Look before you delete: confirm the folder exists and count its files.
+
+```sh
+stem=$(basename "<plan>" .md); [ -n "$stem" ] && ls -A "$HOME/qakit/$stem" | wc -l
+```
+
+The previewed line names each folder with its file count, so the approval covers the delete. Delete only the folders the preview named:
+
+```sh
+[ -n "$stem" ] && rm -rf -- "$HOME/qakit/$stem"
+```
+
+A plan with no folder is normal: no driver ran, or a sweep removed it. Say "no screenshots" for it and go on. A failed `gh api` call is unknown, not "no plans": name it and keep every folder. A dirty worktree that [the teardown](#4-tear-the-worktree-down-through-gitkit-keyed-on-the-branch) kept does not keep these folders, because they hold captures, not work.
+
+This step is done when each added plan's folder is deleted or reported as absent, or the failed call is named.
+
+### 6. Hand off
 
 **What changed.** Report the issue closed and by which PR, and each dependent move (`blocked → ready`, `stacked → ready`, `blocked → stacked`). Name each dependent left alone, with its reason: open prerequisites remain, an unknown PR query, or incompatible stack parents.
 
-**Where it landed.** Say whether the worktree was removed, left dirty, kept as adopted, or already gone. If it survived, name the path and why, so it doesn't quietly linger. A worktree made before gitkit marked its creations is reported as adopted and kept; remove it through gitkit directly when it is no longer needed.
+**Where it landed.** Say whether the worktree was removed, left dirty, kept as adopted, or already gone. Name each QA screenshot folder deleted, and each plan that had none. If it survived, name the path and why, so it doesn't quietly linger. A worktree made before gitkit marked its creations is reported as adopted and kept; remove it through gitkit directly when it is no longer needed.
 
 **Next.** Closing an issue is the moment a slot opens up, so point at what fills it, naming a kit only when it's installed:
 

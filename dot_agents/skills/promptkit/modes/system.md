@@ -70,7 +70,7 @@ Read the prompt back as the receiving model, once per must-pass row, and state w
 
 ### 7. Write the artifact
 
-Write **`docs/prompts/NNNN-prompt-<slug>-YYYY-MM-DD.md`** by default, because in this mode the artifact *is* the deliverable, and the file holds the prompt **and its must-pass contract**, which is genuinely a document rather than a source constant. To get the serial `NNNN`, list `docs/prompts/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Keep the whole name stable on later edits.
+Write **`docs/prompts/NNNN-prompt-<slug>-YYYY-MM-DD.md`** by default, because in this mode the artifact *is* the deliverable, and the file holds the prompt **and its must-pass contract**, which is genuinely a document rather than a source constant. To get the serial `NNNN`, take the highest leading four-digit serial in `docs/prompts/` in this checkout and in every other worktree of the repo, and add one; start at `0001` when there is none. This skill has no shell, so find the worktrees with Read and Glob: in a linked worktree, `.git` is a file that names `<main>/.git/worktrees/<name>`; `<main>` is the main checkout, and each `<main>/.git/worktrees/*/gitdir` holds another worktree's path. Scan them all, because parallel worktrees otherwise take the same serial. The serial is per directory and never reused. Keep the whole name stable on later edits.
 
 Follow the host repo's own documentation convention when it has one. Otherwise use a lowercase type prefix, a short kebab-case subject slug, and the ISO **creation** date last. Re-running updates the same file in place and keeps the creation date fixed; a later update date goes inside the document.
 

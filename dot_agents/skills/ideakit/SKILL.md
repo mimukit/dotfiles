@@ -158,7 +158,7 @@ A slug is short, lowercase, kebab-case, and taken from the idea's core noun. **`
 
 This is a root swap, so it holds for every skill, including one added after this file was written. The repo root has no `docs/` directory and does not gain one.
 
-Filenames follow `NNNN-<type>-<slug>-YYYY-MM-DD.md`, with a four-digit serial in front and the artifact's creation date at the end. The serial counts per directory inside the topic folder: list that directory, take the highest leading serial, and add one, starting at `0001`. Keep the whole name stable when the file is edited later.
+Filenames follow `NNNN-<type>-<slug>-YYYY-MM-DD.md`, with a four-digit serial in front and the artifact's creation date at the end. The serial counts per directory inside the topic folder: take the highest leading serial in that directory across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` when the topic folder is in a git repo, and add one, starting at `0001`. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. Keep the whole name stable when the file is edited later.
 
 ## Saving is a demand, not a default
 

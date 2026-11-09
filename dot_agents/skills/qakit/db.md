@@ -40,11 +40,13 @@ Three rules make the query worth its line:
 - **Query by the identifier the case itself created** (`reference = 'QA-1001'`), rather than by a global count. A row left behind by an earlier pass then cannot fail the check, and the case survives a re-run.
 - **Put the expected values in the checkpoint text, not in the query.** The tester reads one result and makes one judgment: `- [ ] One order row exists, total 4500, status "paid", with 2 item rows`.
 
-**A scenario whose cases write rows carries the cleanup in its Reset.** Put the truncate or the seed re-run in the **Reset** block, in its own ```sh block, so the tester restores the starting state once at the end of the scenario. Keep the cleanup out of the case bodies, because a destructive statement inside a case runs on every pass and the case order already puts destructive work last. The agent writes this block and never runs it.
+**A scenario whose cases write rows carries the cleanup in its Reset.** Put the truncate or the seed re-run in the **Reset** block, in its own ```sh block, so the tester restores the starting state once at the end of the scenario. Keep the cleanup out of the case bodies, because a destructive statement inside a case runs on every pass and the case order already puts destructive work last. The agent writes this block and never runs it, except on the disposable target that qakit's root names, where it runs the whole scenario and this Reset with it.
 
 ## Run the automated checks yourself: static facts, read only
 
 **Name the database you are about to open, before you open it.** `DATABASE_URL` in a shell holds whatever the last person exported, and read-only is not a sufficient guard: a `SELECT` against production is still an unauthorized read of customer data. So resolve the host first, state it to the user, and connect when it is `localhost`, a loopback address, or a container service the compose file defines. For any other host, ask the user before the first connection. When they decline, write the queries into the plan for the human and leave that part of **Automated verification** unrun.
+
+**A declared disposable target's database is the one write exception.** When the scenario runs on that target, the agent runs its write queries and its Reset there, under the same host check, and records the output in the case. Every other database stays read-only.
 
 **Confirm the static facts by reading only.** Run four introspection checks: the new tables and columns exist with the declared types, the indexes are present, the constraints (unique, foreign key, not-null) are present, and the migration list shows the change applied. Run `SELECT` and catalog queries only. Paste each query you ran in its own ```sh block, the same way the `curl` rule requires, so the human can re-run it.
 

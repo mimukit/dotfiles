@@ -1,7 +1,7 @@
 ---
 name: statuskit
 description: >-
-  Survey a project read-only (working tree, issues and their priority, open PRs, unfiled plans) into a one-screen dashboard that crowns one finish-first next move routed to the kit that does it, saved by default as a throwaway snapshot under docs/status/. Use when you sit down at a project and ask "what should I do next" or "check project status"; add "no file" to skip the snapshot. It reads and recommends only; the crowned kit does the work.
+  Survey a project read-only (working tree, issues and their priority, open PRs, unfiled plans, docs awaiting review) into a one-screen dashboard that crowns one finish-first next move routed to the kit that does it, saved by default as a throwaway snapshot under docs/status/. Use when you sit down at a project and ask "what should I do next" or "check project status"; add "no file" to skip the snapshot. It reads and recommends only; the crowned kit does the work.
 license: MIT
 allowed-tools: Bash, Read, Write, Edit, Skill
 metadata:
@@ -10,7 +10,7 @@ metadata:
 
 # statuskit
 
-The front door you open when you sit back down at a project and ask *"where is this thing, and what's my single best next move?"* statuskit surveys the whole project **read-only**, covering the git working tree, GitHub issues, open PRs, and unfiled plans, prints a one-screen **status dashboard**, then does the opinionated part: it ranks the possible next actions by a **finish-first** rule and crowns exactly **one** as the move to make, routing you to the kit (or plain command) that does it.
+The front door you open when you sit back down at a project and ask *"where is this thing, and what's my single best next move?"* statuskit surveys the whole project **read-only**, covering the git working tree, GitHub issues, open PRs, unfiled plans, and docs stamped for review, prints a one-screen **status dashboard**, then does the opinionated part: it ranks the possible next actions by a **finish-first** rule and crowns exactly **one** as the move to make, routing you to the kit (or plain command) that does it.
 
 It is a **read + advise** tool. It never commits, pushes, closes an issue, edits a PR, merges, relabels, or writes code, because every mutation happens inside the kit it hands you off to, under that kit's own guard. Nothing it does reaches a remote, a branch, or a tracker, and that is the point: statuskit is safe to run anytime, as often as you like, to re-orient. It writes only the local files its [write rules](#write-rules) list.
 
@@ -115,7 +115,7 @@ The reading is one of four states, and every tracker-dependent rule in this file
 
 *No tracker* below means absent or unknown. **A query error is never absent.** Name the failed call once on the Issues line and route like no tracker; a retry, not a declaration, settles it. The same holds when the prompt or the guide says present and the issue query fails: the policy is known, the data is not, so the issue rungs skip and the failed call is named.
 
-**Unknown routes like no-tracker and says so.** It never asserts a plan is unfiled, never crowns "go file issues", and names both paths in one line. An empty-array unknown is the only ambiguous policy state. When it fires and a user is there to answer → read [declaration.md](declaration.md), then follow it.
+**Unknown routes like no-tracker and says so.** It never asserts a plan is unfiled, never crowns "go file issues", and names both paths in one line. An empty-array unknown is the only ambiguous policy state. Leave it unknown rather than probe for lifecycle labels: a template may have provisioned labels nobody uses, and the probe changes the wording, not the move. When it fires and a user is there to answer → read [declaration.md](declaration.md), then follow it.
 
 **Only statuskit resolves this.** It is the skill that must, because it crowns exactly one move. Every other skill either carries the one-line conclusion (issuekit, afkkit) or names both destinations without resolving anything (plankit, grillkit, implementkit). Keeping the derivation in one place is what stops four skills drifting into four slightly different answers.
 
@@ -140,6 +140,7 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 - **the base branch**, from **gitkit**, not an assumption that it's `main`. Every "is this a feature branch?" and "is it unmerged?" judgment below turns on it, and on a `develop`- or `trunk`-defaulted repo, assuming `main` misreads the whole dashboard.
 - **branch → issue mapping.** Resolve the current branch to a tracked issue from its open PR's `closingIssuesReferences` (the reliable signal, and already in hand from the PR read below); fall back to a branch-name heuristic. **On a stack layer that field is empty**, so apply [the layer fallback](#unblock-leverage) and read the `Closes #N` from the PR body before you drop to the branch name. **The branch-name pattern comes from gitkit**, which named the branch in the first place (`issue-<n>-<slug>`), so read it there rather than keeping a second copy of the parser here, or a rename upstream leaves this one silently matching nothing. A bare `#N` or a slug matching an issue title are the looser fallbacks. When it stays unmappable, treat a dirty branch that isn't the base as *continue*, not *commit*.
 - **worktrees.** When the survey needs to know where a branch's code lives, ask gitkit rather than reading paths. statuskit never creates or removes one; it only reports.
+- **`CONTEXT.md` signal**, one cheap check in the spirit of the stale-tracker signal: a yes or no, never itemized, because domainkit's `audit` owns the findings. It fires on either of two conditions. **Missing:** no `CONTEXT.md` (or `CONTEXT-MAP.md`) at the repo root while `docs/adr/` or `docs/plans/` exists, so the project has a domain worth naming and no glossary. **Behind:** the newest ADR file in `docs/adr/` was added after the last commit that touched `CONTEXT.md`, or 50 or more commits have landed since it (`git log -1 --format=%H -- CONTEXT.md`, then `git rev-list --count <sha>..HEAD`). A `CONTEXT.md` that only lacks an `## Overview` does not fire it.
 
 **GitHub (only when `gh` is usable):**
 - issues: `gh issue list --state open --json number,title,labels,updatedAt,blockedBy,blocking`, bucketed by lifecycle label (`in-progress` / `ready` / `stacked` / `needs-planning` / `blocked` / `in-review`) plus an **unlabeled/other-status** bucket for repos without that vocabulary. Counts and the actionable set only, with no drift detection. Treat recent unlabeled issues as candidates for classification or planning, not as invisible work.
@@ -163,6 +164,10 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 - **the unbuilt set, which is what the plan rung ranks when there is no tracker.** Find phases by a heading beginning `Phase <n>`, matching the separator loosely (`### Phase 2: auth` and `### Phase 2 — auth` are the same shape, and real plan sets carry both). A phase is **built** when its heading carries a `(built YYYY-MM-DD)` stamp, which **implementkit** writes into the same trailing slot issuekit's `(#41)` occupies; the two coexist, so `### Phase 2: auth (#41) (built 2026-08-20)` is a tracked phase that shipped.
 - **A plan with no stamp anywhere makes no claim.** The stamp convention is opt-in per plan, so absence means unstamped rather than unbuilt, and reading it as unbuilt would report every plan written before the convention as outstanding work. Treat such a plan as a single unit and crown it whole, exactly as [the git-only ladder](#3-rank-and-crown-one-finish-first-move) already does. Once a plan carries one stamp it is authoritative, and its unstamped phases are genuinely unbuilt. A fully stamped plan is finished, so drop it.
 
+**review stamps (filesystem, no tracker needed):**
+- **the pending-review set.** Run `grep -rl '^Review: pending' docs/` once. A file carries the stamp `Review: pending` on a line of its own, and `Review: done <date>` once reviewed. **commitkit** writes both. Keep each hit as file + title (its first heading) and sort by serial, lowest first. A `docs/` directory that is missing, or a grep with no hit, means no finding.
+- **This read sees the current tree only.** A stamp committed on another branch is invisible until that branch is checked out. Say nothing about it, because the survey cannot know what it did not read.
+
 ### 3. Rank and crown one finish-first move
 
 Map the signals onto candidate actions, each tagged with its owning kit/command, then crown the highest applicable rung. Ties inside it break as the rung's own row says, defaulting to most-recently-active, and everything else becomes a runner-up. Pick the ladder by whether GitHub signals are available.
@@ -175,8 +180,10 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 2 | unpushed commits | `git push` |
 | 3 | a stash | inspect and restore it with `gitkit rescue`, or drop it |
 | 4 | an unmerged local feature branch | finish it, or clean it up with `gitkit clean` |
+| 4b | a doc stamped `Review: pending` | read it, then mark it reviewed with `commitkit` |
 | 5 | a plan doc on disk, where filed or not is unknowable with no tracker to check | implement the newest with `implementkit` |
 | 6 | clean on the base branch, nothing pending | start something (newest plan), or run `plankit` |
+| 7 | `CONTEXT.md` signal fired | `domainkit init` when it is missing, `domainkit audit` when it is behind |
 
 **Full ladder** (`gh` available), where every git-only state has an explicit home below. *(Surfaced, never crowned: an approved+green PR; a PR someone else genuinely owes you.)*
 
@@ -195,9 +202,11 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 8c † | a `needs-planning` issue (highest priority, then most-recently-updated) | grill it with `grillkit`, then promote it with `issuekit triage` |
 | 9 † | an unlabeled issue, or one whose status is outside the lifecycle map, needing classification | classify it with `issuekit triage` |
 | 10 † | an unassessed backlog, meaning open issues with no priority label | rank them with `issuekit triage` |
+| 10b | a doc stamped `Review: pending` | read it, then mark it reviewed with `commitkit` |
 | 11 | an unfiled plan *(only when the tracker is in use)*, or no plans at all | `issuekit create`, or `plankit` |
+| 12 | `CONTEXT.md` signal fired | `domainkit init` when it is missing, `domainkit audit` when it is behind |
 
-**† marks a rung that fires only when a tracker is in use.** Resolve that per [Resolving the tracker](#resolving-the-tracker) before ranking, because seven of these rungs turn on it. A project that tracks its work elsewhere falls straight past every one of them, which is exactly the hole rung 8b fills: without it the ladder runs out and crowns nothing, and "no next move" on a repo with unbuilt plans on disk is a survey failure rather than a finding. The PR and git rungs (1, 2, 4, 5, 6) never depend on it, since a branch and a pull request are the same facts whatever the tracker is.
+**† marks a rung that fires only when a tracker is in use.** Resolve that per [Resolving the tracker](#resolving-the-tracker) before ranking, because seven of these rungs turn on it. A project that tracks its work elsewhere falls straight past every one of them, which is exactly the hole rung 8b fills: without it the ladder runs out and crowns nothing, and "no next move" on a repo with unbuilt plans on disk is a survey failure rather than a finding. The PR and git rungs (1, 2, 4, 5, 6, 12) never depend on it, since a branch and a pull request are the same facts whatever the tracker is.
 
 **Rung 8b is rung 8's trackerless twin, and it sits at the same height on purpose.** Both are start-something rungs, both mean the finishing rungs above came up empty, and both hand off the same way once the work is picked. It ranks by the plan's own order, meaning the lowest-numbered unbuilt phase of the newest plan, because a plan's phases are written in dependency order and skipping ahead is how a phase gets built on a prerequisite that does not exist yet.
 
@@ -205,13 +214,17 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 
 **Rung 0 is numbered zero because it isn't really a rung.** It's the [one documented override](#critical-is-the-one-thing-that-outranks-finish-first) of the finish-first spine, and numbering it inside the sequence would make it look like an ordinary state that merely happens to sort first. It fires rarely, it must name what it displaced, and everything below it is the actual ladder. If rung 0 is firing on most runs, `critical` has stopped meaning anything and the real move is `issuekit triage`.
 
+**The `CONTEXT.md` rung sits below every other rung in both ladders** (rung 7 without `gh`, rung 12 with it). A glossary that lags the code costs the next agent some vocabulary, never a broken build or a stuck PR, so it is crowned only on a repo where nothing else is pending. When domainkit isn't installed, the plain move is "update `CONTEXT.md` by hand".
+
 **Rung 10 ranks below every actionable rung and above "go plan something."** An unranked backlog is a genuine gap, since nothing above it can order itself properly, but it is still tracker hygiene rather than work, so it never outranks a thing the user could actually finish. It earns a rung at all because without one, a repo where nobody has set a single priority would silently rank on leverage forever and never be told why.
+
+**Rung 10b (4b without `gh`) sits just above the plan rungs.** A reviewed plan is the input to the next step, so review comes before filing or building it. It ranks below every rung that finishes real work, because a pending review blocks nothing a PR or an issue waits on. When several docs are pending, crown the lowest serial and list the others as runner-ups, one per doc. The stamp needs no tracker, so this rung fires in every tracker state.
 
 **Rung 11's first half only exists when the unfiled set was computed**, meaning [the resolution](#resolving-the-tracker) came back *tracker in use*. A repo that tracks work elsewhere gives statuskit no way to tell a filed plan from an unfiled one, so it never asserts one is unfiled: the rung reduces to its second half, *no plans at all → `plankit`*. Ranking "file your plans" at a project that files its work somewhere else is worse than staying quiet, because it's a confident recommendation built on a read that never happened.
 
 **Rungs 1 and 2 are the same thought twice: your own PR is stuck on you.** A red PR is stuck loudly and an unreviewed one silently, and the silent kind is the one that sits for weeks, which is why it outranks resuming a half-built issue rather than trailing it: the code is already written and green, so it retires the most work for the least effort, which is the whole of finish-first. It's the one rung that breaks ties on leverage while asking you to *finish* rather than start, because there's no context to switch back into: reviewing a finished PR is the same work whichever one you pick, so the tiebreak may as well go to the one that frees the most.
 
-When the owning kit isn't installed, name the **plain action** instead ("commit your changes" rather than "run commitkit"), because statuskit routes and doesn't require the ecosystem.
+When the owning kit isn't installed, name the **plain action** instead ("commit your changes" rather than "run commitkit"; "change the stamp to `Review: done <date>`" for a reviewed doc), because statuskit routes and doesn't require the ecosystem.
 
 ### 4. Output: the dashboard, then one crowned move
 
@@ -254,6 +267,8 @@ Unbuilt phases (N) · plan order      (only when there is no tracker, and a plan
 | plan-sso-login | 3 | <phase title> |
 | plan-sso-login | 4 | <phase title> |
 
+## Review        <N pending: plan-sso-login, research-auth-providers>   (omit entirely unless there is a finding)
+
 ## Next move
 **→ <the #1 action>.** Run `<kit / command>`.
 
@@ -271,9 +286,10 @@ Every rule for what prints, where, and in what order lives in this table. The sn
 
 | Element | Rule | Why |
 |---|---|---|
-| Signal panel | Working tree, Issues, Pull requests, and Plans each put the heading and counts on one line, followed only by a table. A reason for a move goes in the move line. | Four lines tell where the project stands before reading starts. A panel with a second sentence becomes a report. |
+| Signal panel | Working tree, Issues, Pull requests, Plans, and Review each put the heading and counts on one line, followed only by a table. A reason for a move goes in the move line. | Four lines tell where the project stands before reading starts. A panel with a second sentence becomes a report. |
 | Panel presence | Working tree, Issues, and Pull requests always print, zero counts included. A panel is omitted only when its source is unavailable: Issues and Pull requests without `gh`, Issues when the tracker reading is not present. Say the reason once. | A clean tree and an empty PR list are facts worth confirming, and a fixed panel set keeps two days' snapshots comparable. |
-| Plans panel | Prints only with a finding: an unfiled plan when the tracker reading is present, an unbuilt phase of a stamped plan when there is no tracker. Both can print together. No finding means no Plans line, no `## Plans` section in the file, and no mention of why. | An empty plan count (`21 filed · 0 unfiled`) is unactionable, where every other panel reports state that always exists. Plans is the only conditional panel. |
+| Plans panel | Prints only with a finding: an unfiled plan when the tracker reading is present, an unbuilt phase of a stamped plan when there is no tracker. Both can print together. No finding means no Plans line, no `## Plans` section in the file, and no mention of why. | An empty plan count (`21 filed · 0 unfiled`) is unactionable, where every other panel reports state that always exists. Review is conditional the same way, and prints only when a doc carries `Review: pending`. Plans and Review are the only conditional panels. |
+| Review panel | Prints only with a finding: a doc stamped `Review: pending`. It is one count line with the doc names, and no table. No finding means no Review line and no `## Review` section in the file. | The panel reports a queue the standard set cannot see, and an empty queue is unactionable. |
 | Extra panel | At most one, for a first-class queue the standard set cannot see (an `IDEAS.md` backlog, an RFC index), filled from a file the survey read. Never a panel filled by running a build, test, or lint. | statuskit surveys read-only, and a closed panel set is what makes two days' files compare. |
 | Table order | Unblocked, then Waiting for review, then `Blocked issues (N)`, at most three at once. Blocked issues sit under the Pull requests panel and keep the full name. `Unbuilt phases` sits under Plans. The panel order never changes. | A reader stops at the first row they can act on, so every actionable row comes before the first one they cannot. Away from its panel, a bare `Blocked (N)` reads as blocked PRs. |
 | `in-review` issue | One row, in Waiting for review, never in Unblocked. Its count stays on the Issues line. One with no open PR is a note on the Issues line (`in-review 7 · 1 with no open PR`), routed to `issuekit triage`. | The PR row names a person and a CI state. Moving the issue back to Unblocked would claim it is startable. |
@@ -296,7 +312,7 @@ Say `untracked` in place of `gitignored` when the [write rules](#write-rules) sk
 
 **Skip only when asked.** "Just print it", "no file", "don't write anything", "screen only", "/statuskit --no-file" all mean honor that for the run and print the dashboard alone. A skip applies to that run only; it isn't a standing preference unless the user says so or the repo's agent-guide file (`CLAUDE.md` or an equivalent) does. Skip silently too when there's no writable filesystem (below).
 
-**Where it goes.** `docs/status/NNNN-status-<repo-slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case slug (normally the repo name; use a narrower one such as the branch or issue when the snapshot covers a slice of the project), and the ISO creation date. To get the serial `NNNN`, list `docs/status/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Create `docs/status/` if it doesn't exist.
+**Where it goes.** `docs/status/NNNN-status-<repo-slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case slug (normally the repo name; use a narrower one such as the branch or issue when the snapshot covers a slice of the project), and the ISO creation date. To get the serial `NNNN`, take the highest leading four-digit serial in `docs/status/` across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD docs/status/` after `git fetch origin`), and add one; start at `0001` when there is none. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. The serial is per directory and never reused. Create `docs/status/` if it doesn't exist.
 
 **One file per day, always update, never add.** Before writing, list `docs/status/` and look for a snapshot already carrying **today's date**. If one exists, that's the file: update it in place, keeping its existing name even if this run would have picked a different slug. Only when the directory has nothing dated today do you create a new file. A status file is a point-in-time read, and three of them from one afternoon is how a scratch directory becomes archaeology, and worse, it splits the user's ticked boxes across files that all look current. If today's snapshot genuinely covers a different project in a monorepo, make the slug specific to that project and match on slug + date instead; there is no case where the same project gets two files on the same day, so never fall back to a sequence suffix.
 
@@ -334,6 +350,7 @@ Draw keys from a fixed vocabulary, never an improvised slug, or the key drifts r
 | a PR | `pr-34` |
 | a plan doc | `plan-<slug>`, the plan's own slug |
 | one phase of a plan | `plan-<slug>-phase-<n>` |
+| a doc awaiting review | `review-<name>`, the file name minus its serial and date, such as `review-plan-sso-login` |
 | a local branch | `branch-issue-12-retry-budget` |
 | a stash entry | `stash-<sha>`, the stash commit's short SHA from `git stash list --format='%h'`; an index such as `stash@{0}` moves whenever a new stash is pushed |
 | a ladder rung with no subject | one fixed slug per rung: `push`, `reconcile`, `triage`, `prioritize`, `repo-labels`, `declare-tracker` |

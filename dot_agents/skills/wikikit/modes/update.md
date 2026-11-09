@@ -18,7 +18,7 @@ A changed flag edits the flag. It does not regenerate the page. These edits need
 
 ### 4. Flag the documentation-shaped gaps the diff created
 
-A new command with no how-to, a new env var absent from getting-started, a new failure mode with no runbook. **New pages and deletions are consent-gated**, so propose, then write. That split is the whole write-mode policy: edits go straight in, creation and destruction ask. The step is done when every gap has a proposal and a verdict from the user.
+A new command with no how-to, a new env var absent from getting-started, a new failure mode with no runbook. A new self-documenting item, such as a new plugin or package, is a line on its index page, never a page of its own, per **No mirror pages** in [The page vocabulary](../SKILL.md#the-page-vocabulary). **New pages and deletions are consent-gated**, so propose, then write. That split is the whole write-mode policy: edits go straight in, creation and destruction ask. The step is done when every gap has a proposal and a verdict from the user.
 
 ### 5. Re-stamp and reconcile
 

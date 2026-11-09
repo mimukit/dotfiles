@@ -9,7 +9,7 @@ Take the first that resolves:
 1. the system temporary directory: `mktemp -d` on POSIX, `%TEMP%` on Windows;
 2. otherwise `docs/verify/` inside the repo. This writes files into the working tree. Check `git check-ignore -q docs/verify/x`: when the path is not ignored, the screenshots appear as untracked files, and the hand-off must say so.
 
-Inside it, create one run directory named `show-<slug>-YYYY-MM-DD/` (the slug from the shared procedure, today's ISO date). Under `docs/verify/`, prefix it with the next serial, `NNNN-show-<slug>-YYYY-MM-DD/`: list `docs/verify/`, take the highest leading four-digit serial, and add one, starting at `0001`. Keep the name stable when re-running the same slug on the same day; later captures overwrite by file name. This step is done when the run directory exists and you know whether it sits in the repo.
+Inside it, create one run directory named `show-<slug>-YYYY-MM-DD/` (the slug from the shared procedure, today's ISO date). Under `docs/verify/`, prefix it with the next serial, `NNNN-show-<slug>-YYYY-MM-DD/`: take the highest leading four-digit serial in `docs/verify/` across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD docs/verify/` after `git fetch origin`), and add one, starting at `0001`. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. Keep the name stable when re-running the same slug on the same day; later captures overwrite by file name. This step is done when the run directory exists and you know whether it sits in the repo.
 
 ### 2. Drive and screenshot
 

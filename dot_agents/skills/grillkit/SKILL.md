@@ -18,6 +18,7 @@ Interview the user relentlessly about their idea until the two of you reach a ge
 - **Work the tree in rounds.** The **frontier** is every decision whose prerequisites are already settled, meaning the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, numbered, then wait for the user's answers before the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one. [Asking the round](#asking-the-round) is the format.
 - **Each round reshapes the tree.** The answers settle decisions, which pushes the frontier outward and unblocks the questions that depended on them. Recompute the frontier and ask the next round.
 - **Always recommend an answer.** For every question, state the option you'd pick and why. A naked question offloads the thinking; a recommendation gives the user something concrete to accept, reject, or refine.
+- **Ask what needs the user; default the rest.** Most recommendations get accepted as written, so a round asks only the decisions that need the user's judgment and lists every other one as a default the user can override by number. [Ask or default](#ask-or-default) is the sort.
 - **Probe the soft spots.** Push hardest on unstated assumptions, hand-waved edge cases, error and failure paths, scope boundaries, and anything described vaguely. If an answer is thin, follow up in the next round rather than letting it stand. A decision gets one follow-up; a second thin answer records it as **deferred**, and it leaves the frontier.
 - **Ask only what is still open.** A round carries only unresolved decisions. A settled decision returns to the frontier only when a later answer contradicts it, and the round says which answer reopened it.
 
@@ -25,13 +26,42 @@ Interview the user relentlessly about their idea until the two of you reach a ge
 
 A grill is only as good as the user's ability to answer it fast. Dense paragraphs with choices buried mid-sentence make a good question unanswerable, because the reader has to parse prose to find the decision. Every rule below exists to keep a round scannable in one pass.
 
+### Ask or default
+
+Sort every frontier decision before you write the round. The sort decides where it sits in the round, not whether it gets a recommendation: both kinds carry one.
+
+**Ask** the decision when any of these holds:
+
+- **Domain or product.** What the product does and for whom, a business rule, pricing, a domain term's name or meaning, what is in or out of scope.
+- **Taste.** Visual design, copy, tone, naming the user sees.
+- **Hard to reverse.** A data model, a public API or CLI surface, a migration, an external contract, a cost commitment, a security or privacy trade-off.
+- **Weak recommendation.** Two options are close, your evidence is thin, or your pick contradicts something the user said.
+- **Outward action.** Permission for anything beyond the plan's own branch. The build-stop round in [When to stop](#when-to-stop) always asks these.
+
+**Default** everything else: the mechanics a competent implementer picks without controversy, choices a later commit reverses cheaply, and choices the repo's conventions already settle. When the sort is unclear, ask.
+
+A default is settled when the user replies to its round without overriding it. An override settles the decision with the user's answer, and it follows the same follow-up and deferred rules as an asked decision. A default never returns in a later round unless a later answer contradicts it.
+
+The sort is the agent's call, so the user must be able to see it. Every default appears in the round's table with its one-line reason, and the recap in [Hand off](#hand-off) marks each settled decision as asked or defaulted.
+
+This sort is done when every frontier decision is either in the defaults table or written as an asked question.
+
 ### The shape of a round
 
 ```
-### Round 2: 3 open decisions
+### Round 2: 5 open decisions, 2 asked, 2 defaulted
 Blocked behind this round: storage format, migration path.
 
-❓ **Q4. Where does the doc map live?**
+**Defaults.** Taken unless you change one by number.
+
+| # | Decision | Default | Why |
+|---|---|---|---|
+| Q4 | Page file names | (a) kebab-case from the page title | matches the repo's existing docs |
+| Q5 | Link style between pages | (a) relative Markdown links | renders in GitHub and in every engine |
+
+---
+
+❓ **Q6. Where does the doc map live?**
 Stakes: `update` needs a code-path → page lookup without reading every page, and `audit`'s recency prefilter needs to know which paths a page describes.
 
 - **(a) Per-page colocated metadata.** Can't drift from the page, one grep pass, invisible in every renderer
@@ -43,7 +73,7 @@ Stakes: `update` needs a code-path → page lookup without reading every page, a
 
 ---
 
-❓ **Q5. Contributor docs: in or out?**
+❓ **Q7. Contributor docs: in or out?**
 Stakes: dev-env setup and release steps are *derivable from the repo*; a CONTRIBUTING.md is a social contract that isn't in the repo at all.
 
 - **(a) Split on that seam.** Mechanical half becomes how-tos, the social half stays out
@@ -54,9 +84,9 @@ Stakes: dev-env setup and release steps are *derivable from the repo*; a CONTRIB
 
 ---
 
-⏳ **Q6. Which renderer serves these pages?** Waiting on a sub-agent checking the repo for a docs generator. It gates the frontmatter decision, so it lands next round.
+⏳ **Q8. Which renderer serves these pages?** Waiting on a sub-agent checking the repo for a docs generator. It gates the frontmatter decision, so it lands next round.
 
-Reply `4a 5b`, or "go with your picks" to take both.
+Reply `6a 7b`, change a default with its number (`5b`), or say "go with your picks" to take everything.
 ```
 
 ### The rules that produce it
@@ -69,12 +99,14 @@ Reply `4a 5b`, or "go with your picks" to take both.
 - **Number continuously across rounds.** Q1–Q3 in round one, Q4 onward in round two. Restarting at Q1 each round makes "Q2" ambiguous the moment anyone refers back, including your own recap in [Hand off](#hand-off).
 - **Code spans are for literals only.** Paths, filenames, flags, commands, identifiers. Use *italics* for conceptual emphasis. Code-spanning ordinary prose words turns the round into rainbow noise and hides the spans that are real references.
 - **Show what's pending, don't hide it.** When a sub-agent is still fetching a fact a question depends on, list that question with `⏳` and name what it's waiting for. A visible branch that goes unasked reads as forgotten; one line explains it's blocked, not dropped.
-- **Head the round and close it.** The header gives a progress signal, meaning how many decisions are open now and what they unblock, which is otherwise unknowable and makes a long grill feel endless. The closing line names the reply format so the user doesn't invent one every round.
+- **Defaults come first, as one table.** One row per default: the number, the decision, the pick with its letter, and a reason short enough for one cell. A default needs no stakes line and no option list; the user who wants to override one asks for the options. A round with no defaults drops the table.
+- **Head the round and close it.** The header gives a progress signal, meaning how many decisions are open now, how many are asked and how many defaulted, and what they unblock, which is otherwise unknowable and makes a long grill feel endless. The closing line names the reply format so the user doesn't invent one every round.
 
 ### Offer the picker when you have one
 
 With `AskUserQuestion` available, run the round **hybrid**: print the full text round first, with stakes, trade-offs, evidence, and recommendation, then call the tool for the picks alone. The user clicks instead of retyping letters, and the reasoning still gets read.
 
+- **The picker carries the asked questions only.** Defaults stay in the table, where an override costs the user one number in their reply.
 - **The picker mirrors the text round exactly.** Same questions in the same order, same options in the same order inside each question. The widget is a second view of the round the user just read, not a fresh presentation of it. Reorder either one and the letters stop meaning anything: the user reads the case for `(c)`, then clicks the third option and gets something else.
 - **Write the recommended option as `(a)` whenever the list has no order of its own.** The user takes the recommendation most of the time, so landing it in the first slot means a single click with no arrow keys, and because the picker mirrors the text round, ordering it once at the top gets it right in both views. Keep the merits order instead when the options carry one (a spectrum, escalating scope, a chronology), since scrambling that to save a keystroke costs the reader more than it saves.
 - **Do the ordering while writing the options, never between the two views.** Reordering at picker time is what breaks the letters, and it's unnecessary: `(Recommended)` marks the pick wherever it sits.
@@ -110,14 +142,39 @@ grillkit's job is the shared understanding, not a particular file, but where tha
 
 If grilling settled a domain term or a hard-to-reverse trade-off decision worth keeping, **domainkit** is the scribe when installed; otherwise note the settled decision for the user to record as a glossary entry or ADR. grillkit does the interrogating rather than owning that format.
 
+## Publish the result
+
+Users close nearly every grill by asking for the same chores: commit the plan, push it, update the issue body, flip the label. Offer them as one action with one confirmation. Skip this section when the grill wrote no file and settled no issue, or when there is no git repository.
+
+**Build one preview.** List each action that applies, and leave out a line that has nothing to do:
+
+- **Commit.** The paths: the plan file you rewrote, plus any glossary or decision record written during the grill. The Conventional Commits subject, for example `docs(plan): grill the <slug> plan`.
+- **Push.** The current branch and its `origin` target, as a plain fast-forward.
+- **Issue body.** The issue the grill hardened, either the one it started from or the one the plan names. Say what changes: the settled decisions, the link to the plan, and the open questions the grill closed.
+- **Label.** `needs-planning → ready`, only when the plan carries the `Grilled:` stamp and no decision is deferred. With a deferred decision, the label stays and the preview says why. issuekit owns the promotion rule, and it can resolve to `blocked` when the issue names an open dependency; without issuekit, promote to `ready` only when the issue names no open dependency.
+
+**Ask once.** Offer three answers: publish everything, commit only, or skip. With `AskUserQuestion`, use it.
+
+**Run the approved actions in this order:** commit, push, issue body, label.
+
+- Commit and push with **commitkit**, handing it the exact paths. Without commitkit, run `git add -- <paths> && git commit -m "<subject>" && git push`.
+- Edit the issue body with **issuekit**. Without it, run `gh issue edit <n> --body-file <file>`.
+- Promote the label with **issuekit** `triage` as a targeted request (`#<n> is grilled, mark it ready`). Without it, run `gh issue edit <n> --remove-label needs-planning --add-label ready`.
+
+The label goes last because `ready` invites unattended work, and that work needs the plan on the remote.
+
+**Stop at the first failure.** A refused push (a protected branch, a non-fast-forward, no permission) stops the sequence: report the error, leave the issue body and the label unchanged, and name the plain fix. Never force-push, and never open a pull request the user did not ask for.
+
+This step is done when every approved action has run, or the first failure is reported and nothing after it ran.
+
 ## Hand off
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
 Close every grill the same way, naming a sibling skill only when it's installed and otherwise describing the action plainly:
 
-**What changed.** Give a brief recap of the decisions you settled together, each in a line. Name any question you raised and *didn't* resolve; a decision the user deferred is not a decision, and it will surface again downstream as a blocked build. Name each phase that stays attended, and each outward action the user approved.
+**What changed.** Give a brief recap of the decisions you settled together, each in a line. Name any question you raised and *didn't* resolve; a decision the user deferred is not a decision, and it will surface again downstream as a blocked build. Mark each decision as asked or defaulted. Name each phase that stays attended, and each outward action the user approved.
 
-**Where it landed.** Name the plan file you rewrote in place and its `Grilled:` stamp, or the file you were asked to write instead, or nothing at all when the user declined a file.
+**Where it landed.** Name the plan file you rewrote in place and its `Grilled:` stamp, or the file you were asked to write instead, or nothing at all when the user declined a file. Give the commit SHA, the pushed branch, the issue URL, and its label after [Publish the result](#publish-the-result), or say which of those the user skipped or which failed.
 
-**Next.** The stamp is the whole point of finishing a grill, so say what it unlocks. Where the project tracks work in GitHub Issues, a hardened plan is ready to become issues, and **issuekit** reads the stamp to file them as `ready` (safe to work unattended) rather than `needs-planning`. Where it tracks work elsewhere or nowhere, the same stamp clears the plan to be built, so name **implementkit** and its first phase instead. Do not assume the first case: a project on GitHub may still run its backlog in Linear, Jira, or a file, and the prompt or the repo's agent-guide file is what says which. Without a plan file, name what the decisions feed instead, either the build itself (**implementkit**) or a decision record (**domainkit**). Don't start either; grilling ends at the shared understanding.
+**Next.** The stamp is the whole point of finishing a grill, so say what it unlocks. When the publish step moved an existing issue to `ready`, the issue is ready to build: run **afkkit** on it (`run issue #<n> unattended`), otherwise start it with **issuekit** `start <n>`, otherwise create a branch and build it by hand. Where the project tracks work in GitHub Issues and no issue exists yet, a hardened plan is ready to become issues, and **issuekit** reads the stamp to file them as `ready` (safe to work unattended) rather than `needs-planning`. Where it tracks work elsewhere or nowhere, the same stamp clears the plan to be built, so name **implementkit** and its first phase instead. Do not assume the first case: a project on GitHub may still run its backlog in Linear, Jira, or a file, and the prompt or the repo's agent-guide file is what says which. Without a plan file, name what the decisions feed instead, either the build itself (**implementkit**) or a decision record (**domainkit**). Don't start either; grilling ends at the shared understanding.

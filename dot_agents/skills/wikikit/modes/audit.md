@@ -6,7 +6,7 @@ Three checks per page, cheapest first:
 
 - **Recency.** The page's stamp against the commits touching the code it documents, diffing from the stamped SHA while it is reachable and falling back to the date when it isn't. Grep-cheap, so it runs over **every** page. It is a prefilter, not a verdict: a stale stamp on an unchanged concept is fine.
 - **Claim verification.** The load-bearing one. Every command, path, env var, flag, and endpoint on the page checked against the repo, with the allowlisted probes available on consent. A command that no longer exists is **broken**; a described behavior that changed is **stale**. This pass is budgeted and spends **highest-risk-first**, ordered by the recency prefilter.
-- **Coverage.** Documentable surface with no page at all: an undocumented CLI command, a deploy path with no runbook, a public entry point missing from the architecture page.
+- **Coverage.** Documentable surface with no page at all: an undocumented CLI command, a deploy path with no runbook, a public entry point missing from the architecture page. An item that documents itself and appears on an index page is covered. An existing mirror page series is reported as one `mirror` row, routed to [`update`](./update.md) to collapse it into an index.
 
 ### The report
 
@@ -19,6 +19,7 @@ A table per page with a verdict, plus quoted evidence for anything that isn't `c
 | `broken` | a command, path, or var on the page no longer exists |
 | `unverified` | an adopted page wikikit has never claim-checked, **distinct from stale** |
 | `missing` | documentable surface with no page |
+| `mirror` | a page series that restates self-documenting sources, one page per item |
 
 Add a **manifest-drift row** from the reconcile pass, and crown one next move.
 

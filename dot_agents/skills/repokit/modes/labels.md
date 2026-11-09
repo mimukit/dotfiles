@@ -44,6 +44,8 @@ Colors are 6-hex, no leading `#`.
 
 **No priority label means *unassessed*, not *medium*.** The absence is a real state and downstream skills read it as one; it's how `triage` finds issues nobody has ranked yet. Never provision a default, and never treat a missing label as an implied middle.
 
+**Priority is a label, not a GitHub Projects field.** Reading `projectItems` needs an OAuth scope that `gh auth login` does not grant by default, and without it the whole JSON query fails. A board field also exists only for issues somebody added to a board.
+
 **Four levels is the ceiling, and it's already generous.** The point of a priority scale is a backlog someone can order in their head; every level past the fourth is one more place for the same issue to plausibly sit, which is how a scale turns into a coin flip. If the user asks for a fifth, say what it costs before adding it.
 
 ## The canonical automation set
@@ -81,7 +83,9 @@ Handle the namespaces **independently**, because a repo very often has a mature 
 
 **Priority names collide harder than lifecycle names, so check meaning and not just spelling.** `ready` and `in-review` are workflow-shaped words that mostly mean this one thing; `critical`, `high`, and `low` are generic English and a repo may already be using them for something else entirely: bug **severity** (how badly it breaks), effort or T-shirt **size**, risk, or a customer tier. A name match is not a meaning match. When the repo already has a `critical` or `high`, read its description and a couple of the issues carrying it before assuming it's the same axis, and if it turns out to be severity, say so plainly. Severity and priority are genuinely different things (a critical crash nobody hits can be `low`), so the honest fix is to name the collision and let the user decide whether to rename theirs, rename ours, or map onto it.
 
-Absent any existing scheme in a namespace, go straight to the diff for that one. This step is done when each of the three namespaces has an answer: no existing scheme, map onto theirs, or add the canonical set.
+Absent any existing scheme in a namespace, go straight to the diff for that one.
+
+**Under `setup`, ask nothing here.** A namespace with an existing scheme is skipped, neither mapped nor provisioned, and the hand-off names it with `repokit labels` as the place to decide. A namespace with no scheme is provisioned. Skip the question about an installed review app; report only what the workflow grep finds. This step is done when each of the three namespaces has an answer: no existing scheme, map onto theirs, or add the canonical set.
 
 ## 2. Diff against the canonical sets and preview
 Sort each canonical label, from **all three** sets, into one of three buckets and show the plan before touching anything, grouped by namespace so the user can approve one and decline another:
@@ -92,7 +96,7 @@ Sort each canonical label, from **all three** sets, into one of three buckets an
 
 Labels **outside** the canonical sets (GitHub's defaults like `bug`/`enhancement`, or the repo's own) are **left untouched**, and you never delete a label unless the user explicitly asks.
 
-This step is done when every canonical label in a namespace being provisioned sits in exactly one bucket, and the user has approved or declined each namespace's plan.
+This step is done when every canonical label in a namespace being provisioned sits in exactly one bucket, and the user has approved or declined each namespace's plan. Under `setup`, the plan is approved as shown: create every missing label and update every drifted one.
 
 ## 3. Apply, echoing the commands
 On approval:

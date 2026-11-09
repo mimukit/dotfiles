@@ -1,7 +1,7 @@
 ---
 name: prototypekit
 description: >-
-  Build throwaway code that answers a question, whether an interactive state model you can drive, a script that measures one thing, or competing UI mocks to choose between, then fold the answer into the decision and delete the code. Use when the user says "prototype this", "spike this", "does this state model hold up", "is this library fast enough", or "mock up three versions". Not a demo generator and never production code.
+  Build throwaway code that answers a question, whether an interactive state model you can drive, a script that measures one thing, or competing live UI variants to switch between in the app, then fold the answer into the decision and delete the code. Use when the user says "prototype this", "spike this", "does this state model hold up", "is this library fast enough", or "try three live versions in the app". Not a demo generator and never production code.
 license: MIT
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 metadata:
@@ -16,7 +16,7 @@ That inversion is the whole skill. The prototype is not a draft of the real thin
 
 ## When this fires
 
-"Prototype this", "spike this", "throwaway explore X", "does this state model hold up", "will this survive <hard case>", "is this fast enough", "do these two interop", "does this API do what its docs imply", "show me a few options for this screen", "mock up three versions", "/prototypekit".
+"Prototype this", "spike this", "throwaway explore X", "does this state model hold up", "will this survive <hard case>", "is this fast enough", "do these two interop", "does this API do what its docs imply", "try three live versions in the app", "/prototypekit". An image of a screen, or image options of one, is **uikit** `mockup` when installed; otherwise draw the image with whatever image tool is present.
 
 Four things it deliberately is **not**:
 

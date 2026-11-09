@@ -8,6 +8,7 @@ The differentiator, and the one thing a browser-based prompt optimizer structura
 
 - **Resolve every vague reference to a real path or symbol.** *"the auth file"* becomes `src/lib/session.ts`. *"the old flow"* becomes the function that actually implements it, or it stays named as unresolved.
 - **Discover commands rather than guessing them.** *"make sure tests pass"* becomes the repo's real test command, found in `package.json`, a `Makefile`, `pyproject.toml`, a `justfile`, or the CI config.
+- **Resolve every summary of evidence to its primary artifact.** *"the crash"* becomes the crash report or the log path; *"users say it's slow"* becomes the trace, the benchmark output, or the support export behind it. A summary is someone's reading of the evidence, so point the receiver at the evidence itself. An artifact the tree doesn't hold stays named as unresolved.
 - **Read the repo's agent instruction file** (`CLAUDE.md`, an `AGENTS`-style guide, `.cursorrules`, whatever it uses) to learn what the prompt can **leave out**, not what to copy in. A prompt that re-specifies conventions the agent already reads burns tokens and invites contradiction with the file itself.
 
 Look facts up yourself; reserve questions for genuine decisions.
@@ -16,7 +17,7 @@ Look facts up yourself; reserve questions for genuine decisions.
 
 **Keep the resolution ledger as you go.** Grounding with no gate is a claim, not a mechanism: an agent that reads two files and declares itself grounded emits the same generic prompt every web optimizer emits, while reporting that it didn't. The ledger is what makes it checkable, with every vague reference paired with what it became, and every one that didn't resolve named as unresolved. An empty ledger on an obviously vague input is visibly wrong on the page.
 
-Done when every vague reference and every unnamed command in the input has a ledger row, resolved or named as unresolved.
+Done when every vague reference, every summary of evidence, and every unnamed command in the input has a ledger row, resolved or named as unresolved.
 
 ### 2. Ask at most three, and never block
 
@@ -37,12 +38,12 @@ Every `task` prompt carries all five:
 | **Goal** | the outcome, stated once, in the receiver's terms |
 | **File scope** | the paths in, and the paths deliberately out |
 | **Constraints** | what must hold: conventions to follow, things not to touch, decisions already made |
-| **Done signal** | a concrete check, meaning a command, a test, or an observable state. Never "when it works" |
+| **Done signal** | a concrete check, meaning a command, a test, or an observable state. Never "when it works". Prefer a check that exists before the receiver starts (an existing test, a command, a measurement). A check the receiver writes itself must be watched to fail before the change, for the stated reason and not from a setup error, because a check written after the change only proves the change agrees with itself |
 | **Stop condition** | where to stop, so the agent doesn't keep going past the ask |
 
 Bake real content in. Long context on top, the ask at the bottom. `task` **assumes a reasoning-native receiver**, and every current coding agent is one, so spending a question on it buys nothing.
 
-On a review-only run, skip this step and check the input against the five parts instead. Done when each of the five parts is present in the prompt, or, on a review-only run, named as present or missing.
+On a review-only run, skip this step and check the input against the five parts instead. A Done signal the receiver writes and grades itself, with no fail-first step, is present but **weak**; name it as weak, separately from a missing part. Done when each of the five parts is present in the prompt, or, on a review-only run, named as present or missing, with a self-graded Done signal named as weak.
 
 ### 4. Strip the slop, then scan for brackets
 
@@ -72,7 +73,7 @@ The diagnosis exists so you learn to write the prompt yourself rather than needi
 
 **The no-rewrite verdict.** promptkit may return *"this is fine, send it"* with the input unchanged, a first-class outcome, because the alternative is the failure every rewrite skill has: changing something to justify having been invoked. It's gated on the three mechanical checks the run already performed, not on a feeling: **every contract part present · no placeholder surviving the scan · no catalog entry firing.** Pass all three and the ledger prints what the prompt already had instead of what changed.
 
-On a review-only run, deliver the diagnosis alone: the ledger, the missing contract parts, the catalog entries that fired, and the placeholders the scan found.
+On a review-only run, deliver the diagnosis alone: the ledger, the missing contract parts and a weak Done signal, the catalog entries that fired, and the placeholders the scan found.
 
 ### 7. Hand off
 

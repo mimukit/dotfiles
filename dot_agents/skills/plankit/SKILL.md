@@ -21,9 +21,11 @@ The user wants to think a piece of work through *before* building it: "plan this
 ## Procedure
 
 ### 1. Capture the idea
-Get the concept, the problem it solves, who it's for, and the outcome that means success. If the input is a one-liner, ask a few **scoping** questions (use `AskUserQuestion` when available). Those are generative "what are we building and why", not adversarial "what did you miss". Ask one round at most, and only about the four items the input leaves open.
+Get the concept, the problem it solves, who it's for, and the outcome that means success. The success outcome is the **goal behind the request**, meaning what the work is for and not only what it builds ("keep the app crash-free", not "fix this crash"), plus a **target**: the number that shows it worked. If the input is a one-liner, ask a few **scoping** questions (use `AskUserQuestion` when available). Those are generative "what are we building and why", not adversarial "what did you miss". Ask one round at most, and only about the four items the input leaves open.
 
-**Done when** the concept, the problem, the user, and the success outcome each have a one-line answer, from the input or from the user.
+**Ask for the target; propose one only from a baseline.** Ask the user for their number first. When they have none, propose one only from a baseline the user gives or a file you can read (a CI report, a benchmark output, a dashboard export), and label it with both: `Target: p95 load under 200 ms (proposed; baseline 4.8 s from ci/bench.json)`. This skill has no shell, so it never measures a baseline itself. With no baseline, write `Target: open, no baseline` and carry that line to Open questions, so grillkit settles it instead of an invented number. When no number fits the work, record why and name what does show it worked ("docs-only change, so the check is a lint pass"); "not applicable" names nothing and fails the step.
+
+**Done when** the concept, the problem, the user, and the success outcome each have a one-line answer, from the input or from the user, and the success outcome carries a target, a `Target: open, no baseline` line, or a reason no number fits that names what does show it worked.
 
 ### 2. Ground it in reality
 Research before proposing, so the plan reuses what exists instead of reinventing it.
@@ -31,7 +33,7 @@ Research before proposing, so the plan reuses what exists instead of reinventing
 - **In an existing repo:** read the relevant code, docs, and config to find the patterns, utilities, and conventions the plan should build on. Look up facts yourself (`Read`, `Grep`, `Glob`); reserve questions for genuine decisions. Never propose new code where a suitable implementation already exists; name the existing thing in the plan instead.
 - **Greenfield (no repo yet):** skip the code research; ground the plan in the user's stated goals and constraints.
 
-**Done when** every part of the system the work touches has its existing module, utility, or convention named by path, or is recorded as having none. In greenfield work, every stated goal and constraint is written down instead.
+**Done when** every part of the system the work touches has its existing module, utility, or convention named by path, or is recorded as having none, and for a UI change the house rules and the visual reference are found or recorded as missing ([UI plans](#ui-plans)). In greenfield work, every stated goal and constraint is written down instead.
 
 ### 3. Diverge, explore approaches
 Brainstorm the real options and **recommend one**, something concrete to accept or redirect, not a naked menu. This is the generative half: don't settle for the first idea, and consider the unconstrained version of the work before narrowing to the practical one.
@@ -52,7 +54,7 @@ Resolve the structural decisions a coherent draft needs (the architecture, the p
 **Done when** the architecture, the phase list, and the scope boundary each have a settled answer the user accepted or redirected, every phase that needs a person is marked [attended](#attended-phases), and every other unsettled point sits in the Open questions list.
 
 ### 5. Write the plan document
-Write `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md`, where `NNNN` is the next four-digit serial in `docs/plans/`, `<slug>` is a short lowercase kebab-case name for the feature, and the suffix is the plan's ISO creation date (`0007-plan-sso-login-2026-07-23.md`). To get the serial, list `docs/plans/`, take the highest leading serial, and add one; start at `0001` when there is none. The serial is per directory and never reused, and it applies in every repo, a fresh one included. Keep the whole name stable on later edits; record an updated date inside the document when useful. Use the [plan-doc format](#plan-doc-format) below, which is the contract grillkit and issuekit both read, so keep the body phase/task-shaped. Create `docs/plans/` if it doesn't exist. If a plan for this work already exists, update it in place rather than writing a second file, and keep its name even when it has no serial. When that plan carries a `Grilled:` line and your update is [material](#when-a-grilled-stamp-goes-stale), delete the line and say so in the hand-off.
+Write `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md`, where `NNNN` is the next four-digit serial in `docs/plans/`, `<slug>` is a short lowercase kebab-case name for the feature, and the suffix is the plan's ISO creation date (`0007-plan-sso-login-2026-07-23.md`). To get the serial, take the highest leading serial in `docs/plans/` in this checkout and in every other worktree of the repo, and add one; start at `0001` when there is none. This skill has no shell, so find the worktrees with Read and Glob: in a linked worktree, `.git` is a file that names `<main>/.git/worktrees/<name>`; `<main>` is the main checkout, and each `<main>/.git/worktrees/*/gitdir` holds another worktree's path. Scan them all, because parallel worktrees otherwise take the same serial. The serial is per directory and never reused, and it applies in every repo, a fresh one included. Keep the whole name stable on later edits; record an updated date inside the document when useful. Use the [plan-doc format](#plan-doc-format) below, which is the contract grillkit and issuekit both read, so keep the body phase/task-shaped. Create `docs/plans/` if it doesn't exist. If a plan for this work already exists, update it in place rather than writing a second file, and keep its name even when it has no serial. When that plan carries a `Grilled:` line and your update is [material](#when-a-grilled-stamp-goes-stale), delete the line and say so in the hand-off.
 
 **Done when** the file exists at its path, every section in the format is filled or deliberately dropped, and every phase carries its acceptance observable.
 
@@ -80,7 +82,7 @@ The canonical structure plankit owns. Keep it lean, so every section earns its p
 # Plan: <title>
 
 ## Context
-The problem, why it matters now, and the outcome that means success.
+The problem, why it matters now, and the outcome that means success: the goal behind the request and its target line.
 
 ## Design decisions (settled)
 | Decision | Resolution |
@@ -109,11 +111,17 @@ A hardened plan additionally carries a **`Grilled: YYYY-MM-DD` line directly und
 
 **Every phase ends on a `Done when:` line**, the acceptance observable. It names something a person or a test can check after the phase ships, never an intent ("auth works"). It gives the build a finish line to check against, and a phase without one has no finish.
 
+**The last phase's `Done when:` carries the target when the build can measure it**, so the build checks the number instead of only recording it. A metric that only shows after release stays in Context, marked `measured after release`, because no build can check it.
+
 **A phase that asks for a new kind of test names its runner and approach** in Design decisions (for example "component tests with vitest and Testing Library, beside the source"). Without that row, the build stops to ask which runner to use.
 
 ### Attended phases
 
 **A phase that needs a person carries an `Attended:` line** naming what it waits on: a design pick, a mockup approval, an outward action such as filing issues or a deploy. Order the attended phases before the phases an unattended run can take, so the human work ends first and the rest can run with nobody at the keyboard. An unattended runner reads the line and stops before the build, not in the middle of it.
+
+### UI plans
+
+**A plan that changes a screen settles how it looks before the build, not after the PR.** Read the project's `DESIGN.md` and agent instructions for its UI house rules (for example: external links open in a new tab, the theme toggle has light and dark only, cards in a row share one height), and list the rules this plan's screens must follow as one Design decisions row. A rule the user states during planning that no file records yet goes in that row too, marked new, so it can move into `DESIGN.md`. Name the visual reference (a mockup path, an issue attachment, a reference site) and ask the user to approve it during planning; record the approval as a Design decisions row with the date. When no reference exists yet, the visual pick is an attended phase, ordered first.
 
 ### When a `Grilled:` stamp goes stale
 

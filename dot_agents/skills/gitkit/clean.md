@@ -2,7 +2,7 @@
 
 Reference for gitkit's [`clean`](./SKILL.md#clean) mode. Read this only when a run actually sweeps; nothing else in gitkit depends on it.
 
-The sweep finds the worktrees, local branches, and remote branches whose work has landed, and removes them one at a time. It is the counterpart to [create, or adopt](./SKILL.md#create-or-adopt): the teardown rules in [Remove](./SKILL.md#remove) govern every removal here, and this file adds only the classification that decides which rows reach them.
+The sweep finds the worktrees, local branches, and remote branches whose work has landed, and removes them one at a time. It then sweeps old QA screenshot folders, which live outside git. It is the counterpart to [create, or adopt](./SKILL.md#create-or-adopt): the teardown rules in [Remove](./SKILL.md#remove) govern every removal here, and this file adds only the classification that decides which rows reach them.
 
 ## 1. Enumerate
 
@@ -88,7 +88,7 @@ Print one table: the branch, its worktree path, whether the remote branch goes t
 
 **A remote delete takes its own confirmation, even for a branch you are already deleting locally.** The local delete is recoverable from the reflog. The remote delete reaches a shared server and other people's clones.
 
-**Never a batch yes.** A sweep is the one place where a single confirmation covers many independent deletions, and the rows are not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt hides. Sync is different, and legitimately takes one confirmation, because there the rebase and the push are one decision about one branch.
+**Never a batch yes.** A sweep is the one place where a single confirmation covers many independent deletions, and the rows are not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt hides. Sync is different, and takes no confirmation at all, because there the rebase and the push are one decision about one branch, and the ask to sync already made it.
 
 A run where the human declines everything is a successful run. Report the table and stop.
 
@@ -96,7 +96,7 @@ Ends when every reapable row and every reapable remote row has the human's own a
 
 ## 5. Remove
 
-For each confirmed row, in this order:
+For each confirmed row, in this order. A row whose worktree carries the `gitkit-prepared` marker runs its declared [teardown](./prepare.md#teardown) first, and a failed teardown keeps that row's worktree and branch:
 
 ```sh
 git -C "$REPO" worktree remove "$WT"
@@ -118,8 +118,38 @@ A server-side rejection is a normal outcome. A protected branch rule refuses the
 
 Ends when every confirmed row is removed or carries its reported refusal.
 
+## 6. Sweep the QA screenshot folders
+
+qakit keeps each run's screenshots and gallery in `~/qakit/<plan file name without .md>/`, outside every repo. issuekit `close` deletes a merged PR's folders; this step catches the ones that outlived a branch with no close. It runs after [Remove](#5-remove), so the rows the sweep kept are known.
+
+```sh
+find "$HOME/qakit" -mindepth 1 -maxdepth 1 -type d -mtime +14
+```
+
+Folders 14 days old or newer are out of scope; report their count only. For each older folder, the plan is `docs/qa/<folder name>.md`. Hold the folder when that plan exists on a branch or worktree the sweep kept (active, adopted, dirty, or a held remote row). Check a kept worktree on disk too, because an unmerged plan is often still uncommitted:
+
+```sh
+git -C "$REPO" cat-file -e "$REF:docs/qa/$STEM.md" 2>/dev/null && echo held
+```
+
+```sh
+test -f "$WT/docs/qa/$STEM.md" && echo held
+```
+
+Every other folder is reapable, with one of two reasons: the plan is only on the base, or the plan is not in this repo at all. The second can be another repo's run, so say it plainly in the reason.
+
+Print the folders as their own table: the folder, its age in days, its file count, and the reason. **One confirmation covers the whole table**, and the human may strike rows from it. That is the one exception to the per-item rule in [Preview, and confirm per item](#4-preview-and-confirm-per-item): a folder holds captures and no commits, and a qakit run takes them again. Delete each confirmed folder by its full path:
+
+```sh
+[ -n "$STEM" ] && rm -rf -- "$HOME/qakit/$STEM"
+```
+
+No `~/qakit/` folder is a normal state. Say so in one line and skip the table.
+
+Ends when every older folder is held with its branch, deleted, or struck by the human.
+
 ## Hand off
 
-Report the buckets by count, then each removed worktree by path, each deleted local branch by name, and each deleted remote branch as `origin/<name>`. Name the dirty rows you left and what is in them. Name the remote rows you held and why. Say when nothing was reapable.
+Report the buckets by count, then each removed worktree by path, each deleted local branch by name, and each deleted remote branch as `origin/<name>`. Name the dirty rows you left and what is in them. Name the remote rows you held and why. Name each QA screenshot folder deleted and each one held, with its branch. Say when nothing was reapable.
 
 Next, act on the tracker drift rows with **issuekit** `close <n>`, otherwise `gh issue close <n>`. With no drift, there is no next step. A workspace tool drops the row of a removed worktree by itself, so neither orcakit nor paseokit has a step to run after this sweep. Run `paseokit clean` only when Paseo shows duplicate rows.

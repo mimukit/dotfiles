@@ -1,12 +1,12 @@
 # Mode: `setup`
 
-Bring an already-created GitHub repo up to convention in one span: the repo settings, the baseline files, then the `about` and `labels` modes on top. `setup` **configures, never creates** — the root's preflight already stopped if there is no GitHub remote, and `gh repo create` stays with the user. It also never commits: every file it writes is left unstaged for a commit skill to group. The root's [Preflight](../SKILL.md#preflight-every-mode) and [Detect](../SKILL.md#detect-every-mode) have already run; this file assumes their state.
+Bring an already-created GitHub repo up to convention in one span: the repo settings, the baseline files, then the `about` and `labels` modes on top. **`setup` runs on defaults and asks nothing.** Every decision below has a default, and the run applies it and reports it in the hand-off; the user changes a value afterwards with `gh repo edit` or by editing the file. The only stops are the root's guardrails: an archived repo, or a fork or template the user does not confirm. `setup` **configures, never creates** — the root's preflight already stopped if there is no GitHub remote, and `gh repo create` stays with the user. It also never commits: every file it writes is left unstaged for a commit skill to group. The root's [Preflight](../SKILL.md#preflight-every-mode) and [Detect](../SKILL.md#detect-every-mode) have already run; this file assumes their state.
 
 ## 1. Report the repo's shape
-Read the state Detect fetched, plus the commit count (`git rev-list --count HEAD`, which fails harmlessly on an empty repo) and the top-level file list. Say what you found before proposing anything: empty repo, fresh repo with a first commit, or a repo with real history. Every shape runs the identical flow below; history only shrinks the diffs, because the scaffold step proposes missing files and everything else reconciles. This step is done when you have stated the shape and the user has not objected to continuing.
+Read the state Detect fetched, plus the commit count (`git rev-list --count HEAD`, which fails harmlessly on an empty repo) and the top-level file list. State what you found in one line: empty repo, fresh repo with a first commit, or a repo with real history. Every shape runs the identical flow below; history only shrinks the diffs, because the scaffold step writes only missing files and everything else reconciles. This step is done when the shape is stated.
 
-## 2. Settings diff
-Fetch the current settings and diff them against the canonical map:
+## 2. Settings
+Fetch the current settings and diff them against the canonical map, which is the user's default for every repo:
 
 ```sh
 gh repo view --json visibility,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,deleteBranchOnMerge,autoMergeAllowed,hasIssuesEnabled,hasWikiEnabled,hasProjectsEnabled,defaultBranchRef
@@ -21,45 +21,43 @@ gh api repos/{owner}/{repo} --jq '{allow_update_branch, security_and_analysis}'
 | `--enable-squash-merge` | false | A squash breaks branch ancestry, the case gitkit's `clean` needs three detections to catch. |
 | `--enable-rebase-merge` | false | One merge method means one shape of history. |
 | `--delete-branch-on-merge` | true | The remote branch dies with the PR, so a branch sweep only handles local leftovers. |
-| `--enable-wiki` | false | Proposed off; wikikit `publish` is opt-in and enabling later is one click. Flippable in this preview. |
+| `--enable-wiki` | false | wikikit `publish` is opt-in, and enabling later is one click. |
 | `--enable-projects` | false | Nothing in this collection reads a project board. |
 | `--enable-issues` | true | The issue tracker is the workflow's substrate. |
 | `--allow-update-branch` | false | The button merges the base into the PR branch by default, and gitkit syncs a branch by rebase. No skill here uses it. |
-| `--enable-auto-merge` | true | Lets `gh pr merge --auto` land an approved PR once checks pass, so a merge waits on CI instead of on you. No skill here uses it: mergekit merges on your word and afkkit stops at an open PR. |
+| `--enable-auto-merge` | false | A person reviews the code before every merge. mergekit merges on your word and afkkit stops at an open PR. |
 | `--enable-secret-scanning` | true | GitHub reports a credential committed to the repo. |
 | `--enable-secret-scanning-push-protection` | true | GitHub blocks the push that carries a credential, so nothing to revoke. |
 
-Show current vs proposed for every row in the map, the same side-by-side shape `about` uses. Mark each row as matching or differing; never drop a matching row, because the user may want to flip a setting the map already agrees with.
-
-**Ask the settings as their own question, separate from every other decision in this mode.** Do not fold them into the scaffold or the license question, and do not ask for one blanket approval of the whole map. Put one option per row, in the map's order, worded as `current → proposed` (or `current, matches` for a row already at the proposed value) with the Why column as the option's explanation, and let the user select per row whether to enable or disable that setting. A selected matching row flips to its opposite value; an unselected row stays untouched. The wiki row is the one most often flipped, so never bundle it with another row. When the user selects nothing, change no setting and continue.
+Apply every differing row without a question. A matching row needs no flag. Keep the current and new value of each changed row for the hand-off.
 
 The default branch is report-only: state it when it isn't `main` and change nothing, because renaming a default branch breaks open PRs and clones.
 
-**Both secret-scanning rows are free on a public repo and need GitHub Advanced Security on a private one.** Propose them on a public repo. On a private repo, say in one line that the plan may reject them, and offer them anyway — the cost of a rejected flag is one error message.
+**Both secret-scanning rows are free on a public repo and need GitHub Advanced Security on a private one.** Apply them on either visibility; on a private repo the plan may reject them, and the cost of a rejected flag is one error message.
 
-Apply only the selected rows, in one echoed command built from those flags:
+Apply the differing rows in one echoed command built from their flags. The full form, when every row differs:
 
 ```sh
-gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --delete-branch-on-merge --enable-issues --enable-wiki=false --enable-projects=false --allow-update-branch=false --enable-auto-merge --enable-secret-scanning --enable-secret-scanning-push-protection
+gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --delete-branch-on-merge --enable-issues --enable-wiki=false --enable-projects=false --allow-update-branch=false --enable-auto-merge=false --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
 
-When the command fails, re-run it without the rejected flag rather than dropping the whole batch, and report which row GitHub refused. This step is done when every row in the map is either applied, deliberately left unselected by the user, refused by GitHub with that refusal reported, or already matching.
+When the command fails, re-run it without the rejected flag rather than dropping the whole batch, and report which row GitHub refused. This step is done when every row in the map is applied, already matching, or refused by GitHub with that refusal reported.
 
-## 3. Scaffold diff
-List which baseline files exist and which are missing. Propose only the missing ones; an existing file is never overwritten, and patching one happens only when the user asks. Preview every file's content before writing it.
+## 3. Scaffold
+List which baseline files exist and which are missing. Write every missing one without a preview; the files stay unstaged, so `git diff` is the review. An existing file is never overwritten. The one patch `setup` makes to an existing file is the naming section in `AGENTS.md`, described below.
 
 | File | Content | Skipped when |
 |------|---------|--------------|
-| `LICENSE` | The license the user picks in the license question below. | Present, or the user declines a license. |
+| `LICENSE` | The default license for the repo's visibility, below. | Present. |
 | `README.md` | Title, the one-line About text, an install or run section matched to the stack. | Present. |
 | `.gitignore` | Matched to the detected stack; no file when the stack is unknown. | Present, or stack undetected. |
-| `AGENTS.md` | A repo-conventions skeleton: what the project is, how to build and test it, what an agent must not do, and the [docs artifact naming](#docs-artifact-naming) section. | Present; then propose only the naming section, when it is missing. |
+| `AGENTS.md` | A repo-conventions skeleton: what the project is, how to build and test it, what an agent must not do, and the [docs artifact naming](#docs-artifact-naming) section. | Present; then append only the naming section, when it is missing. |
 | `.claude/CLAUDE.md` | One line pointing at `AGENTS.md` (`@../AGENTS.md` under a header), so both agent families read one source. | Present. |
 
-**The license is a question, never an assumption, and a private repo gets the question too.** Ask which license the project takes before writing `LICENSE`. The recommendation follows the repo's visibility (fetched in the settings diff), and the option list changes with it:
+**The license follows the repo's visibility (fetched in the settings step), with no question.**
 
-- **Public repo → recommend MIT.** Offer MIT, Apache-2.0, and GPL-3.0, and accept any SPDX identifier the user names instead. Fetch the text from `gh api /licenses/<key> --jq .body` rather than writing a license from memory, then substitute the year and holder name.
-- **Private repo → recommend a proprietary all-rights-reserved file.** A private repo holds proprietary code, and the point of the file is to say so where a reader will find it. Write a short `LICENSE` naming the holder, the year, and the reservation of all rights, with no grant to use, copy, modify, or distribute:
+- **Public repo → MIT.** Fetch the text from `gh api /licenses/mit --jq .body` rather than writing it from memory, then substitute the year and holder name.
+- **Private repo → a proprietary all-rights-reserved file.** A private repo holds proprietary code, and the file says so where a reader will find it. Write this text with the holder and the year:
 
   ```text
   Copyright (c) <year> <holder>. All rights reserved.
@@ -70,34 +68,32 @@ List which baseline files exist and which are missing. Propose only the missing 
   the copyright holder.
   ```
 
-- **Offer an open license to a private repo as the runner-up**, because a private repo often goes public later and picking the license now is cheaper than relicensing after contributors arrive.
-- **"No license" stays available in both.** Say what it means when picked: default copyright already reserves all rights, so the code is not open, but nobody reading the repo can tell that from the repo.
-- Recommend, and let the user decide; say in one line that this is not legal advice.
+A private repo that goes public later needs a new `LICENSE`; name that in the hand-off for a private repo.
 
 ### Docs artifact naming
 
-Every `AGENTS.md` this mode writes carries the section below. When `AGENTS.md` is already present, check it for an artifact-naming rule. When none exists, propose appending the section, and accept a no. A repo scaffolded by another tool, such as a project generator, arrives with an `AGENTS.md` but no naming rule, and that is the case this row exists for.
+Every `AGENTS.md` this mode writes carries the section below. When `AGENTS.md` is already present, check it for an artifact-naming rule. When none exists, append the section. A repo scaffolded by another tool, such as a project generator, arrives with an `AGENTS.md` but no naming rule, and that is the case this row exists for.
 
 ```markdown
 ## Docs artifact naming
 
 - An artifact under `docs/<type>/` (a plan, a QA plan, a review, research) is named `NNNN-<type>-<slug>-YYYY-MM-DD.md`.
-- `NNNN` is a four-digit serial, per directory, assigned in creation order and never reused. To get it, list the directory, take the highest serial, and add one. An empty directory starts at `0001`.
+- `NNNN` is a four-digit serial, per directory, assigned in creation order and never reused. To get it, take the highest serial in that directory across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD <dir>` after `git fetch origin`), and add one. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. An empty directory starts at `0001`.
 - `YYYY-MM-DD` is the creation date. The whole name stays fixed after edits.
 - An ADR uses its decision number as the serial: `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`.
 - Reader-facing pages (`docs/wiki/`, how-to guides, runbooks) stay unnumbered.
 ```
 
-The holder name comes from `gh api user --jq .name`, falling back to `git config user.name` when that is empty, and it is always visible in the file preview before the write. This step is done when every row is written, skipped for its stated reason, or declined by the user.
+The holder name comes from `gh api user --jq .name`, falling back to `git config user.name` when that is empty, This step is done when every row is written or skipped for its stated reason.
 
 ## 4. Run `about`
-Read [about.md](about.md) and run it in full against the now-scaffolded repo, so the README it reads is the one this run just wrote. Skip its hand-off; this file's [Hand off](#6-hand-off) closes for the whole span.
+Read [about.md](about.md) and run it against the now-scaffolded repo, so the README it reads is the one this run just wrote. Run it on defaults: skip the per-field question and apply the defaults that file states for a `setup` run. Skip its hand-off; this file's [Hand off](#6-hand-off) closes for the whole span.
 
 ## 5. Run `labels`
-Read [labels.md](labels.md) and run it in full, unchanged. Skip its hand-off for the same reason.
+Read [labels.md](labels.md) and run it on defaults: skip every approval question and apply the defaults that file states for a `setup` run. Skip its hand-off for the same reason.
 
 ## 6. Hand off
-**What changed.** Report four things in order: the settings applied and the rows kept as-is, the files written and the ones skipped with their reasons, the About fields applied, and the label sets provisioned. Name the license picked, or say the user declined one.
+**What changed.** Report four things in order: each setting changed as `current → new`, the files written and the ones skipped with their reasons, the About fields applied and the fields kept, and the label sets provisioned or skipped. Name the license written. Give the `gh repo edit` flag that reverts any setting the user may want back.
 
 **Where it landed.** Give the repo URL, the file paths written, and say the files are unstaged.
 

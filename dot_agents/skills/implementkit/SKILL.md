@@ -26,7 +26,7 @@ Two hard boundaries:
 ## Procedure
 
 ### 1. Take an explicit input
-Require the user to name what to build. The options are a plan file (`docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md`, or an older one without the `NNNN-` serial), an issue (`#42`, or a URL/id `gh` can fetch), a freeform spec written in the prompt, or a **fix round**. A fix round takes one of two forms: a concrete list of review findings (e.g. the blockers from a review pass), each naming what's wrong and where, or a **failing reproduction test** (e.g. from debugkit) with the cause it proves. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it). The step is done when the whole input has been read, or the run has stopped to ask for it.
+Require the user to name what to build. The options are a plan file (`docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md`, or an older one without the `NNNN-` serial), an issue (`#42`, or a URL/id `gh` can fetch), a freeform spec written in the prompt, or a **fix round**. A fix round takes one of two forms: a concrete list of review findings (e.g. the blockers from a review pass), each naming what's wrong and where, or a **failing reproduction test** (e.g. from debugkit) with the cause it proves. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. The one exception is an issue branch. When the prompt names nothing and the current branch matches `issue-<n>-<slug>` (the shape gitkit gives a worktree started from an issue), take issue `#<n>` as the named input and say the branch supplied it. Any other branch shape still stops and asks. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it). The step is done when the whole input has been read, or the run has stopped to ask for it.
 
 **A plan or an issue may be narrowed to one phase** ("implement phase 3 of `0007-plan-sso-2026-07-23.md`", "implement phase 2 of #42"). Both carry their phases as headings, so a narrowed run builds that phase and leaves the rest alone. Read the whole document either way: the phases above the named one say what the code may already assume, and the ones below say what it must not.
 
@@ -60,7 +60,7 @@ Pick **straight-through**, **tests-after**, or **TDD** by this precedence, takin
 - The subagent builds and runs the gate under [Tool rules](#tool-rules), writes its notes and logs to a file, and returns a short result: pass or fail, the files changed, the gate result, and that file's path.
 - The conductor edits no code. It reads each result, dispatches the next group, then runs the [done-gate](#5-run-the-done-gate) once over the whole tree.
 
-When afkkit is installed, its conductor section holds the full dispatch and payload rules. On a host with no subagent tool, build the groups inline in order and say so.
+When afkkit is installed, its **Dispatch rules** section holds the full brief rules: a new agent, never a fork, inputs by path, and the two command rules. On a host with no subagent tool, build the groups inline in order and say so.
 
 Follow [Tool rules](#tool-rules) for every command and every file write, inline or delegated.
 

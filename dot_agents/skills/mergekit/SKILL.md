@@ -21,8 +21,8 @@ It forms **no opinion about the code**. Judging the source is a code-review job;
 The PR already exists, and you are either reviewing it, or you authored it and it has come back needing changes:
 
 - **list.** "What PRs are waiting on me", "show me the ready-for-review PRs", "mergekit list".
-- **start `<n>`.** "Pull PR #34 down so I can test it", "set up #34 for review", "check out this PR for QA". **`<n>` is a PR number by default**, in every mode here.
-- **close `<n>`.** "Merge #34", "this one's good, land it", "#34 needs changes: <findings>".
+- **start `<n>`.** "Pull PR #34 down so I can test it", "set up #34 for review", "check out this PR for QA". "Start #34 and sync" adds a sync onto the latest base. **`<n>` is a PR number by default**, in every mode here.
+- **close `[<n>]`.** "Merge #34", "close this PR", "this one's good, land it", "#34 needs changes: <findings>". With no number, `close` takes the PR of the current branch.
 - **fix `<n>`.** The author's side: "my PR is red, fix the CI", "address the review comments on #34", "respond to the feedback on my PR". It triages the feedback before acting on it; it does not apply every comment on sight.
 
 If a PR is named but the action isn't, assume `start`, because setting a PR up is safe and reversible while merging is not.
@@ -31,13 +31,13 @@ If a PR is named but the action isn't, assume `start`, because setting a PR up i
 
 ## Never merge automatically
 
-Every merge requires an explicit, per-PR confirmation from a human who has just reviewed *that* PR. Concretely:
+Every merge requires an explicit, per-PR confirmation from a human who has just reviewed *that* PR. **A direct instruction to merge or close one PR is that confirmation.** "Merge #34", "close this PR", and `mergekit close` in a worktree whose branch has one open PR all count, so mergekit merges without a second prompt. It asks only when the instruction leaves a doubt or the state shows an anomaly, as [the close mode](modes/close.md#merge-path) lists. Concretely:
 
 - **Never a batch.** "Merge them all" is not a confirmation for any individual PR. Ask once per PR, naming the number and title.
-- **A stack cascade is one action, so it takes one confirmation that names every PR in it.** Merging a PR in a stack merges every unmerged PR *below* it, bottom-up, so the reviewer who says yes to the top is saying yes to all of them. That is not an exception to the rule above; it is the rule applied honestly. The prompt lists each PR the cascade will land, in merge order, with number and title, so nothing merges that the human did not see named. A cascade nobody enumerated is exactly the batch this rule bans.
-- **Bound to the reviewed head.** The confirmation names the PR's head SHA and covers that commit only. A push after the confirmation is a new change, so it needs a fresh review and a fresh confirmation, and the merge call carries `--match-head-commit` so GitHub enforces it.
+- **A stack cascade is one action, so it takes one confirmation that names every PR in it.** An instruction that names only the top PR does not name the layers below it, so a cascade always gets the enumerated prompt below. Merging a PR in a stack merges every unmerged PR *below* it, bottom-up, so the reviewer who says yes to the top is saying yes to all of them. That is not an exception to the rule above; it is the rule applied honestly. The prompt lists each PR the cascade will land, in merge order, with number and title, so nothing merges that the human did not see named. A cascade nobody enumerated is exactly the batch this rule bans.
+- **Bound to the reviewed head.** The confirmation covers one head SHA only: the head `start` recorded, or the head read when the instruction arrived. A push after the confirmation is a new change, so it needs a fresh review and a fresh confirmation, and the merge call carries `--match-head-commit` so GitHub enforces it.
 - **Never inferred.** Green CI, an approving review, zero unresolved threads, and a passing local gate are *inputs to the human's decision*, and none of them is the decision. A perfectly green PR still waits.
-- **Never default-yes.** Don't phrase the prompt so silence merges. No answer means no merge.
+- **Never default-yes.** When mergekit does ask, don't phrase the prompt so silence merges. No answer means no merge.
 - **Never as a side effect.** `start` never merges. A fix round never merges. Only `close` merges, and only after the confirmation.
 
 The same preview-and-confirm rule covers every other outward-facing mutation: pushing a sync, commenting, closing an issue. Show what will happen, wait for the OK.
@@ -59,7 +59,7 @@ gh repo view --json nameWithOwner           # inside a repo
 
 ## What gitkit owns
 
-mergekit does not implement worktrees, base-ref detection, or the rebase-versus-merge rule, because **gitkit** does, and mergekit calls it for all three. What mergekit owns is the *policy about when*: that a PR is worth pulling down, that a merge needs a confirmation. **The sync is the reviewer's call, not mergekit's.** `start` reports how far the branch is behind and stops; the human runs gitkit `sync` in the worktree. Only `fix` syncs, because it is already pushing to that branch. If you find a worktree path convention, a base-ref ladder, or a sync rule restated below as mergekit's own, that is a bug.
+mergekit does not implement worktrees, base-ref detection, the rebase-versus-merge rule, or a worktree's setup, because **gitkit** does, and mergekit calls it for all four. What mergekit owns is the *policy about when*: that a PR is worth pulling down, that a merge needs a confirmation. **The sync is the reviewer's call, not mergekit's.** `start` reports how far the branch is behind and stops, unless the human asked for the sync in the same breath ("start #34 and sync"); otherwise the human runs gitkit `sync` in the worktree. `fix` always syncs, because it is already pushing to that branch. If you find a worktree path convention, a base-ref ladder, or a sync rule restated below as mergekit's own, that is a bug.
 
 When gitkit isn't installed, fall back to the plain git commands named inline, but keep the same convention, and don't invent a different one.
 
@@ -69,7 +69,7 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 
 - Mode `list` → read [modes/list.md](modes/list.md), then follow it.
 - Mode `start <n>` → read [modes/start.md](modes/start.md), then follow it.
-- Mode `close <n>` → read [modes/close.md](modes/close.md), then follow it.
+- Mode `close [<n>]` → read [modes/close.md](modes/close.md), then follow it.
 - Mode `fix <n>` → read [modes/fix.md](modes/fix.md), then follow it.
 
 ## Notes
@@ -77,7 +77,7 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 - **The merge exception is narrow.** mergekit may merge because a human is sitting in front of it. It must therefore never be dispatched as a subagent inside an unattended pipeline, because the confirmation would have nobody to come from, and "the orchestrator said yes" is not a human review.
 - **No polling, no queue, no auto-merge.** mergekit runs when you invoke it. It does not watch for PRs, does not enable GitHub's auto-merge, and does not act on a schedule.
 - **`fix` is interactive too.** Reading review feedback and judging whether each comment is right *for this project* is judgment work, so mergekit does not do it unattended, and `fix` never runs inside an automated pipeline. Its [triage step](modes/fix.md#2-triage-the-punch-list-and-decide-what-is-actually-worth-fixing) exists to be overruled by a human, which needs one present. It is the author-side counterpart to `start`: it services the PR but, like every mode here, never merges it.
-- **Force-push only with a lease, and only behind the gate.** `fix` is the one mode that syncs, and gitkit's sync rule rebases by default, so a PR branch does get rewritten. Use `--force-with-lease`, never bare `--force`, and never without the preview that names how many review threads it outdates. Never force-push to tidy history; the only force-push mergekit performs is the one the human just OK'd as part of a `fix` sync.
+- **Force-push only with a lease, and only behind the gate.** `fix` syncs on every run and `start` syncs only on an explicit ask, and gitkit's sync rule rebases by default, so a PR branch does get rewritten. Use `--force-with-lease`, never bare `--force`, and report how many review threads it outdated. Never force-push to tidy history; the only force-push mergekit performs is the one in a sync, which the ask to fix the PR, or the ask to start and sync it, already covers.
 - **Read-only on fork PRs.** You can review and merge them; you cannot push fixes to them. Say so at setup, not at failure.
 - **Bot review feedback is reported, not resolved, on the reviewer's side.** `list` and `start` surface unresolved threads and stop there; judging and answering them is the *author's* job, and `fix` is where it happens. A bot's finding carries no more authority than a human's: both are triaged against the project's own conventions before anything is changed.
 - **No shell or `gh` available** (e.g. a browser-based agent)? Then you can't create a worktree or call `gh`. Print the review pack from what the user provides, and print the setup and merge commands as codeblocks for them to run, and never claim a merge happened that you could not perform.

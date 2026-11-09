@@ -24,7 +24,7 @@ Done when every intake item holds a stated or inferred value.
 
 Run `crawl` with `--out` to a file in the system temp directory:
 
-- public host: `crawl <start-url> --cap <n> --out <file>`. It identifies as `seokit/1.0`, obeys the `*` and `seokit` groups in `robots.txt`, and waits one second between requests. Record robots-blocked URLs under `CRAWL-ROBOTS`.
+- public host: `crawl <start-url> --cap <n> --out <file>`. It identifies as `seokit/1.0`, obeys the `*` and `seokit` groups in `robots.txt`, and waits one second between requests, because a public host may belong to someone else. Record robots-blocked URLs under `CRAWL-ROBOTS`.
 - `local`: `crawl <start-url> --local --origin <production-origin> --cap <n> --out <file>`. It sends no delay, maps production-origin sitemap and link URLs to the local server, and reads `robots.txt` without obeying it; a `Disallow` rule feeds the expected-block rule.
 
 Read the summary, then read the file in parts. Never paste the whole file into the conversation.

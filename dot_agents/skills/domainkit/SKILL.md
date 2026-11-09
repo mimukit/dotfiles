@@ -1,69 +1,71 @@
 ---
 name: domainkit
 description: >-
-  Maintain a project's domain model as a consented byproduct of design work: a CONTEXT.md glossary of the ubiquitous language and docs/adr/ decision records. Use when a domain term needs pinning down, when a hard-to-reverse trade-off decision gets settled, when the user says "write an ADR" or "update the glossary", or when another skill needs to keep the domain model current. It scribes the model, it doesn't interrogate it.
+  Maintain a project's domain model as a consented record of settled understanding: the CONTEXT.md overview and glossary of the ubiquitous language, and docs/adr/ decision records. Use when a domain term needs pinning down, when a hard-to-reverse trade-off decision gets settled, when the user says "update the glossary" or "write an ADR", or when another skill needs the domain model kept current; when the user says "set up CONTEXT.md" or "write the project overview"; or when the user asks "is CONTEXT.md still accurate" or says "audit the glossary".
 license: MIT
-allowed-tools: Read, Write, Edit, Grep, Glob
+allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Bash(git log:*)
 metadata:
   internal: false
 ---
 
 # domainkit
 
-Scribe of the project's **domain model**. domainkit keeps two living artifacts current as work happens: **`CONTEXT.md`**, a glossary of the project's ubiquitous language, and **`docs/adr/`**, the log of architectural decisions and why they were made. Its loop is narrow on purpose, **detect the moment, offer to record it, write on consent**, so the vocabulary and the reasoning behind hard choices stay pinned down without anyone remembering to do it.
+Scribe of the project's **domain model**. domainkit keeps two living artifacts current: **`CONTEXT.md`**, a short overview of what the product is and who it is for followed by a glossary of the project's ubiquitous language, and **`docs/adr/`**, the log of architectural decisions and why they were made. Its core loop is narrow on purpose, **detect the moment, offer to record it, write on consent**, so the vocabulary and the reasoning behind hard choices stay pinned down without anyone remembering to do it.
 
-It runs primarily as a **byproduct of design work**, though explicit invocation is supported. While a decision is being grilled, a plan drafted, or code written, a term crystallizes or a decision lands. That's when domainkit fires, proposes the entry, and writes it once you say yes.
+It runs primarily as a **byproduct of design work**. While a decision is being grilled, a plan drafted, or code written, a term crystallizes or a decision lands. That's when domainkit fires, proposes the entry, and writes it once you say yes. Two explicit modes sit beside that loop: one seeds `CONTEXT.md` for a project in a single pass, and one checks later whether it still matches the code.
 
 ## When this fires
 
-A **domain term** needs pinning down, because it's vague, overloaded, or two words are being used for one concept. Or a **decision** gets settled that meets the ADR bar (below). Also on explicit asks: "record this decision", "write an ADR", "update the glossary", "add this term to the ubiquitous language", "/domainkit". And when another skill needs the domain model kept current, it defers here rather than carrying the format itself.
+Route to one of three modes:
 
-Two things it deliberately is **not**:
+- **`record`**, the default. A **domain term** needs pinning down, because it's vague, overloaded, or two words are being used for one concept. Or a **decision** gets settled that meets the [ADR bar](#the-adr-decision-record-format). Also on explicit asks: "record this decision", "write an ADR", "update the glossary", "add this term to the ubiquitous language", "/domainkit". And when another skill needs the domain model kept current, it defers here rather than carrying the format itself.
+- **`init`.** The user asks to seed the domain model: "set up CONTEXT.md", "write the project overview", "domainkit init". It reads the repo, interviews the owner once, and proposes a whole `CONTEXT.md`.
+- **`audit`.** The user asks whether the model still holds: "is CONTEXT.md still accurate", "audit the glossary", "domainkit audit". statuskit routes here when `CONTEXT.md` has fallen behind the code.
 
-- **Not the interrogator.** Challenging a term, inventing edge-case scenarios, stress-testing whether a decision holds: that's an interrogation step. domainkit records the *settled* understanding; if a term or decision is still genuinely unresolved, use grillkit when installed or ask the user to settle it directly rather than writing down a guess.
-- **Not a status tracker.** There is no `status.md` and no "current state" file. Project status is ambient: issues track what's planned, git and session history track what happened, a handoff compacts state on demand. domainkit persists only what those *can't* recover, meaning the vocabulary and the reasoning behind irreversible choices.
+**A model-fired run always routes to `record`.** `init` and `audit` run only when the user asks for them, because each reads the whole repo and proposes a large diff, and that cost is the user's to choose.
 
-## Procedure
+Two things domainkit deliberately is **not**:
 
-Every write is **consent-gated**, so detect, offer, then write only on a yes. A misfire costs one dismissible offer, never a spurious file.
+- **Not the interrogator.** Challenging a term, inventing edge-case scenarios, stress-testing whether a decision holds: that's an interrogation step. domainkit records the *settled* understanding; if a term or decision is still genuinely unresolved, use grillkit when installed or ask the user to settle it directly rather than writing down a guess. `init` does ask the owner questions, but only for facts the code cannot answer, each with a recommended answer.
+- **Not a status tracker.** There is no `status.md` and no "current state" file. Project status is ambient: issues track what's planned, git and session history track what happened, a handoff compacts state on demand. domainkit persists only what those *can't* recover, meaning what the product is for, the vocabulary, and the reasoning behind irreversible choices.
 
-### 1. Detect the moment
-A term is being used loosely or inconsistently, or a settled decision clears the three-part ADR bar. In flow, this surfaces mid-grill, mid-plan, or mid-implementation; you don't wait to be called. Done when you can name the one term or the one decision to record, and for a decision, which of the three bar conditions each part of it meets.
+## Consent (every mode)
 
-### 2. Locate the existing artifacts
-Read the repo-root `CONTEXT.md` if it exists (or `CONTEXT-MAP.md` → the right context file for a multi-context project). If neither exists, create `CONTEXT.md` at the repo root when the first glossary term is accepted. For an ADR, scan `docs/adr/` and take the highest existing decision number, whether the file is `NNNN-adr-*.md` or the older `adr-NNNN-*.md`. Then name every existing ADR the new decision replaces, and read each one's `Status`. Done when you hold the next free number and the list of superseded records (often empty).
+Every write is **consent-gated**: domainkit writes only after an explicit yes. `record` offers each entry on its own. `init` and `audit` show the whole proposed change, the full file or the full diff, and write it once on one yes. A misfire costs one dismissible offer, never a spurious file.
 
-### 3. Offer
-Show the proposed glossary entry or ADR and ask before writing. When the ADR supersedes older records, show each old record's `Status` change in the same offer, because the new record and its back-links are one update and one yes covers both. Keep the proposal tight enough to accept or redirect at a glance. Done when the user has accepted, redirected, or declined.
+## The modes
 
-### 4. Write on consent
-- **Glossary.** Add or adjust the term in place. Keep `CONTEXT.md` a *pure glossary*: what terms mean, nothing else. Be opinionated, so when several words compete, pick one canonical term and list the rest under `_Avoid_`.
-- **ADR.** Create `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md` at the next number, using a short lowercase kebab-case slug and the decision's ISO creation date (for example, `0007-adr-use-postgres-2026-07-23.md`). Minimal by default; add optional sections only when they carry real value. ADR content is **immutable** once shipped; the `Status` section is the one mutable part, so a later ADR may mark the old record `deprecated` or `superseded by ADR-NNNN`. An older record with no `Status` section gets one added for the flip; that addition is the same permitted edit.
-- **Check the ADR before you finish.** Re-list `docs/adr/` just before writing; if another file now holds your number, take the next free one and say so. Write the new ADR, then the `Status` flip on every record it supersedes. Done when no two files share a number, the new ADR's `Status` names each record it supersedes, and each of those records names the new one back.
+The mode bodies live in one file each under `modes/`. Route with [When this fires](#when-this-fires), read that one file, and follow it. Everything in this file applies to every mode and is not restated in the mode files.
 
-### 5. Defer when unsettled
-If the term or decision isn't actually resolved, don't manufacture certainty. Use grillkit to settle it first when installed, or ask the user to settle it directly, then record the result. Done when the user has settled it or chosen to drop the record.
+- Mode `record` → read [modes/record.md](modes/record.md), then follow it.
+- Mode `init` → read [modes/init.md](modes/init.md), then follow it.
+- Mode `audit` → read [modes/audit.md](modes/audit.md), then follow it.
 
-### 6. Hand off
+## The CONTEXT.md format
 
-_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
-
-Keep this short. domainkit usually fires *inside* someone else's work, so a long report is an interruption on top of an interruption.
-
-**What changed.** One line: the term added or adjusted, or the ADR written with its number and title, plus each older record whose `Status` flipped.
-
-**Where it landed.** Give the exact path (`CONTEXT.md`, or `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`).
-
-**Next.** Normally, *return to what was interrupted*: name the grill, plan, or implementation this fired inside and pick it straight back up. Only when something genuinely follows from the write does it outrank that: a supersession the user declined to flip leaves the old record's `Status` stale, so name that record; a term that turned out to be contested isn't settled at all, so route to grillkit (when installed) or ask the user to settle it rather than leaving a guess on disk. Invoked directly with nothing to return to? Say what was written and stop, because there is no next step to invent.
-
-## The CONTEXT.md glossary format
-
-`CONTEXT.md` is the single source of truth for **what words mean** in this project, a Domain-Driven-Design ubiquitous language, not a spec and not a status file.
+`CONTEXT.md` is the single source of truth for **what the product is and what its words mean**: a short overview, then a Domain-Driven-Design ubiquitous language. It is not a spec, not a status file, and not a README.
 
 ```markdown
 # <Context name>
 
 <1–2 sentence description of this context.>
+
+## Overview
+
+### What it is
+<3 lines or fewer.>
+
+### Who it is for
+<3 lines or fewer.>
+
+### The problem it solves
+<3 lines or fewer.>
+
+### Core capabilities
+- <7 bullets or fewer, one capability each>
+
+### Non-goals
+- <3 lines or fewer: what the product deliberately does not do>
 
 ## <Optional grouping subheading>
 
@@ -72,12 +74,24 @@ Keep this short. domainkit usually fires *inside* someone else's work, so a long
 _Avoid: <synonym to reject>, <another>_
 ```
 
+**The overview.** It gives the glossary its frame and fits on one screen.
+
+- **Five parts, in this order.** What it is, Who it is for, The problem it solves, Core capabilities, Non-goals. Each part is 3 lines or fewer, and Core capabilities is 7 bullets or fewer.
+- **What it is is required.** Any other part may be left out when the owner says it does not matter.
+- **Purpose and audience, never usage.** The overview states why the product exists and for whom. It never repeats install or usage text from the README; link the README instead.
+- **Optional for an existing file.** A `CONTEXT.md` with no overview stays valid. `init` offers to add one, and nothing flags a file only because it lacks one.
+
+**The glossary.** Every `##` section other than `## Overview` holds terms.
+
 - **Content allowed.** Terms specific to *this* project's domain; concepts unique to the work.
 - **Content forbidden.** General programming concepts (timeouts, error types, utility patterns), however heavily used. If it isn't domain-specific, it doesn't belong here.
 - **Definition style.** Define *what a term is*, not what it does; one or two sentences.
 - **Be opinionated.** When multiple words exist for one concept, choose the best and push the others to `_Avoid_`.
 - **No size cap.** A glossary grows with the domain; never evict a real term to hit a length target.
-- **Multiple contexts.** When bounded contexts clearly diverge, keep a `CONTEXT-MAP.md` at the repo root listing each context, where its file lives, and the relationships between them; split lazily, only once one file stops making sense.
+
+**The content rule: overview and glossary only.** No status, stage, roadmap, or metrics, because those go stale and live in the tracker. No decisions, because those are ADRs; a term may link the ADR that shaped it. No install or usage steps, because those are the README.
+
+**Multiple contexts.** When bounded contexts clearly diverge, keep a `CONTEXT-MAP.md` at the repo root listing each context, where its file lives, and the relationships between them; split lazily, only once one file stops making sense. In a multi-context project the `## Overview` block lives in `CONTEXT-MAP.md`, above the context list, because it describes the whole product. Each per-context `CONTEXT.md` keeps its 1–2 sentence description and its glossary, with no overview of its own.
 
 ## The ADR decision record format
 
@@ -112,4 +126,4 @@ Typical qualifiers: architectural structure (monorepo layout, event sourcing), i
 
 - **Consent holds even when auto-fired.** Being model-invoked never means writing unprompted, because the offer always comes first.
 - **Bias toward the high bar.** Better to fire on a genuinely conflicting term or a genuinely irreversible decision than to nag on every noun; when in doubt, stay quiet.
-- **No filesystem or shell** (e.g. a browser-based agent)? Print the proposed glossary entry or ADR as a codeblock for the user to save, and skip the file write. Everything else is unchanged.
+- **No filesystem or shell** (e.g. a browser-based agent)? Print the proposed glossary entry, ADR, or whole `CONTEXT.md` as a codeblock for the user to save, and skip the file write. With no `git log`, `audit` compares against the current tree only. Everything else is unchanged.

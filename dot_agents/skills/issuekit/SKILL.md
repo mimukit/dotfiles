@@ -1,7 +1,7 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle in five modes: create issues from a plan or description, start a `ready` or `stacked` issue into its own worktree, close one out once its PR merges, sync PR↔issue links and dependents after merge, and triage the tracker for lifecycle, priority, and title gaps. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "sync my issues", "triage the backlog", "set the priority on #42", "#42 is grilled, mark it ready", or "fix the titles on these issues".
+  Own the GitHub issue lifecycle in five modes: file issues from a plan, start a workable issue in its own worktree, close one once its PR merges, sync PR↔issue links and dependents after merge, and triage the tracker for label and title gaps and for done, duplicate, or obsolete issues. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "sync my issues", "triage the backlog", "set the priority on #42", "#42 is grilled, mark it ready", "fix the titles on these issues", or "clean up my issues".
 license: MIT
 allowed-tools: Bash, Read, Edit, Write, Skill
 metadata:
@@ -14,13 +14,13 @@ Own the GitHub issue lifecycle through the [`gh` CLI](https://cli.github.com), i
 
 - **`create`.** Turn a plan document or a plain description into well-formed issues.
 - **`start`.** Take a `ready` or `stacked` issue into its own worktree and flip it `in-progress`.
-- **`close`.** Once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down.
+- **`close`.** Once its PR has merged, close the issue, unblock what it was holding up, tear the worktree down, and delete the QA screenshots its plans left in `~/qakit/`.
 - **`sync`.** Reconcile and repair the PR↔issue relationship *after* the fact (issues a merged PR should have closed, a missing link on an existing PR, a dependent still marked `blocked` by an issue that landed).
-- **`triage`.** Report the health of the tracker, then apply the fixes you approve, including the `needs-planning → ready` promotion once a grill settled an issue.
+- **`triage`.** Report the health of the tracker, then apply the fixes you approve, including the `needs-planning → ready` promotion once a grill settled an issue and the close of issues already done, duplicated, or obsolete.
 
 One skill, five jobs, because they're the same job at five points in a dev workflow: file the work, pick it up, land it, keep everything in sync as PRs merge, and keep the tracker honest.
 
-**`close` vs `sync`.** They do overlapping tracker work and the split is by *scope*, not mechanism: `close` lands **one named issue** whose PR you know merged, and is the only mode that touches the filesystem (the worktree teardown). `sync` sweeps the **whole tracker** for drift after the fact, meaning issues a merged PR should have closed but didn't, missing links, and dependents still marked `blocked` by work that landed, and it never touches a worktree. `close` reuses `sync`'s reconciliation rather than restating it.
+**`close` vs `sync`.** They do overlapping tracker work and the split is by *scope*, not mechanism: `close` lands **one named issue** whose PR you know merged, and is the only mode that touches the filesystem (the worktree teardown and the QA screenshot folders). `sync` sweeps the **whole tracker** for drift after the fact, meaning issues a merged PR should have closed but didn't, missing links, and dependents still marked `blocked` by work that landed, and it never touches a worktree. `close` reuses `sync`'s reconciliation rather than restating it.
 
 ## When this fires
 
@@ -30,7 +30,7 @@ The user wants to act on GitHub issues. Route to a mode from what they ask:
 - **start.** "Start issue #42", "begin #42", "pick up #42", "spin up a worktree for #42", "I'm working on 42 now".
 - **close.** "Close #42", "close out #42", "wrap up #42 now the PR merged", "tear down #42's worktree", "#42 landed, clean it up".
 - **sync.** "Sync my issues", "this PR merged but the issue is still open", "link this PR to #42", "unblock what #42 was holding up".
-- **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority", "relabel #42", "rename issue #42", "fix the titles on these issues", "these titles don't follow the convention", "#42 is grilled, mark it ready".
+- **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority", "relabel #42", "rename issue #42", "fix the titles on these issues", "these titles don't follow the convention", "#42 is grilled, mark it ready", "clean up my issues", "which issues can I close", "merge these duplicate issues".
 
 **If no mode is clear, ask first.** Present the modes as options and let the user pick before doing anything, and don't guess between creating and mutating the tracker.
 
@@ -70,7 +70,7 @@ Pick the `type` from what the issue delivers, not the files it touches. The set 
 |------|------|
 | `feat` | a new capability the user can see |
 | `fix` | a bug fix |
-| `hotfix` | an urgent fix patched straight onto the base branch |
+| `hotfix` | a fix on a `hotfix-<slug>` branch |
 | `docs` | documentation only |
 | `refactor` | behavior-preserving code change |
 | `perf` | a performance improvement |
@@ -86,7 +86,7 @@ Rules, applied to **every** title you generate:
 - **Imperative mood**, stating the *effect* ("add sso login"), not the activity ("changes to auth"). **No trailing period.** Keep it concise.
 - **Title the whole issue, not its first phase.** A multi-phase issue names the capability it delivers end to end (`feat(auth): add sso login`), and its phases live in the body. A title that reads like one phase is a sign the issue was sliced too thin.
 
-**A hotfix needs no issue before the branch.** Urgent work that patches the base branch directly starts from the symptom: somebody cuts a `hotfix-<slug>` branch and opens a `hotfix(scope):` pull request without waiting for the tracker. So no mode here gates a hotfix, and `start` is not on its path. When the user files one after the fact for the record, title it `hotfix(scope): …`, label it `in-review` when its PR is already open, and never label it `ready`, because `ready` promises work nobody has begun.
+**A hotfix needs no issue before the branch.** An urgent fix or a quick change that goes straight to the deploy branch starts from the symptom: somebody cuts a `hotfix-<slug>` branch and opens a `hotfix(scope):` pull request without waiting for the tracker. So no mode here gates a hotfix, and `start` is not on its path. When the user files one after the fact for the record, title it `hotfix(scope): …`, label it `in-review` when its PR is already open, and never label it `ready`, because `ready` promises work nobody has begun.
 
 If the repo has its own issue-title style (visible in `gh issue list` or an `.github/ISSUE_TEMPLATE/`), follow that instead and say you did; see [Notes](#notes).
 
