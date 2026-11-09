@@ -19,15 +19,14 @@
 # Never run `chezmoi add` on ~/.claude/settings.json. Unlike re-add it does not
 # skip: it DELETES modify_settings.json.tmpl and replaces it with a plain file.
 #
-# Policy: keep everything except hook entries belonging to a vendor. Ownership is
+# Policy: export only the preferences named in JQ_PROGRAM. Credentials and new
+# settings stay local until this list explicitly permits them. Hook ownership is
 # decided by the command an entry runs — ours all invoke
 # $HOME/.local/bin/agent-hook. Match the full `.local/bin/agent-hook` path and
 # not a bare `agent-hook`, which would also match Orca's `.orca/agent-hooks/`
 # directory and claim its entries as ours.
 #
-# Everything else passes through byte for byte, including keys Claude Code adds
-# on its own, so a theme or model change made in the app lands in the source on
-# the next sync. Key order is preserved rather than sorted: the modify_ script
+# Key order is preserved rather than sorted: the modify_ script
 # merges into the live file and jq keeps input order, so re-sorting here would
 # fight whatever Claude Code writes next and never settle.
 #
@@ -100,11 +99,22 @@ fi
 # directory containing a regex metacharacter cannot corrupt the payload.
 # shellcheck disable=SC2016  # $marker and $home are jq variables, bound with --arg below.
 JQ_PROGRAM='
+  def only($keys): with_entries(select(.key as $key | $keys | index($key) != null));
   def is_ours: ((.hooks // []) | any((.command // "") | index($marker) != null));
   def tokenize: walk(if type == "string" and (index($home) != null)
                      then (split($home) | join("__HOME__")) else . end);
-  (.hooks |= (with_entries(.value |= map(select(is_ours)))
-              | with_entries(select(.value | length > 0))))
+  only(["env", "attribution", "permissions", "model", "hooks", "statusLine",
+        "effortLevel", "modelSettings", "awaySummaryEnabled", "tui", "theme",
+        "fileCheckpointingEnabled", "terminalProgressBarEnabled"])
+  | (if has("env") then .env |= only(["DISABLE_TELEMETRY", "IS_DEMO"]) else . end)
+  | (if has("attribution") then .attribution |= only(["commit", "pr"]) else . end)
+  | (if has("permissions") then .permissions |= only(["allow", "deny", "defaultMode"]) else . end)
+  | (if has("statusLine") then .statusLine |= only(["type", "command", "padding"]) else . end)
+  | (if has("modelSettings") then .modelSettings |= with_entries(.value |= only(["effortLevel"])) else . end)
+  | (.hooks |= ((. // {}) | with_entries(.value |= map(select(is_ours)
+       | only(["matcher", "hooks"])
+       | .hooks |= map(only(["type", "command", "timeout", "statusMessage", "async"]))))
+       | with_entries(select(.value | length > 0))))
   | tokenize
 '
 

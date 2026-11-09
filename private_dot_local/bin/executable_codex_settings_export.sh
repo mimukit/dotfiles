@@ -26,16 +26,12 @@
 # Never run `chezmoi add` on ~/.codex/config.toml. Unlike re-add it does not
 # skip: it DELETES the modify_ script and replaces it with a plain file.
 #
-# Policy: keep everything except the sections named in DROP below. A deny list,
-# not an allow list, so a preference Codex adds in a future build is captured on
-# the next sync instead of being silently dropped.
+# Policy: export only the preferences named in ALLOW below. New settings and
+# provider credentials stay local until this list explicitly permits them.
 #
-# Formatting: tomlkit parses TOML into a style-preserving tree, so key order,
-# quote style and blank lines survive. That matters for the same reason it does
-# in the Orca script: the modify_ script merges into the live file, and a
-# re-sorted payload would fight whatever Codex writes next and never settle.
-# `dasel` was tried first and rejected — it round-trips without data loss but
-# alphabetises every table and rewrites double quotes as single.
+# Rebuild the selected preferences without comments. A comment can contain a
+# credential even beside an allowed setting. The modify_ script still preserves
+# the live file's formatting when it merges these preferences.
 #
 # Nothing here applies source -> target or commits anything. Review the result
 # with `git diff` in the chezmoi source and commit yourself.
@@ -48,7 +44,6 @@ set -euo pipefail
 
 # Color definitions
 RESET='\033[0m'
-CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
@@ -88,52 +83,88 @@ if [ "$DRY_RUN" -eq 1 ]; then
   echo -e "${YELLOW}ℹ️ Dry run: showing changes only, writing nothing.${RESET}"
 fi
 
-# Keep this deny list in step with the same constant in
-# dot_codex/private_modify_config.toml.tmpl.
+# This allow list controls export only. The modify_ script preserves local keys.
 FILTER=$(
   cat <<'PY'
 import sys, tomlkit
 
-# Top-level keys withheld from the source, and nested (table, key) pairs where
-# only part of the table is machine state.
-DROP_TOP = ["notify", "marketplaces", "projects", "mcp_servers",
-            "shell_environment_policy"]
-DROP_NESTED = [("hooks", "state"), ("tui", "model_availability_nux")]
+# Only these keys and value types can enter the public payload.
+ALLOW = {
+    'model': str,
+    'model_reasoning_effort': str,
+    'plugins': {
+        '*': {
+            'enabled': bool,
+        },
+    },
+    'tui': {
+        'status_line': [str],
+        'status_line_use_colors': bool,
+        'screen_reader_detection_done': bool,
+    },
+    'features': {
+        'hooks': bool,
+        'js_repl': bool,
+        'memories': bool,
+    },
+    'desktop': {
+        'conversationDetailMode': str,
+        'ambient-suggestions-enabled': bool,
+        'appearanceLightCodeThemeId': str,
+        'dock-icon-preference': str,
+        'hotkey-window-projectless-default-enabled': bool,
+        'followUpQueueMode': str,
+        'sidebar-show-projects-in-recents': bool,
+        'open-link-in-target-preference': str,
+        'appearanceLightChromeTheme': {
+            'accent': str,
+            'contrast': int,
+            'ink': str,
+            'opaqueWindows': bool,
+            'surface': str,
+            'fonts': {},
+            'semanticColors': {
+                'diffAdded': str,
+                'diffRemoved': str,
+                'skill': str,
+            },
+        },
+        'open-in-target-preferences': {
+            'global': str,
+        },
+    },
+    'memories': {
+        'generate_memories': bool,
+        'use_memories': bool,
+    },
+}
 
-doc = tomlkit.parse(sys.stdin.read())
+def select(value, policy):
+    if isinstance(policy, dict):
+        if not isinstance(value, dict):
+            raise ValueError("invalid preference table")
+        return {key: select(item, policy.get(key, policy.get("*")))
+                for key, item in value.items() if key in policy or "*" in policy}
+    if isinstance(policy, list):
+        if not isinstance(value, list) or any(type(item) is not policy[0] for item in value):
+            raise ValueError("invalid preference list")
+    elif type(value) is not policy:
+        raise ValueError("invalid preference value")
+    return value
 
-withheld = []
-for key in DROP_TOP:
-    if key in doc:
-        del doc[key]
-        withheld.append(key)
-for parent, child in DROP_NESTED:
-    table = doc.get(parent)
-    if table is not None and child in table:
-        del table[child]
-        withheld.append(f"{parent}.{child}")
-        # Drop a table that held nothing but machine state.
-        if not len(table):
-            del doc[parent]
-
-sys.stderr.write(",".join(withheld))
-sys.stdout.write(tomlkit.dumps(doc))
+current = tomlkit.parse(sys.stdin.read()).unwrap()
+selected = select(current, ALLOW)
+# Do not preserve comments or formatting from the credential-bearing input.
+sys.stdout.write(tomlkit.dumps(selected))
 PY
 )
 
+errors=$(mktemp)
+trap 'rm -f "$errors"' EXIT
 if ! rendered=$(uv run --quiet --with tomlkit python -c "$FILTER" \
-  <"$CODEX_CONFIG" 2>/tmp/codex_export_withheld.$$); then
-  rm -f "/tmp/codex_export_withheld.$$"
-  echo -e "${RED}❌ Could not parse $CODEX_CONFIG as TOML.${RESET}" >&2
+  <"$CODEX_CONFIG" 2>"$errors"); then
+  echo -e "${RED}❌ Could not export the permitted Codex preferences.${RESET}" >&2
   exit 1
-fi
-withheld=$(cat "/tmp/codex_export_withheld.$$")
-rm -f "/tmp/codex_export_withheld.$$"
-
-if [ -n "$withheld" ]; then
-  echo -e "${CYAN}   withheld: ${withheld//,/, }${RESET}"
-else
-  echo -e "${CYAN}   withheld: nothing (no machine state present)${RESET}"
 fi
 
 # Refuse to record an empty payload. Codex rewriting its config down to nothing
