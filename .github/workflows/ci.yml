@@ -1,9 +1,8 @@
 name: ci
 
 # Direct commits to main are the normal habit on this repo, and afkkit and prkit
-# both open pull requests, so both triggers are needed. The weekly run exists for
-# the gitleaks history scan, which is the slow half and does not belong on every
-# push.
+# both open pull requests, so both triggers are needed. Scan history on each
+# event so deleting a secret in a later commit cannot hide it from the scan.
 on:
   push:
     branches: [main]
@@ -14,18 +13,17 @@ on:
 permissions:
   contents: read
 
-env:
-  GITLEAKS_VERSION: "8.30.1"
-
 jobs:
   shellcheck:
     name: shellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
 
       - name: Install chezmoi
-        run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+        run: bash .github/scripts/install-ci-tool.sh chezmoi
 
       # The modify_ scripts and the bootstrap script are shell, but they are not
       # valid shell until the Go template directives are substituted out. Render
@@ -72,38 +70,32 @@ jobs:
     name: gitleaks
     runs-on: ubuntu-latest
     steps:
-      # A full history scan needs full history. Every other run only reads the
-      # working tree, so a shallow clone is enough and much faster.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          fetch-depth: ${{ github.event_name == 'schedule' && 0 || 1 }}
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Install gitleaks
-        run: |
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-            | sudo tar -xz -C /usr/local/bin gitleaks
-          gitleaks version
+        run: bash .github/scripts/install-ci-tool.sh gitleaks
 
-      # `dir` reads the working tree only and is what runs on push and on a pull
-      # request. `git` walks every commit and runs on the weekly schedule, which
-      # is worth doing here because this repo is public and its history has
-      # carried an Obsidian vault and a Raycast settings backup.
       - name: Scan working tree
-        if: github.event_name != 'schedule'
         run: gitleaks dir . --redact --verbose
 
       - name: Scan full history
-        if: github.event_name == 'schedule'
-        run: gitleaks git . --redact --verbose
+        run: |
+          test "$(git rev-parse --is-shallow-repository)" = false
+          gitleaks git . --log-opts=--all --redact --verbose
 
   chezmoi:
     name: chezmoi
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
 
       - name: Install chezmoi
-        run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+        run: bash .github/scripts/install-ci-tool.sh chezmoi
 
       # The Codex modify_ script merges TOML through `uv run --with tomlkit`.
       # Without uv it takes its passthrough path and leaves the file unchanged,
@@ -111,7 +103,10 @@ jobs:
       # with the source. Installing uv is what makes that check exercise the
       # merge rather than the fallback.
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: bash .github/scripts/install-ci-tool.sh uv
+
+      - name: Test settings exports
+        run: uv run --no-project --with tomlkit python .github/scripts/test_settings_exports.py
 
       # NUL-delimited: one tracked template path contains a space.
       - name: Render every template
