@@ -17,19 +17,19 @@ Host github.com ssh.github.com gist.github.com
 	IdentityAgent none
 	IdentityFile ~/.ssh/github_mimukit
 
-Host brainaloy-ovh-ts
+Host brainaloy-ovh
 	User ubuntu
 	HostName brainaloy-ovh
   IdentitiesOnly yes
 
-Host devaloy-ovh-ts
+Host devaloy-ovh
 	User dev
 	HostName devaloy-ovh
   IdentitiesOnly yes
 
-Host devaloy-mini-ts
+Host devaloy-insta
 	User dev
-	HostName devaloy-mini
+	HostName devaloy-insta
   IdentitiesOnly yes
 
 Host *
