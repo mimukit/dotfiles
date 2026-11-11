@@ -246,6 +246,7 @@ baseline snapshot: none (no tracked change at start) · probe patches in <ledger
 **Next.** Crown one move, and match it to the outcome:
 
 - **Proven cause** → hand the reproduction test and the described fix to a build skill. Name **implementkit** when it is installed, as a fix round with the reproduction test as its input: `implementkit fix round: make <test path> pass; cause: <one sentence>`. implementkit runs the test red first, keeps it, and shows it green at its done-gate. Otherwise say plainly that the next step is to write the fix, keep the test, and watch it pass.
+- **Proven cause is a slow query** → name **dbkit** `tune` when it is installed, with the query as its input. Otherwise say plainly that the next step is to read the query's plan and fix the query or its index.
 - **Reproduced, not explained** → tell the user what evidence would restart the hunt. Do not route to a build skill. Nothing is proven yet.
 - **Instrumentation plan** → tell the user to deploy the measurements you listed. Say that they should run debugkit again when the evidence arrives.
 

@@ -57,10 +57,11 @@ Pick **straight-through**, **tests-after**, or **TDD** by this precedence, takin
 
 - Group the phases: a heavy phase stands alone, and consecutive light phases share a group.
 - Dispatch one subagent per group, in order, with the host's subagent tool (`Task` or `Agent`, or `spawn_agent` on Codex). Its brief carries the paths it touches, the signatures of the shared APIs it calls, the resolved mode, the phase's acceptance items, and the gate commands, so it reads nothing this thread already read.
-- The subagent builds and runs the gate under [Tool rules](#tool-rules), writes its notes and logs to a file, and returns a short result: pass or fail, the files changed, the gate result, and that file's path.
-- The conductor edits no code. It reads each result, dispatches the next group, then runs the [done-gate](#5-run-the-done-gate) once over the whole tree.
+- The subagent builds and runs the **phase gate** under [Tool rules](#tool-rules): typecheck, lint, and only the tests of the packages the group changed (the affected test files in a single-package repo), each once into a log. It never runs the full suite. The brief carries this line in these words, because a subagent follows the brief and not this file. The subagent writes its notes and logs to a file and returns a short result: pass or fail, the files changed, the phase-gate result, and that file's path.
+- The conductor edits no code. It reads each result, dispatches the next group, then runs the full suite and the build once over the whole tree as the [done-gate](#5-run-the-done-gate). A full suite in every subagent repeats that gate once per group and loads the machine until the suite flakes.
+- A group whose subagent returns interrupted or errored gets one new subagent with the same brief, told to read `git diff` first and finish the group. A second failure stops the build and reports both.
 
-When afkkit is installed, its **Dispatch rules** section holds the full brief rules: a new agent, never a fork, inputs by path, and the two command rules. On a host with no subagent tool, build the groups inline in order and say so.
+When afkkit is installed, its **Dispatch rules** section holds the full brief rules: a new agent, never a fork, inputs by path, the command rules, and the recovery of a broken dispatch. On a host with no subagent tool, build the groups inline in order and say so.
 
 Follow [Tool rules](#tool-rules) for every command and every file write, inline or delegated.
 

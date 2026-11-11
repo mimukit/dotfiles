@@ -72,6 +72,8 @@ Name the second or the third, not both, when you can tell which applies. The pro
 
 If the planning surfaced project vocabulary worth pinning down or a hard-to-reverse trade-off decision, offer **domainkit** when installed; otherwise offer to record a glossary entry or ADR directly.
 
+If the plan has a `Migration and rollback` section, offer **dbkit** `design` when installed; otherwise offer to draft the schema change and check each migration's locks by hand.
+
 Do not start either yourself.
 
 ## Plan-doc format

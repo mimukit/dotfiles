@@ -28,7 +28,9 @@ afkkit adds **no** worktree, tracker, or PR behavior of its own. It **sequences*
 
 If the user names neither an issue number nor `all`, ask which. afkkit never plans, grills, merges, or responds to PR review feedback (see [Non-goals](#non-goals)).
 
-**Run it from the main checkout, in the session you are already in.** One command does the whole span: issuekit `start` acquires the worktree, and every step works inside it by path. There is no separate session to open in the worktree and no build prompt to type there. A host that can bind a new conversation to a worktree (T3 Code's thread launch is one) may show the run in that conversation, but nothing in the run depends on it.
+**Run it from the main checkout, in the session you are already in.** One command does the whole span: issuekit `start` acquires the worktree, and every step works inside it by path. There is no separate session to open in the worktree and no build prompt to type there.
+
+**Start an unattended single issue through `relaunch.sh`**, the script beside this file: `relaunch.sh [--agent '<cmd>'] <n>` runs `<cmd> "afkkit <n>"` headless in the main checkout (`claude -p` by default, `--agent 'codex exec'` on Codex) and starts it again when the session dies mid-run, under [Session relaunch](#session-relaunch). When the script cannot run (no `gh`, or no headless command on the host), run the headless command once; nothing restarts it. A run in an interactive session is attended: when the session's own turn ends, a person restarts it.
 
 ## Preflight (once per invocation)
 
@@ -51,7 +53,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner     # inside a repo on GitHu
 
 - **The worktree path is carried run state, not the session's location.** Hold the path issuekit returns and run every command against it: `git -C <worktree> …`, or `cd <worktree> && …` inside the same shell call. A shell's working directory may reset between calls, and a command that ran in the main checkout by mistake writes to the wrong branch.
 - **implementkit decides when implement splits.** Its own conductor rule sends a build with more than one heavy phase, or one mechanical bulk phase, to one subagent per phase group. afkkit adds no second split rule. A session that cannot dispatch (a subagent, on Claude-compatible hosts) builds the groups inline, as implementkit already says.
-- **The run makes one dispatch of its own: the [acceptance check](#5-acceptance-check).** It is the only step whose value comes from *not* holding the session's context.
+- **The run makes two kinds of dispatch of its own: the invariant check after each phase group, in [Implement](#3-implement), and the [acceptance check](#5-acceptance-check).** They are the only steps whose value comes from *not* holding the session's context.
 - **Every model is the session's model.** No step routes to another model or family by default. The user can name one inline ("afkkit 42, acceptance check on sonnet"); validate it against the active host, and write the host's alias, never a dated snapshot.
 - **Task-tracking tools are not run state.** A harness task list is a fine progress display but it is not durable. `progress.md` and the issue's labels and comments are the record.
 
@@ -63,8 +65,11 @@ These bind every subagent the run starts: the acceptance check, a per-issue agen
 - **The brief names the role and its edge.** Say what the agent is ("you are the acceptance checker for issue 42"), what it returns, and which actions belong to someone else ("do not run QA, commit, push, or open a PR").
 - **The brief passes inputs by path.** Give the worktree path and the run-directory files it reads; the agent's first action is to work inside that path. A payload goes in a file, and the return is pass or fail plus the identifiers and one-line summaries the dispatcher needs (`B1 · sidebar absent at 1280 px`).
 - **The brief states two command rules**, because a subagent starts without the lessons of the last one. First, write commands that run the same in zsh and bash: quote every glob argument (`--include='*.tsx'`), and iterate a file list with `| while IFS= read -r f` or `xargs`, never `for f in $var`. Second, run each gate command once into a log file, then print its exit code and a bounded tail, and never run it again to get the messages or the pass signal.
+- **A phase-group brief carries implementkit's phase gate, and the full suite stays with the dispatcher.** The brief says: "run typecheck, lint, and only the tests of the packages this group changed, each once into a log; never the full suite". Before the first group, the dispatcher finds a full-suite command and a concurrency limit that pass on this machine, and records both in `orientation.md` with the run that proved them. It runs the full suite at that limit once at every phase-group boundary, before the group's commit, so every commit `progress.md` names is green for a resume.
+- **Every process an agent starts gets a PID file.** The agent writes `.afkkit/pids/<role>-<name>.pid` when it starts a process, and removes the file when it stops that process. A file left behind names a process its agent never stopped.
+- **A dispatch that comes back broken gets one continuation.** When an agent returns interrupted, errored, or without its result file, the dispatcher does three things, in order. First, it stops every process in `.afkkit/pids/` with that agent's role, then frees any `orientation.md` port still held (`lsof -ti :<port>`). Second, it reads `progress.md`, `git -C <worktree> status --porcelain`, and the agent's result file when one exists. Third, it dispatches one new agent with the original brief plus this line: "the previous agent stopped; its partial work is in the tree; read `git diff` first, then finish the unit". A second broken return for the same unit [escalates](#the-escalation-contract) keeping `in-progress`, and the comment names the unit and both failures.
 
-**No subagent capability?** Run the acceptance check inline as a self-check, and write `self-check` at the top of `findings.md` so the PR body can say so. The rest of the pipeline is unchanged.
+**No subagent capability?** Run the acceptance check inline as a self-check, and write `self-check` at the top of `findings.md` so the PR body can say so. Run the invariant check inline too, and end its `progress.md` line with `self-check`. A batch issue agent counts as a session with no subagent capability. The rest of the pipeline is unchanged.
 
 ### Work that runs once
 
@@ -91,16 +96,17 @@ Each step writes its payload down once, in one place, so a resumed run and the a
 
   | File | Written by | Read by |
   |------|-----------|---------|
-  | `assumptions.md` | [spec gate](#2-spec-gate), then every step that decides something | [Open the PR](#7-open-the-pr) (copied into the PR body as text), the acceptance check |
+  | `assumptions.md` | [spec gate](#2-spec-gate), then every step that decides something | [Open the PR](#7-open-the-pr) (copied into the PR body as text), the invariant check in [Implement](#3-implement), the acceptance check |
   | `checks.md` | [spec gate](#2-spec-gate) | qakit, the acceptance check |
-  | `orientation.md` | any step that starts the dev server or claims a pre-existing failure | every later step, the acceptance check |
+  | `orientation.md` | any step that starts the dev server, proves the full-suite limit, or claims a pre-existing failure | every later step, the acceptance check |
   | `findings.md` | the [acceptance check](#5-acceptance-check) | [Fix](#6-fix) |
-  | `progress.md` | every step that lands work, one line each | [Resume an interrupted run](#resume-an-interrupted-run) |
+  | `progress.md` | every step that lands work, one line each | [Resume an interrupted run](#resume-an-interrupted-run), [Session relaunch](#session-relaunch) |
+  | `pids/` | any agent that starts a process, one `<role>-<name>.pid` each | the dispatcher, when an agent comes back broken ([Dispatch rules](#dispatch-rules)) |
 
 - **`assumptions.md` is the decisions list.** Every time the run picks between two reasonable options on the user's behalf (a file name, a library pin, an edge case the issue left open, a failing test on `main` it worked around), it appends one line: what it chose, the alternative, and why. The gate writes the first entries; implement, QA, and fix append theirs as they happen, never from memory at the end. This list is what the user reads first in the PR.
 - **`checks.md` is the yardstick.** One line per acceptance criterion: an identifier, the **observable** that would confirm it, and a flag for whether an agent can confirm it or only a human can, such as `C3 · sidebar visible on /dashboard at 1280 px · agent`. Use qakit's test for the flag: a check whose pass condition a script can assert is the agent's, and with a browser driver on the box that includes what a page shows. It holds no commands; qakit works those out from what shipped.
-- **`orientation.md` holds facts with sources, never conclusions.** "`pnpm lint` exits 1 on `main` at `abc123` with 12 errors in `vendor/`" is a fact; "lint is broken anyway" is not. It stays short: the dev-server commands and the pre-existing failure claims, nothing else.
-- **`progress.md` lines.** `implement <group> <phases> <sha>`, `qa <path> <sha>`, `check <n blockers>`, `fix <sha>`, `qa-refresh <sha>`. One line per landed step, appended right after the step lands.
+- **`orientation.md` holds facts with sources, never conclusions.** "`pnpm lint` exits 1 on `main` at `abc123` with 12 errors in `vendor/`" is a fact; "lint is broken anyway" is not. It stays short: the dev-server commands, the full-suite command with its concurrency limit, and the pre-existing failure claims, nothing else.
+- **`progress.md` lines.** `implement <group> <phases> <sha>`, `qa <path> <sha>`, `check <n blockers>`, `invariant <group> <first>-<last> <n>`, `invariant-fix <group> <sha>`, `fix <sha>`, `qa-refresh <sha>`, `escalated <label> <reason>`. One line per landed step, appended right after the step lands. An `escalated` line is always the last line a run writes.
 - **No writable filesystem?** Hold each payload in the session and paste it into the acceptance check's brief, and say that's what you're doing.
 
 ## Resume an interrupted run
@@ -118,6 +124,7 @@ With the worktree path known, add `git -C <worktree> status --porcelain`, `git -
 |---|---|---|
 | an open PR on the branch | PR creation | the `in-review` advance only, when the label still reads `in-progress` (prkit's label step, or `gh issue edit <n> --remove-label in-progress --add-label in-review`); the outcome is **opened** |
 | a merged or closed PR on the branch | the span | nothing; report the PR and stop, because issuekit `close` or a human owns it |
+| `escalated` as the last `progress.md` line, and the issue arrived `in-progress` | an escalation | nothing; report that line and stop. A person deletes it to allow a re-run. An issue that arrived `ready` skips this row, because a grill moved it back |
 | the branch on `origin` at the local `HEAD`, no PR | the push | [Open the PR](#7-open-the-pr) |
 | the branch on `origin` at another commit | unknown | escalate keeping `in-progress`, and name both commits |
 | uncommitted changes other than the QA plan that `progress.md` names | a step in flight | escalate keeping `in-progress`, and list the paths; afkkit does not guess whose they are |
@@ -125,6 +132,8 @@ With the worktree path known, add `git -C <worktree> status --porcelain`, `git -
 | a `fix` line, no `qa-refresh` | the fix commit | the qakit refresh in [Fix](#6-fix) |
 | a `check` line with blockers, no `fix` | the acceptance check | [Fix](#6-fix); check each blocker ID against the code before applying it |
 | a `qa` line, no `check` | the QA plan | [Acceptance check](#5-acceptance-check) |
+| a group whose latest `invariant` line has blockers, with no `invariant-fix` line after it | the invariant check | the fix round in [Implement](#3-implement) for that group |
+| an `implement` or `invariant-fix` line for a group, with no `invariant` line after it | a phase commit or its fix | the invariant check in [Implement](#3-implement) for that group |
 | an `implement` line for every phase group, no `qa` | the last phase commit | [QA plan](#4-qa-plan) |
 | `implement` lines for some groups | a phase commit | [Implement](#3-implement), from the first group with no line |
 | no `progress.md` | nothing afkkit recorded | the full pipeline |
@@ -132,6 +141,12 @@ With the worktree path known, add `git -C <worktree> status --porcelain`, `git -
 Every commit named in `progress.md` must be on the branch (`git merge-base --is-ancestor <sha> HEAD`). A named commit that is missing means the history moved under the run, so escalate keeping `in-progress`. On every row that resumes inside the worktree, run issuekit `start` first to adopt it, and skip the spec gate when the issue arrived `in-progress` and `assumptions.md` and `checks.md` already exist. An issue that came back through `ready` gets a fresh gate, because a grill changed its spec.
 
 **Done when** the matched row and the resume point are named in one line, before any work.
+
+## Session relaunch
+
+A provider error can end the session's own turn while an agent runs, and then nothing runs until someone types again. `relaunch.sh` closes that gap for a headless run. It owns the session process, so it knows when the session ends, and the resume table above makes every new start safe. The script's header is its reference: the stop rules, the restart limit and waits, and the state paths.
+
+The run keeps one promise to the script: **every escalation appends `escalated <label> <reason>` as the last `progress.md` line**, in item 3 of [the escalation contract](#the-escalation-contract). That line is how the script tells a run that stopped on purpose from one that crashed, because an execution gap also leaves the issue `in-progress` with no PR.
 
 ## The pipeline (per issue)
 
@@ -186,13 +201,19 @@ Invoke **implementkit** against the issue spec, with the worktree path and the a
 
 **Commit at every phase boundary.** An issue with `## Phase N` headings commits once per phase group, through **commitkit** with `no-push` (fallback: `git add -- <paths the group changed> && git commit` with a conventional subject from the issue title, and no push), and appends `implement <group> <phases> <sha>` to `progress.md` right after. implementkit's own contract stops short of committing, so afkkit makes the commit between groups. That boundary is what bounds a usage-limit stop: a re-run loses at most the group in flight. A body with no phase headings is one group.
 
+**Check each group's new assumptions before the next group starts.** Record the `assumptions.md` line count before a group builds. After its commit and its `implement` line, dispatch a new agent under [the dispatch rules](#dispatch-rules), the invariant checker. Its brief carries, by path: the worktree, the issue, the plan the issue links, and the `assumptions.md` line range the group added. It reads only those lines against the binding parts of the input: the issue body, and the plan's settled decisions, the invariants its approach states, and its non-goals. It returns blockers with IDs (`I1`, `I2`), each quoting the assumption line and the issue or plan text it breaks. It does not read the diff, because the [acceptance check](#5-acceptance-check) owns the diff. It edits no code. Append `invariant <group> <first>-<last> <n>` to `progress.md`.
+
+- **No blockers.** Start the next group.
+- **Blockers.** Dispatch one implementkit fix round for that group with the blocker IDs and quotes, commit its fix through commitkit with `no-push`, and append `invariant-fix <group> <sha>`. Then run the invariant check once more on the same range plus the lines the fix added. A blocker that survives escalates keeping `in-progress`.
+- **A blocker that shows the plan's invariant cannot hold at all**, so no fix in the code can satisfy it, is a planning gap. Escalate to `needs-planning` with the blocker quoted.
+
 **The run does not tick the issue's phase checkboxes.** The exemptions in this pipeline cover label writes only, and a checkbox edit is not a label write. The commits on the branch are the record while the run is live.
 
-**Done when** every phase group has an `implement` line in `progress.md` whose commit is on the branch, the worktree is clean, and implementkit's gate is green, or the run has escalated.
+**Done when** every phase group has an `implement` line in `progress.md` whose commit is on the branch and an `invariant` line whose last check found no blocker, the worktree is clean, and implementkit's gate is green, or the run has escalated.
 
 ### 4. QA plan
 
-Invoke **qakit** on the branch, handing it `checks.md` as the acceptance list and the dev server recorded in `orientation.md`. qakit writes `docs/qa/NNNN-qa-<slug>-YYYY-MM-DD.md`, runs every agent-confirmable check itself (in the headless browser when a driver is present), captures a screenshot of each screen a human must judge, and records the revision every result ran against. The human-only entries in `checks.md` become its manual cases.
+First dispatch part one of the [acceptance check](#5-acceptance-check), so it runs while qakit works. Then invoke **qakit** on the branch, handing it `checks.md` as the acceptance list and the dev server recorded in `orientation.md`. qakit writes `docs/qa/NNNN-qa-<slug>-YYYY-MM-DD.md`, runs every agent-confirmable check itself (in the headless browser when a driver is present), captures a screenshot of each screen a human must judge, and records the revision every result ran against. The human-only entries in `checks.md` become its manual cases.
 
 **One exception escalates here:** if the change **does not run at all** (the app won't start, every page check fails the same way), that is an execution gap. Escalate keeping `in-progress`, and don't pay for an acceptance check of code that can't start.
 
@@ -202,16 +223,18 @@ Leave the QA doc uncommitted; prkit commits it at the PR step. Append `qa <path>
 
 ### 5. Acceptance check
 
-The run's one review, and its one dispatch. Start a **new** subagent under [the dispatch rules](#dispatch-rules), on the session's model unless the user named another. It has no memory of the build, which is the independence it exists for: a reviewer that shares the builder's context shares its blind spots, whatever model it runs on.
+The run's one review of the whole change. Start a **new** subagent under [the dispatch rules](#dispatch-rules), on the session's model unless the user named another. It has no memory of the build, which is the independence it exists for: a reviewer that shares the builder's context shares its blind spots, whatever model it runs on.
 
-Its brief carries, by path: the worktree, the issue number, the branch diff range (`<base>...HEAD`), `assumptions.md`, `checks.md`, `orientation.md`, and the QA plan with its screenshot directory. It says the agent **is** the fresh reviewer, so it runs the passes itself rather than delegating them again. Its job, in order:
+**It runs in two parts beside qakit.** Dispatch part one when the [QA plan](#4-qa-plan) step starts. Its brief carries, by path: the worktree, the issue number, the branch diff range (`<base>...HEAD`), `assumptions.md`, `checks.md`, and `orientation.md`. Part one runs the jobs below that need no QA result (1, the diff half of 2, and 3), writes them to `findings.md` marked `interim`, and returns. When the `qa` line lands, continue the same agent with the host's message-to-agent tool (`SendMessage` on Claude-compatible hosts, `send_input` on Codex), passing the QA plan path and its screenshot directory. Part two compares each agent criterion in `checks.md` with its QA result, finalizes `findings.md`, and returns. A host that cannot continue an agent dispatches the whole check once, after the `qa` line, with every path in one brief.
 
-1. **Verify every pre-existing failure claim** in `orientation.md`: run each named command once against the base branch, in a throwaway worktree of the base (`git worktree add --detach <tmp> <base>`, removed after), and mark it `confirmed` or `belongs to this branch`. A failure that belongs to the branch is a blocker. This is the one check between an unattended run and a shipped regression, so the agent that built the change never grades it.
+The brief says the agent **is** the fresh reviewer, so it runs the passes itself rather than delegating them again. Its jobs:
+
+1. **Verify every pre-existing failure claim** in `orientation.md`: run each named command once against the base branch, in a throwaway worktree of the base (`git worktree add --detach <tmp> <base>`, removed after), and mark it `confirmed` or `belongs to this branch`. Run a full-suite command at the concurrency limit `orientation.md` records, because qakit's dev server runs at the same time. A failure that belongs to the branch is a blocker. This is the one check between an unattended run and a shipped regression, so the agent that built the change never grades it.
 2. **Run reviewkit's requirement-completeness and correctness passes only**, against the diff range, with the issue as the stated intent and `checks.md` as the criteria. Read qakit's ❌ results and screenshots as evidence: a criterion the screenshot contradicts ("design A was chosen; the page shows B", "the sidebar is absent") is a blocker even when the diff reads fine. With no screenshots (no driver on the box), review the diff alone and say so in `findings.md`.
 3. **Read `assumptions.md` against the issue.** An assumption that contradicts the issue, or decides something the issue reserved for a person, is a blocker.
-4. **Write `findings.md`** with **blockers only**, each with a stable ID (`B1`, `B2`), its file and line or check ID, and the evidence. Style, naming, and taste are not blockers; the PR review bot and the human reviewer own them.
+4. **Write `findings.md`** with **blockers only**, naming the QA plan revision it compared, each with a stable ID (`B1`, `B2`), its file and line or check ID, and the evidence. Style, naming, and taste are not blockers; the PR review bot and the human reviewer own them.
 
-The brief ends with the agent's edge: it edits no code, starts no browser, and does not run QA, commit, push, or open a PR. It returns the blocker count and one line per blocker ID. Append `check <n>` to `progress.md`.
+The brief ends with the agent's edge: it edits no code, starts no browser, and does not run QA, commit, push, or open a PR. Each part returns the blocker count so far and one line per blocker ID. Append `check <n>` to `progress.md` after part two only. A run that resumes with a `qa` line and no `check` line dispatches the whole check again, in one part.
 
 **Done when** every pre-existing claim is marked, every agent criterion in `checks.md` has been compared with its QA result, and `findings.md` exists with a blocker list, empty or not.
 
@@ -272,7 +295,7 @@ Then escalation always means the same five things:
 
 1. **No PR.**
 2. **Keep the work.** Leave the worktree and every commit intact, and stop the dev server.
-3. **Comment the stuck-state** on the issue, precisely: the open questions for a planning gap, the failing gate output for an execution gap, the surviving blocker IDs for a review gap. On a multi-phase issue, name the phases that committed and the phase that stopped.
+3. **Comment the stuck-state** on the issue, precisely: the open questions for a planning gap, the failing gate output for an execution gap, the surviving blocker IDs for a review gap. On a multi-phase issue, name the phases that committed and the phase that stopped. Then append `escalated <label> <reason>` to `progress.md` with the label from the next item and the one-line reason, so [Session relaunch](#session-relaunch) does not start the run again.
 4. **Set the label by *cause*.** A **planning gap** (a missing *decision*, from the [spec gate](#2-spec-gate) or implementkit) → flip `in-progress → needs-planning`; it goes back to the human's grill queue. An **execution gap** (tests won't go green, or blockers survive the fix) → **keep `in-progress`**; the spec was fine.
 5. **Continue the batch.**
 
@@ -284,8 +307,8 @@ Then escalation always means the same five things:
 
 **The invoking session becomes a thin conductor, and each issue gets a new agent.** Issue N's context must never bill issue N+1's turns, so the conductor holds only the queue and each issue's one-line outcome. Per issue:
 
-1. **Dispatch an issue agent** under [the dispatch rules](#dispatch-rules). Its brief is the issue number, the authorization, and this skill: run the [pipeline](#the-pipeline-per-issue) from [Start the issue](#1-start-the-issue) through [QA plan](#4-qa-plan) and return the worktree path, the open-PR count, the outcome so far, and the `progress.md` tail.
-2. **Dispatch the [acceptance check](#5-acceptance-check) from the conductor.** On Claude-compatible hosts a subagent cannot start a subagent of its own, so the issue agent cannot make this dispatch. The conductor can, and the checker stays independent of the agent that built the change.
+1. **Dispatch an issue agent** under [the dispatch rules](#dispatch-rules). Its brief is the issue number, the authorization, and this skill: run the [pipeline](#the-pipeline-per-issue) from [Start the issue](#1-start-the-issue) through [Implement](#3-implement) and return the worktree path, the open-PR count, the outcome so far, and the `progress.md` tail.
+2. **Dispatch part one of the [acceptance check](#5-acceptance-check) from the conductor, and continue the issue agent through the [QA plan](#4-qa-plan) at the same time.** When the issue agent returns the `qa` line, continue the checker for part two. On Claude-compatible hosts a subagent cannot start a subagent of its own, so the issue agent cannot make this dispatch. The conductor can, and the checker stays independent of the agent that built the change.
 3. **Continue the issue agent** with the blocker count and the `findings.md` path, using the host's message-to-agent tool (`SendMessage` on Claude-compatible hosts, `send_input` on Codex), so it keeps its warm context through [Fix](#6-fix), [Open the PR](#7-open-the-pr), and [Hand off](#8-hand-off). On a host that cannot continue an agent, dispatch a new one from the resume table's row instead.
 
 The conductor **never writes to a worktree**. It dispatches, reads `progress.md` and the labels to verify a claim, and decides the next move. Between dispatches it says what it is doing in one line.
