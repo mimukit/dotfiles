@@ -1,7 +1,6 @@
 tap "abue-ammar/tinycast", trusted: true
 tap "anomalyco/tap", trusted: true
 tap "infisical/get-cli", trusted: true
-tap "peterldowns/tap", trusted: true
 tap "pulumi/tap"
 # Run your GitHub Actions locally
 brew "act"
@@ -85,8 +84,6 @@ brew "grep"
 brew "grex"
 # GNU troff text-formatting system
 brew "groff"
-# Agent multiplexer that lives in your terminal
-brew "herdr"
 # Idempotent command-line utility for managing your /etc/hosts file
 brew "hostess"
 # User-friendly cURL replacement (command-line HTTP client)
@@ -97,16 +94,10 @@ brew "hub"
 brew "imagemagick"
 # Lightweight and flexible command-line JSON processor
 brew "jq"
-# Lazier way to manage everything docker
-brew "lazydocker"
 # Simple terminal UI for git commands
 brew "lazygit"
-# Terminal file manager
-brew "lf"
 # Exposes your localhost to the world for easy testing and sharing
 brew "localtunnel"
-# Keep your Mac's application settings in sync
-brew "mackup"
 # Mac App Store command-line interface
 brew "mas"
 # Polyglot runtime manager (asdf rust clone)
@@ -203,14 +194,10 @@ brew "wget2"
 brew "wireshark"
 # Blazing fast terminal file manager written in Rust, based on async I/O
 brew "yazi"
-# Pluggable terminal workspace, with terminal multiplexer as the base feature
-brew "zellij"
 # Shell extension to navigate your filesystem faster
 brew "zoxide"
 # The official Infisical CLI
 brew "infisical/get-cli/infisical", trusted: true
-# Localias is a tool for developers to securely manage local aliases for development servers.
-brew "peterldowns/tap/localias", trusted: true
 # Pulumi - Modern Infrastructure as Code. Any cloud, any language 
 brew "pulumi/tap/pulumi", trusted: true
 # Password manager that keeps all passwords secure behind one password
