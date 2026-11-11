@@ -118,10 +118,10 @@ diff <(jq -S . "$ORCA") <(chezmoi cat "$ORCA" | jq -S .)
 
 ## Claude Code
 
-`~/.claude/settings.json` has three writers. We own the top-level keys and three
+`~/.claude/settings.json` has two writers. We own the top-level keys and three
 hook entries calling `~/.local/bin/agent-hook`. Orca adds twelve entries calling
-`~/.orca/agent-hooks/claude-hook.sh`, and herdr adds a SessionStart entry. Both
-reinstall on launch and rewrite their command string on upgrade, so tracking the
+`~/.orca/agent-hooks/claude-hook.sh`. Orca
+reinstalls them on launch and rewrites their command string on upgrade, so tracking the
 file whole meant a diff in the source after every vendor build.
 
 Turning Orca's hooks off is not the fix. Its "Agent status hooks" setting gates

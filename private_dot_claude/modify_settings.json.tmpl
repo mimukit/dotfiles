@@ -2,14 +2,13 @@
 #
 # chezmoi modify_ script for Claude Code's settings file.
 #
-# Three programs write ~/.claude/settings.json:
+# Two programs write ~/.claude/settings.json:
 #
 #   us      everything in .chezmoitemplates/claude-settings.json — env,
 #           permissions, model, statusLine, and the three agent-hook entries
 #   Orca    twelve hook entries calling ~/.orca/agent-hooks/claude-hook.sh
-#   herdr   a SessionStart entry calling ~/.claude/hooks/herdr-agent-state.sh
 #
-# Orca and herdr reinstall their entries whenever the app starts, and rewrite
+# Orca reinstalls its entries whenever the app starts, and rewrites
 # the command string on every upgrade. Tracking the file whole meant a diff in
 # the chezmoi source each time one of them shipped a new build. Turning their
 # hooks off is not an option either: Orca's "Agent status hooks" setting gates

@@ -30,7 +30,7 @@
 #                         the diff has to travel in the prompt. commitkit's
 #                         draft mode is written for exactly this shape.
 #   --setting-sources ""  Loads no settings file. ~/.claude/settings.json carries
-#                         twelve hook entries (agent-hook, Orca, Paseo, herdr).
+#                         twelve hook entries (agent-hook, Orca, Paseo).
 #                         Without this, writing a commit message fires a desktop
 #                         toast and flips your Orca and Paseo workspace status.
 #                         The cost is that /commitkit no longer resolves, which

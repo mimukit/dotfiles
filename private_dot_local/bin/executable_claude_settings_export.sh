@@ -3,12 +3,11 @@
 # Extract our slice of Claude Code's settings file into the chezmoi source, at
 # .chezmoitemplates/claude-settings.json.
 #
-# Why this exists: three programs write ~/.claude/settings.json. We own the
+# Why this exists: two programs write ~/.claude/settings.json. We own the
 # top-level keys. Orca installs twelve hook entries calling its own
-# ~/.orca/agent-hooks/claude-hook.sh, and herdr installs a SessionStart entry
-# calling ~/.claude/hooks/herdr-agent-state.sh. Both reinstall on launch and
-# rewrite their command string on upgrade, so tracking the file whole produced a
-# diff in the source every time either shipped a build.
+# ~/.orca/agent-hooks/claude-hook.sh. Orca reinstalls them on launch and
+# rewrites their command string on upgrade, so tracking the file whole produced
+# a diff in the source every time it shipped a build.
 #
 # The file is therefore managed by a chezmoi modify_ script
 # (private_dot_claude/modify_settings.json.tmpl), which merges the payload this

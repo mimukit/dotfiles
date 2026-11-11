@@ -20,8 +20,8 @@
 # A toast names the repo and branch, carries a reason, and focuses the pane that
 # sent it when you click it. See the notification helpers below feat_notify.
 #
-# Vendor hooks are deliberately NOT routed through here. Orca and herdr install
-# and maintain their own entries alongside ours, and both are careful about it:
+# Vendor hooks are deliberately NOT routed through here. Orca installs
+# and maintains its own entries alongside ours, and is careful about it:
 # Orca's applyManagedHooks() strips only commands matching its own script name
 # and appends its entry after ours, so the two coexist without either clobbering
 # the other. Wrapping their relays here would mean Orca no longer recognises its
@@ -52,7 +52,7 @@ PORT_CLEANUP="$HOME/.claude/hooks/cleanup-worktree-ports.sh"
 # the agent case reports state over its own client. Both end in a native toast,
 # so ours is a duplicate either way. PASEO_CLI is the bundled binary path rather
 # than session identity — not a suppression signal.
-NOTIFY_SUPPRESS_VARS="ORCA_PANE_KEY ORCA_AGENT_HOOK_PORT HERDR_ENV SUPERSET_HOME_DIR PASEO_TERMINAL_ID PASEO_AGENT_ID"
+NOTIFY_SUPPRESS_VARS="ORCA_PANE_KEY ORCA_AGENT_HOOK_PORT SUPERSET_HOME_DIR PASEO_TERMINAL_ID PASEO_AGENT_ID"
 
 # --- features ---------------------------------------------------------------
 
@@ -255,7 +255,7 @@ Handled events: PreToolUse, Notification, Stop.
 [reason] repeats the settings matcher on a Notification entry, one of
 permission_prompt, idle_prompt, agent_needs_input or agent_completed. Any other
 value, and any missing value, uses the generic text.
-Orca and herdr manage their own hook entries separately — by design.
+Orca manages its own hook entries separately — by design.
 EOF
 }
 

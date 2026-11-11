@@ -46,7 +46,7 @@ RED='\033[0;31m'
 # Edit these lists to match what your update flows touch.
 
 # Modifications only (safe; managed files only).
-# Note on ~/.codex/hooks.json below: Orca and herdr install their own hook entries
+# Note on ~/.codex/hooks.json below: Orca installs its own hook entries
 # into it and refresh those entries on upgrade, so it legitimately changes outside
 # chezmoi and needs re-adding. Our own entries sit alongside the vendor ones and
 # are left alone — Orca matches only commands naming its own script. See
@@ -85,7 +85,6 @@ RE_ADD_PATHS=(
   "$HOME/.codex/hooks.json"
   "$HOME/.codex/rules/default.rules"
   "$HOME/.codex/AGENTS.md"
-  "$HOME/.codex/herdr-agent-state.sh"
   "$HOME/.config/yazi/package.toml"
   # Orca keybindings. The rest of Orca's config does not go through chezmoi
   # re-add — see the extract step below.
@@ -145,8 +144,8 @@ if [ -x "$ORCA_EXPORT" ]; then
   fi
 fi
 
-# Claude Code's settings file carries hook entries that Orca and herdr install
-# and rewrite on every upgrade. It is managed by a modify_ script that merges our
+# Claude Code's settings file carries hook entries that Orca installs
+# and rewrites on every upgrade. It is managed by a modify_ script that merges our
 # keys in and passes those entries through, which `chezmoi re-add` cannot capture
 # because it skips modify_ entries. This pulls our slice back out instead. It
 # no-ops when Claude Code has never written a settings file.
