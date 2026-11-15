@@ -32,5 +32,10 @@ Host devaloy-insta
 	HostName devaloy-insta
   IdentitiesOnly yes
 
+Host devaloy-upbox
+	User boxuser
+	HostName devaloy-upbox
+  IdentitiesOnly yes
+
 Host *
 	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
