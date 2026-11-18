@@ -41,6 +41,16 @@ hooks = true
 js_repl = false
 memories = true
 
+# These servers require ChatGPT.app, which this Mac does not have.
+# Keep a command on each entry because Codex validates disabled transports.
+[mcp_servers.node_repl]
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
+enabled = false
+
+[mcp_servers.cua_repl]
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
+enabled = false
+
 [desktop]
 conversationDetailMode = "STEPS_PROSE"
 ambient-suggestions-enabled = true

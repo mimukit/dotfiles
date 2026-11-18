@@ -11,7 +11,7 @@
 #   marketplaces              last_updated stamps and ~/.cache paths
 #   projects                  per-directory trust decisions, absolute, and a
 #                             readable list of every project you have opened
-#   mcp_servers               vendor-installed, pins an app version string
+#   mcp_servers               vendor state, except the two disabled app servers
 #   shell_environment_policy  vendor build hashes
 #   hooks.state               a trusted_hash per hook entry, rewritten whenever
 #                             hooks.json changes
@@ -106,6 +106,12 @@ ALLOW = {
         'hooks': bool,
         'js_repl': bool,
         'memories': bool,
+    },
+    # Preserve the disabled app servers without exporting their environment.
+    # Codex requires a command even when a server is disabled.
+    'mcp_servers': {
+        'node_repl': {'command': str, 'enabled': bool},
+        'cua_repl': {'command': str, 'enabled': bool},
     },
     'desktop': {
         'conversationDetailMode': str,
