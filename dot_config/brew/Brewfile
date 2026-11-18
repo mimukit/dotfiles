@@ -1,9 +1,5 @@
-tap "abue-ammar/tinycast", trusted: true
-tap "anomalyco/tap", trusted: true
 tap "ardia-browser/tap"
 tap "infisical/get-cli", trusted: true
-tap "peterldowns/tap", trusted: true
-tap "pulumi/tap"
 # Run your GitHub Actions locally
 brew "act"
 # Display directories as trees (with optional color/HTML output)
@@ -206,10 +202,6 @@ brew "yazi"
 brew "zoxide"
 # The official Infisical CLI
 brew "infisical/get-cli/infisical", trusted: true
-# Localias is a tool for developers to securely manage local aliases for development servers.
-brew "peterldowns/tap/localias", link: false, trusted: true
-# Pulumi - Modern Infrastructure as Code. Any cloud, any language 
-brew "pulumi/tap/pulumi", trusted: true
 # Password manager that keeps all passwords secure behind one password
 cask "1password"
 # Command-line interface for 1Password
@@ -270,8 +262,6 @@ cask "google-chrome"
 cask "google-chrome@beta"
 # Chromium-based web browser
 cask "helium-browser"
-# Local voice dictation
-cask "anomalyco/tap/hex", trusted: true
 # Utility to hide menu bar items
 cask "hiddenbar"
 # Homebrew's official GUI
@@ -365,7 +355,6 @@ cask "yaak"
 # Mesh VPN client
 cask "zerotier-one"
 mas "Battery Monitor", id: 836505650
-mas "Hidden Bar 2", id: 1452453066
 mas "Kindle", id: 302584613
 mas "Klack", id: 6446206067
 mas "Pastel", id: 413897608
