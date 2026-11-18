@@ -9,6 +9,7 @@
                 "rules": [
                     {
                         "description": "Capslock to Hyper",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "description": "Click to Capslock, Hold to Hyper",
