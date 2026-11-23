@@ -291,6 +291,11 @@ path_prepend "$HOME/.antigravity/antigravity/bin"
 path_prepend "/opt/homebrew/opt/postgresql@18/bin"
 path_prepend "/usr/local/opt/postgresql@18/bin"
 
+# Rex CLI
+if [ -n "$REX_BIN_DIR" ]; then
+    export PATH="$REX_BIN_DIR:$PATH"
+fi
+
 # Initialize zoxide last, after all PATH changes (per zoxide doctor)
 if [[ "$OSTYPE" == "darwin"* ]]; then
   eval "$(zoxide init zsh)"
