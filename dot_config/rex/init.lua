@@ -76,8 +76,5 @@ rex.bind("resize/enter", "client.mode.exit")
 require("projects")
 require("layouts")
 
--- Remote Rex servers, reached over SSH through ~/.ssh/config and the tailnet.
--- Both boxes are containers without systemd: the first connection starts
--- the server, and a container restart ends its sessions.
-rex.host{ label = "devaloy-metal", endpoint = "ssh://devaloy-metal" }
-rex.host{ label = "devaloy-upbox", endpoint = "ssh://devaloy-upbox" }
+-- Remote hosts (devaloy-metal) live in Settings > Remote Hosts, not here:
+-- the app does not show rex.host entries. Add them by hand on a new Mac.
