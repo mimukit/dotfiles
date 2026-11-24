@@ -212,6 +212,7 @@ alias oc='opencode'
 alias pab='pnpm approve-builds'
 alias pwdc='pwd | pbcopy'
 alias python='python3'
+alias rx='rex new "${PWD##*/}"'
 alias skmi="skills add mimukit/skills --global --skill '*' -a claude-code -a codex -a opencode -y"
 alias skup='skills update --global -y'
 alias so='subl .'
