@@ -6,12 +6,11 @@
 
 local M = {}
 
--- Return the ID of the session with this label, or nil.
+-- Return the ID of the session with this label, or nil if it does not exist.
 function M.find(label, server)
   local result, err = (server or rex).call("session.list", {})
   if not result then
-    rex.log("warn", "session.list failed: " .. tostring(err))
-    return nil
+    error("session.list failed: " .. tostring(err))
   end
   for _, s in ipairs(result.sessions or {}) do
     if s.label == label then
