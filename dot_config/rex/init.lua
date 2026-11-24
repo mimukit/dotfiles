@@ -73,8 +73,10 @@ rex.bind("resize/enter", "client.mode.exit")
 
 -- Custom actions. Ctrl+B u opens the project picker (was the sesh picker).
 -- Ctrl+B Shift+U opens the upx system update layout.
+-- Ctrl+B w opens a git worktree on devaloy-metal.
 require("projects")
 require("layouts")
+require("worktrees")
 
 -- Remote hosts (devaloy-metal) live in Settings > Remote Hosts, not here:
 -- the app does not show rex.host entries. Add them by hand on a new Mac.
