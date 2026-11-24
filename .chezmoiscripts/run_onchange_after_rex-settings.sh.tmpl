@@ -1,0 +1,61 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/usr/bin/env bash
+#
+# Apply Rex's tracked app settings, on a new Mac and whenever they change.
+#
+# Rex keeps its look (theme, font, tabs, sidebar, padding, selection) in the
+# com.superlogical.rex defaults domain, which chezmoi does not track.
+# ~/.local/bin/rex_settings_export.sh copies those keys into
+# .chezmoitemplates/rex-defaults.plist. This script merges them back into the
+# domain and leaves every other key (window frames, update state, the local
+# server route) as it was.
+#
+# `run_onchange_` with the hash below re-runs this only when the tracked
+# settings change, not on every apply.
+#
+# Rex defaults hash: {{ include ".chezmoitemplates/rex-defaults.plist" | sha256sum }}
+
+set -euo pipefail
+
+DOMAIN="com.superlogical.rex"
+
+# A running Rex writes its in-memory defaults back when it quits, which would
+# undo these writes. Skip and say so. chezmoi still records the run, so re-run
+# it by hand after quitting Rex. Quitting Rex does not end its sessions: the
+# Rex server keeps them.
+#   chezmoi execute-template < "$(chezmoi source-path)/.chezmoiscripts/run_onchange_after_rex-settings.sh.tmpl" | bash
+if pgrep -xq Rex; then
+  echo "chezmoi: Rex is running, quit it and re-run this script to apply its settings" >&2
+  exit 0
+fi
+
+tracked="$(mktemp)"
+current="$(mktemp)"
+merged="$(mktemp)"
+trap 'rm -f "$tracked" "$current" "$merged"' EXIT
+
+cat > "$tracked" <<'PLIST'
+{{ include ".chezmoitemplates/rex-defaults.plist" -}}
+PLIST
+
+# `defaults export` fails when the domain does not exist yet, on a Mac where
+# Rex never ran. The merge then starts from an empty domain.
+defaults export "$DOMAIN" "$current" 2>/dev/null || : > "$current"
+
+/usr/bin/python3 -I - "$current" "$tracked" "$merged" <<'PY'
+import os, plistlib, sys
+
+current_path, tracked_path, merged_path = sys.argv[1:4]
+domain = {}
+if os.path.getsize(current_path) > 0:
+    with open(current_path, "rb") as f:
+        domain = plistlib.load(f)
+with open(tracked_path, "rb") as f:
+    domain.update(plistlib.load(f))
+with open(merged_path, "wb") as f:
+    plistlib.dump(domain, f)
+PY
+
+defaults import "$DOMAIN" "$merged"
+echo "chezmoi: applied $(plutil -p "$tracked" | grep -c '=>') Rex settings"
+{{ end -}}

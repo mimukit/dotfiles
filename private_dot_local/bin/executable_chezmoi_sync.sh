@@ -74,6 +74,9 @@ RE_ADD_PATHS=(
   "$HOME/.config/nvim"
   "$HOME/.config/brew/Brewfile"
   "$HOME/.config/btop/btop.conf"
+  # Rex key bindings and custom actions (init.lua and the files it requires).
+  # The app's look is not here; the extract step above handles it.
+  "$HOME/.config/rex"
   # Codex (~/.codex): stable config files only. Secrets (auth.json), history,
   # logs, caches, sqlite DBs, sessions and other runtime state are excluded.
   #
@@ -172,6 +175,20 @@ if [ -x "$CODEX_EXPORT" ]; then
     "$CODEX_EXPORT" --dry-run
   else
     "$CODEX_EXPORT"
+  fi
+fi
+
+# Rex keeps its look (theme, font, tabs, sidebar) in its macOS defaults domain,
+# mixed in with window frames, update state and the local server's route. A
+# dedicated script pulls out the `Workspace.*` settings instead. It no-ops when
+# Rex has never run, because `defaults export` then has nothing to read.
+REX_EXPORT="$HOME/.local/bin/rex_settings_export.sh"
+if [ -x "$REX_EXPORT" ] && defaults read com.superlogical.rex >/dev/null 2>&1; then
+  echo -e "${CYAN}⏳ extract  Rex settings${RESET}"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    "$REX_EXPORT" --dry-run
+  else
+    "$REX_EXPORT"
   fi
 fi
 

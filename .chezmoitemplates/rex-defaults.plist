@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Workspace.activityGrouping</key>
+	<string>priority</string>
+	<key>Workspace.appIconVisibility</key>
+	<string>dockOnly</string>
+	<key>Workspace.appearance</key>
+	<string>dark</string>
+	<key>Workspace.darkThemeID</key>
+	<string>merino-dark</string>
+	<key>Workspace.inactivePaneFadeMode</key>
+	<string>both</string>
+	<key>Workspace.interfaceStyle</key>
+	<string>blendTheme</string>
+	<key>Workspace.lightThemeID</key>
+	<string>merino-light</string>
+	<key>Workspace.notificationPosition</key>
+	<string>top-right</string>
+	<key>Workspace.paneDensity</key>
+	<string>comfortable</string>
+	<key>Workspace.paneHeaderVisibility</key>
+	<string>onHover</string>
+	<key>Workspace.shellIconTheme</key>
+	<string>themed</string>
+	<key>Workspace.showsPaneHeaders</key>
+	<false/>
+	<key>Workspace.showsWindowOnLaunch</key>
+	<true/>
+	<key>Workspace.sidebarCollapsed</key>
+	<true/>
+	<key>Workspace.sidebarPosition</key>
+	<string>left</string>
+	<key>Workspace.sshAgentChoice</key>
+	<string>system</string>
+	<key>Workspace.tabBarEdge</key>
+	<string>top</string>
+	<key>Workspace.tabIconTintMode</key>
+	<string>off</string>
+	<key>Workspace.tabStyle</key>
+	<string>vertical</string>
+	<key>Workspace.terminalCellHeightPercent</key>
+	<real>10.0</real>
+	<key>Workspace.terminalFontPointSize</key>
+	<real>14.0</real>
+	<key>Workspace.terminalSmoothScrolling</key>
+	<true/>
+	<key>Workspace.toolbarBehavior</key>
+	<string>onHover</string>
+	<key>Workspace.usesPaneGlass</key>
+	<true/>
+	<key>Workspace.usesStandardInactiveWindowPaneStyles</key>
+	<true/>
+</dict>
+</plist>
