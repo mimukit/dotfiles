@@ -34,7 +34,6 @@ end
 
 -- Sessions
 tmux("s", "session.switch")
-tmux("u", "session.switch") -- was the sesh picker
 tmux("shift+4", "session.rename") -- $
 
 -- Panes
@@ -71,3 +70,14 @@ for _, dir in ipairs({ "left", "right", "up", "down" }) do
 end
 rex.bind("resize/=", "pane.balance")
 rex.bind("resize/enter", "client.mode.exit")
+
+-- Custom actions. Ctrl+B u opens the project picker (was the sesh picker).
+-- Ctrl+B Shift+U opens the upx system update layout.
+require("projects")
+require("layouts")
+
+-- Remote Rex servers, reached over SSH through ~/.ssh/config and the tailnet.
+-- Both boxes are containers without systemd: the first connection starts
+-- the server, and a container restart ends its sessions.
+rex.host{ label = "devaloy-metal", endpoint = "ssh://devaloy-metal" }
+rex.host{ label = "devaloy-upbox", endpoint = "ssh://devaloy-upbox" }
